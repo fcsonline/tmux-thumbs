@@ -1,0 +1,10 @@
+[package]
+name = "tmux-thumbs"
+version = "0.1.0"
+authors = ["Ferran Basora <fcsonline@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+rustbox = "*"
+regex = "1"
+clap = "2.32.0"
