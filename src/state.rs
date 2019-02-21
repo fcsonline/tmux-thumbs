@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use regex::Regex;
 
 pub struct Match<'a> {
@@ -28,7 +29,7 @@ impl<'a> State<'a> {
     }
   }
 
-  pub fn matches(&self, reverse: bool) -> Vec<Match<'a>> {
+  pub fn matches(&self, reverse: bool, unique: bool) -> Vec<Match<'a>> {
     let mut matches = Vec::new();
     let mut patterns = Vec::new();
 
@@ -67,13 +68,27 @@ impl<'a> State<'a> {
     let alphabet = super::alphabets::get_alphabet(self.alphabet);
     let mut hints = alphabet.hints(matches.len());
 
-    if reverse {
+    // This looks wrong but we do a pop after
+    if !reverse {
       hints.reverse();
     }
 
-    for mat in &mut matches {
-      if let Some(hint) = hints.pop() {
-        mat.hint = Some(hint.to_string().clone())
+    if unique {
+      let mut previous: HashMap<&str, String> = HashMap::new();
+
+      for mat in &mut matches {
+        if let Some(previous_hint) = previous.get(mat.text) {
+          mat.hint = Some(previous_hint.clone());
+        } else if let Some(hint) = hints.pop() {
+          mat.hint = Some(hint.to_string().clone());
+          previous.insert(mat.text, hint.to_string().clone());
+        }
+      }
+    } else {
+      for mat in &mut matches {
+        if let Some(hint) = hints.pop() {
+          mat.hint = Some(hint.to_string().clone());
+        }
       }
     }
 
@@ -95,18 +110,44 @@ impl<'a> State<'a> {
 mod tests {
   use super::*;
 
-  fn match_lines(output: &str) -> Vec<Match> {
+  fn match_lines_flags(output: &str, reverse: bool, unique: bool) -> Vec<Match> {
     let lines = output.split("\n").collect::<Vec<&str>>();
     let state = State::new(lines, "abcd");
 
-    state.matches()
+    state.matches(reverse, unique)
+  }
+
+  fn match_lines(output: &str) -> Vec<Match> {
+    match_lines_flags(output, false, false)
+  }
+
+  #[test]
+  fn match_reverse () {
+    let output = "lorem 127.0.0.1 lorem 255.255.255.255 lorem 127.0.0.1 lorem";
+
+    let results = match_lines_flags(output, false, false);
+
+    assert_eq!(results.len(), 3);
+    assert_eq!(results.first().unwrap().hint.clone().unwrap(), "a");
+    assert_eq!(results.last().unwrap().hint.clone().unwrap(), "c");
+  }
+
+  #[test]
+  fn match_unique () {
+    let output = "lorem 127.0.0.1 lorem 255.255.255.255 lorem 127.0.0.1 lorem";
+
+    let results = match_lines_flags(output, false, true);
+
+    assert_eq!(results.len(), 3);
+    assert_eq!(results.first().unwrap().hint.clone().unwrap(), "a");
+    assert_eq!(results.last().unwrap().hint.clone().unwrap(), "a");
   }
 
   #[test]
   fn match_paths () {
     let output = "Lorem /tmp/foo/bar lorem\n Lorem /var/log/bootstrap.log lorem /var/log/kern.log lorem";
 
-    assert_ne!(match_lines(output).len(), 2); // FIXME regex priority
+    assert_eq!(match_lines(output).len(), 3);
   }
 
   #[test]

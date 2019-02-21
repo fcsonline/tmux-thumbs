@@ -34,6 +34,10 @@ fn app_args<'a> () -> clap::ArgMatches<'a> {
                 .help("Reverse the order for assigned hints")
                 .long("reverse")
                 .short("r"))
+    .arg(Arg::with_name("unique")
+                .help("Don't show duplicated hints for the same match")
+                .long("unique")
+                .short("u"))
     .arg(Arg::with_name("excluded")
                 .help("Excluded keys from the alphabet")
                 .long("excluded")
@@ -46,6 +50,7 @@ fn main() {
   let args = app_args();
   let alphabet = args.value_of("alphabet").unwrap_or("querty");
   let reverse = args.is_present("reverse");
+  let unique = args.is_present("unique");
 
   let execution = exec_command(format!("tmux capture-pane -e -J -p"));
   let output = String::from_utf8_lossy(&execution.stdout);
@@ -70,7 +75,7 @@ fn main() {
   }
 
   let mut typed_hint: String = "".to_owned();
-  let matches = state.matches(reverse);
+  let matches = state.matches(reverse, unique);
   let longest_hint = matches.last().unwrap().hint.clone().unwrap().len();
 
   loop {
