@@ -38,11 +38,6 @@ fn app_args<'a> () -> clap::ArgMatches<'a> {
                 .help("Don't show duplicated hints for the same match")
                 .long("unique")
                 .short("u"))
-    .arg(Arg::with_name("excluded")
-                .help("Excluded keys from the alphabet")
-                .long("excluded")
-                .short("e")
-                .takes_value(true))
     .get_matches();
 }
 
@@ -118,7 +113,6 @@ fn main() {
     match rustbox.poll_event(false) {
       Ok(rustbox::Event::KeyEvent(key)) => {
         match key {
-          Key::Char('q') => { break; }
           Key::Esc => { break; }
           Key::Enter => {
             let mut choosen = matches.first().unwrap();
