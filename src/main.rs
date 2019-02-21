@@ -33,8 +33,7 @@ fn app_args<'a> () -> clap::ArgMatches<'a> {
     .arg(Arg::with_name("reverse")
                 .help("Reverse the order for assigned hints")
                 .long("reverse")
-                .short("r")
-                .takes_value(true))
+                .short("r"))
     .arg(Arg::with_name("excluded")
                 .help("Excluded keys from the alphabet")
                 .long("excluded")
@@ -46,6 +45,7 @@ fn app_args<'a> () -> clap::ArgMatches<'a> {
 fn main() {
   let args = app_args();
   let alphabet = args.value_of("alphabet").unwrap_or("querty");
+  let reverse = args.is_present("reverse");
 
   let execution = exec_command(format!("tmux capture-pane -e -J -p"));
   let output = String::from_utf8_lossy(&execution.stdout);
@@ -70,7 +70,7 @@ fn main() {
   }
 
   let mut typed_hint: String = "".to_owned();
-  let matches = state.matches();
+  let matches = state.matches(reverse);
   let longest_hint = matches.last().unwrap().hint.clone().unwrap().len();
 
   loop {

@@ -28,7 +28,7 @@ impl<'a> State<'a> {
     }
   }
 
-  pub fn matches(&self) -> Vec<Match<'a>> {
+  pub fn matches(&self, reverse: bool) -> Vec<Match<'a>> {
     let mut matches = Vec::new();
     let mut patterns = Vec::new();
 
@@ -66,6 +66,10 @@ impl<'a> State<'a> {
 
     let alphabet = super::alphabets::get_alphabet(self.alphabet);
     let mut hints = alphabet.hints(matches.len());
+
+    if reverse {
+      hints.reverse();
+    }
 
     for mat in &mut matches {
       if let Some(hint) = hints.pop() {
