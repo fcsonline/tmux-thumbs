@@ -32,24 +32,34 @@ impl<'a> State<'a> {
     let mut matches = Vec::new();
     let mut patterns = Vec::new();
 
-    // TODO: Improve pattern preference
-    patterns.push(Regex::new("((^|^\\.|[[:space:]]|[[:space:]]\\.|[[:space:]]\\.\\.|^\\.\\.)[[:alnum:]~_-]*/\\[\\][[:alnum:]_.#$%&+=/@-]+)").unwrap()); // Paths
+    patterns.push(Regex::new(r"((https?://|git@|git://|ssh://|ftp://|file:///)[\w?=%/_.:,;~@!#$&()*+-]*)").unwrap()); // Urls
+    patterns.push(Regex::new(r"/[^ ]+").unwrap()); // Paths
     patterns.push(Regex::new(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}").unwrap()); // Uid
     patterns.push(Regex::new(r"[0-9a-f]{7,40}").unwrap()); // Sha id
-    // patterns.push(Regex::new(r"[0-9]{4,}").unwrap()); // Process or ports
     patterns.push(Regex::new(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}").unwrap()); // Ip address
-    patterns.push(Regex::new(r"((https?://|git@|git://|ssh://|ftp://|file:///)[\w?=%/_.:,;~@!#$&()*+-]*)").unwrap()); // Urls
-    patterns.push(Regex::new(r"(0x[0-9a-fA-F]+)").unwrap()); // Address
+    patterns.push(Regex::new(r"0x[0-9a-fA-F]+").unwrap()); // Address
+    patterns.push(Regex::new(r"[0-9]{4,}").unwrap()); // Process or ports
 
     for (index, line) in self.lines.iter().enumerate() {
-      for pattern in patterns.iter() {
-        for mat in pattern.find_iter(line) {
+      let mut chunk: &str = line;
+      let mut offset: i32 = 0;
+
+      loop {
+        let submatches = patterns.iter().filter_map(|pattern| pattern.find_iter(chunk).nth(0)).collect::<Vec<_>>();
+        let first_match_option = submatches.iter().min_by(|x, y| x.start().cmp(&y.start()));
+
+        if let Some(first_match) = first_match_option {
           matches.push(Match{
-            x: mat.start() as i32,
+            x: offset + first_match.start() as i32,
             y: index as i32,
-            text: &line[mat.start()..mat.end()],
+            text: &chunk[first_match.start()..first_match.end()],
             hint: None
           });
+
+          chunk = chunk.get(first_match.end()..).unwrap();
+          offset = offset + first_match.end() as i32;
+        } else {
+          break;
         }
       }
     }
@@ -58,7 +68,9 @@ impl<'a> State<'a> {
     let mut hints = alphabet.hints(matches.len());
 
     for mat in &mut matches {
-      mat.hint = Some(hints.pop().unwrap().to_string().clone())
+      if let Some(hint) = hints.pop() {
+        mat.hint = Some(hint.to_string().clone())
+      }
     }
 
     return matches;
@@ -97,7 +109,7 @@ mod tests {
   fn match_uids () {
     let output = "Lorem ipsum 123e4567-e89b-12d3-a456-426655440000 lorem\n Lorem lorem lorem";
 
-    assert_ne!(match_lines(output).len(), 1); // FIXME regex priority
+    assert_eq!(match_lines(output).len(), 1);
   }
 
   #[test]
@@ -125,6 +137,27 @@ mod tests {
   fn match_addresses () {
     let output = "Lorem 0xfd70b5695 0x5246ddf lorem\n Lorem 0x973113 lorem";
 
-    assert_ne!(match_lines(output).len(), 3); // FIXME regex priority
+    assert_eq!(match_lines(output).len(), 3);
+  }
+
+  #[test]
+  fn match_process_port () {
+    let output = "Lorem 5695 52463 lorem\n Lorem 973113 lorem 99999 lorem 8888 lorem\n   23456 lorem 5432 lorem 23444";
+
+    assert_eq!(match_lines(output).len(), 8);
+  }
+
+  #[test]
+  fn priority () {
+    let output = "Lorem /var/fd70b569/9999.log 52463 lorem\n Lorem 973113 lorem 123e4567-e89b-12d3-a456-426655440000 lorem 8888 lorem\n  https://crates.io/23456/fd70b569 lorem";
+
+    // Matches
+    // /var/fd70b569/9999.log
+    // 52463
+    // 973113
+    // 123e4567-e89b-12d3-a456-426655440000
+    // 8888
+    // https://crates.io/23456/fd70b569
+    assert_eq!(match_lines(output).len(), 6);
   }
 }
