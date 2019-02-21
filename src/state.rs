@@ -34,6 +34,8 @@ impl<'a> State<'a> {
     let mut patterns = Vec::new();
 
     patterns.push(Regex::new(r"((https?://|git@|git://|ssh://|ftp://|file:///)[\w?=%/_.:,;~@!#$&()*+-]*)").unwrap()); // Urls
+    patterns.push(Regex::new(r"--- a/([^ ]+)").unwrap()); // Diff
+    patterns.push(Regex::new(r"\+\+\+ b/([^ ]+)").unwrap()); // Diff
     patterns.push(Regex::new(r"[^ ]+/[^ ]+").unwrap()); // Paths
     patterns.push(Regex::new(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}").unwrap()); // Uid
     patterns.push(Regex::new(r"[0-9a-f]{7,40}").unwrap()); // Sha id
@@ -46,19 +48,38 @@ impl<'a> State<'a> {
       let mut offset: i32 = 0;
 
       loop {
-        let submatches = patterns.iter().filter_map(|pattern| pattern.find_iter(chunk).nth(0)).collect::<Vec<_>>();
-        let first_match_option = submatches.iter().min_by(|x, y| x.start().cmp(&y.start()));
+        let submatches = patterns.iter().filter_map(|pattern|
+          match pattern.find_iter(chunk).nth(0) {
+            Some(m) => Some((pattern, m)),
+            None => None
+          }
+        ).collect::<Vec<_>>();
+        let first_match_option = submatches.iter().min_by(|x, y| x.1.start().cmp(&y.1.start()));
 
         if let Some(first_match) = first_match_option {
-          matches.push(Match{
-            x: offset + first_match.start() as i32,
-            y: index as i32,
-            text: &chunk[first_match.start()..first_match.end()],
-            hint: None
-          });
+          let (pattern, matching) = first_match;
+          let text = &chunk[matching.start()..matching.end()]; // FIXME? matching.as_str()
 
-          chunk = chunk.get(first_match.end()..).expect("Unknown chunk");
-          offset = offset + first_match.end() as i32;
+          if let Some(captures) = pattern.captures(text) {
+            let (subtext, substart) = if let Some(capture) = captures.get(1) {
+              (capture.as_str(), capture.start())
+            } else {
+              (matching.as_str(), 0)
+            };
+
+            matches.push(Match{
+              x: offset + matching.start() as i32 + substart as i32,
+              y: index as i32,
+              text: subtext,
+              hint: None
+            });
+
+            chunk = chunk.get(matching.end()..).expect("Unknown chunk");
+            offset = offset + matching.end() as i32;
+
+          } else {
+            panic!("No matching?");
+          }
         } else {
           break;
         }
@@ -197,6 +218,26 @@ mod tests {
     let output = "Lorem 5695 52463 lorem\n Lorem 973113 lorem 99999 lorem 8888 lorem\n   23456 lorem 5432 lorem 23444";
 
     assert_eq!(match_lines(output).len(), 8);
+  }
+
+  #[test]
+  fn match_diff_a () {
+    let output = "Lorem lorem\n--- a/src/main.rs";
+
+    let results = match_lines(output);
+
+    assert_eq!(results.len(), 1);
+    assert_eq!(results.first().unwrap().text.clone(), "src/main.rs");
+  }
+
+  #[test]
+  fn match_diff_b () {
+    let output = "Lorem lorem\n+++ b/src/main.rs";
+
+    let results = match_lines(output);
+
+    assert_eq!(results.len(), 1);
+    assert_eq!(results.first().unwrap().text.clone(), "src/main.rs");
   }
 
   #[test]
