@@ -16,6 +16,8 @@ const COLORS: [(&'static str, Color); 9] = [
 pub fn get_color(color_name: &str) -> Color {
   let available_colors: HashMap<&str, Color> = COLORS.iter().cloned().collect();
 
+  available_colors.get(color_name).expect(format!("Unknown color: {}", color_name).as_str()); // FIXME
+
   available_colors[&color_name]
 }
 

@@ -60,6 +60,8 @@ impl<'a> Alphabet<'a> {
 pub fn get_alphabet(alphabet_name: &str) -> Alphabet {
   let alphabets: HashMap<&str, &str> = ALPHABETS.iter().cloned().collect();
 
+  alphabets.get(alphabet_name).expect(format!("Unknown alphabet: {}", alphabet_name).as_str()); // FIXME
+
   Alphabet::new(alphabets[alphabet_name])
 }
 
