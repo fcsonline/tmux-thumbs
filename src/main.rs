@@ -59,12 +59,18 @@ fn app_args<'a> () -> clap::ArgMatches<'a> {
                 .help("Don't show duplicated hints for the same match")
                 .long("unique")
                 .short("u"))
+    .arg(Arg::with_name("position")
+                .help("Hint position")
+                .long("position")
+                .default_value("left")
+                .short("p"))
     .get_matches();
 }
 
 fn main() {
   let args = app_args();
   let alphabet = args.value_of("alphabet").unwrap();
+  let position = args.value_of("position").unwrap();
   let reverse = args.is_present("reverse");
   let unique = args.is_present("unique");
 
@@ -131,7 +137,9 @@ fn main() {
       rustbox.print(offset, mat.y as usize, rustbox::RB_NORMAL, selected_color, background_color, mat.text);
 
       if let Some(ref hint) = mat.hint {
-        rustbox.print(offset, mat.y as usize, rustbox::RB_BOLD, hint_foreground_color, hint_background_color, hint.as_str());
+        let extra_position = if position == "left" { 0 } else { mat.text.len() - mat.hint.clone().unwrap().len() };
+
+        rustbox.print(offset + extra_position, mat.y as usize, rustbox::RB_BOLD, hint_foreground_color, hint_background_color, hint.as_str());
       }
     }
 
