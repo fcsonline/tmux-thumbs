@@ -3,6 +3,7 @@ extern crate clap;
 
 mod state;
 mod alphabets;
+mod colors;
 
 use self::clap::{Arg, App};
 use std::char;
@@ -28,12 +29,31 @@ fn app_args<'a> () -> clap::ArgMatches<'a> {
     .arg(Arg::with_name("alphabet")
                 .help("Sets the alphabet")
                 .long("alphabet")
-                .short("a")
+                .takes_value(true))
+    .arg(Arg::with_name("foreground_color")
+                .help("Sets the foregroud color for matches")
+                .long("fg-color")
+                .takes_value(true))
+    .arg(Arg::with_name("background_color")
+                .help("Sets the background color for matches")
+                .long("bg-color")
+                .takes_value(true))
+    .arg(Arg::with_name("hint_foreground_color")
+                .help("Sets the foregroud color for hints")
+                .long("hint-fg-color")
+                .takes_value(true))
+    .arg(Arg::with_name("hint_background_color")
+                .help("Sets the background color for hints")
+                .long("hint-bg-color")
                 .takes_value(true))
     .arg(Arg::with_name("reverse")
                 .help("Reverse the order for assigned hints")
                 .long("reverse")
                 .short("r"))
+    .arg(Arg::with_name("select_foreground_color")
+                .help("Sets the foregroud color for selection")
+                .long("select-fg-color")
+                .takes_value(true))
     .arg(Arg::with_name("unique")
                 .help("Don't show duplicated hints for the same match")
                 .long("unique")
@@ -46,6 +66,12 @@ fn main() {
   let alphabet = args.value_of("alphabet").unwrap_or("querty");
   let reverse = args.is_present("reverse");
   let unique = args.is_present("unique");
+
+  let foreground_color = colors::get_color(args.value_of("foreground_color").unwrap_or("green"));
+  let background_color = colors::get_color(args.value_of("background_color").unwrap_or("black"));
+  let hint_foreground_color = colors::get_color(args.value_of("hint_foreground_color").unwrap_or("yellow"));
+  let hint_background_color = colors::get_color(args.value_of("hint_background_color").unwrap_or("black"));
+  let select_foreground_color = colors::get_color(args.value_of("select_foreground_color").unwrap_or("blue"));
 
   let execution = exec_command(format!("tmux capture-pane -e -J -p"));
   let output = String::from_utf8_lossy(&execution.stdout);
@@ -85,9 +111,9 @@ fn main() {
 
     for mat in matches.iter() {
       let selected_color = if selected == Some(mat) {
-        Color::Blue
+        select_foreground_color
       } else {
-        Color::Green
+        foreground_color
       };
 
       // TODO: Find long utf sequences and extract it from mat.x
@@ -101,10 +127,10 @@ fn main() {
 
       let offset = (mat.x as usize) - extra;
 
-      rustbox.print(offset, mat.y as usize, rustbox::RB_NORMAL, selected_color, Color::Black, mat.text);
+      rustbox.print(offset, mat.y as usize, rustbox::RB_NORMAL, selected_color, background_color, mat.text);
 
       if let Some(ref hint) = mat.hint {
-        rustbox.print(offset, mat.y as usize, rustbox::RB_BOLD, Color::Yellow, Color::Black, hint.as_str());
+        rustbox.print(offset, mat.y as usize, rustbox::RB_BOLD, hint_foreground_color, hint_background_color, hint.as_str());
       }
     }
 
