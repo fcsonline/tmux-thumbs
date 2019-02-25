@@ -38,18 +38,22 @@ impl<'a> Alphabet<'a> {
   pub fn hints(&self, matches: usize) -> Vec<String> {
     let letters: Vec<String> = self.letters.chars().map(|s| s.to_string()).collect();
 
-    if matches <= letters.len() {
-      letters.iter().take(matches).map(|x| x.clone()).collect::<Vec<String>>()
-    } else {
-      // TODO
-      let mut f = letters.iter().take(letters.len() - 1).map(|x| x.clone()).collect::<Vec<String>>();
-      let l = letters.iter().last().unwrap();
-      let mut g = letters.iter().take(matches - (letters.len() - 1)).map(|s| l.clone() + s).collect();
+    let mut expansion = letters.clone();
+    let mut expanded: Vec<String> = Vec::new();
 
-      f.append(&mut g);
+    loop {
+      if expansion.len() + expanded.len() >= matches { break; }
+      if expansion.len() == 0 { break; }
 
-      f
+      let prefix = expansion.pop().expect("Ouch!");
+      let sub_expansion: Vec<String> = letters.iter().take(matches - expansion.len() - expanded.len()).map(|s| prefix.clone() + s).collect();
+
+      expanded.splice(0..0, sub_expansion);
     }
+
+    expansion = expansion.iter().take(matches - expanded.len()).map(|s| s.clone()).collect();
+    expansion.append(&mut expanded);
+    expansion
   }
 }
 
@@ -75,5 +79,19 @@ mod tests {
     let alphabet = Alphabet::new("abcd");
     let hints = alphabet.hints(6);
     assert_eq!(hints, ["a", "b", "c", "da", "db", "dc"]);
+  }
+
+  #[test]
+  fn composed_matches_multiple () {
+    let alphabet = Alphabet::new("abcd");
+    let hints = alphabet.hints(8);
+    assert_eq!(hints, ["a", "b", "ca", "cb", "da", "db", "dc", "dd"]);
+  }
+
+  #[test]
+  fn composed_matches_max () {
+    let alphabet = Alphabet::new("ab");
+    let hints = alphabet.hints(8);
+    assert_eq!(hints, ["aa", "ab", "ba", "bb"]);
   }
 }
