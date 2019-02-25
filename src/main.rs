@@ -29,31 +29,32 @@ fn app_args<'a> () -> clap::ArgMatches<'a> {
     .arg(Arg::with_name("alphabet")
                 .help("Sets the alphabet")
                 .long("alphabet")
-                .takes_value(true))
+                .short("a")
+                .default_value("qwerty"))
     .arg(Arg::with_name("foreground_color")
                 .help("Sets the foregroud color for matches")
                 .long("fg-color")
-                .takes_value(true))
+                .default_value("green"))
     .arg(Arg::with_name("background_color")
                 .help("Sets the background color for matches")
                 .long("bg-color")
-                .takes_value(true))
+                .default_value("black"))
     .arg(Arg::with_name("hint_foreground_color")
                 .help("Sets the foregroud color for hints")
                 .long("hint-fg-color")
-                .takes_value(true))
+                .default_value("yellow"))
     .arg(Arg::with_name("hint_background_color")
                 .help("Sets the background color for hints")
                 .long("hint-bg-color")
-                .takes_value(true))
+                .default_value("black"))
+    .arg(Arg::with_name("select_foreground_color")
+                .help("Sets the foregroud color for selection")
+                .long("select-fg-color")
+                .default_value("blue"))
     .arg(Arg::with_name("reverse")
                 .help("Reverse the order for assigned hints")
                 .long("reverse")
                 .short("r"))
-    .arg(Arg::with_name("select_foreground_color")
-                .help("Sets the foregroud color for selection")
-                .long("select-fg-color")
-                .takes_value(true))
     .arg(Arg::with_name("unique")
                 .help("Don't show duplicated hints for the same match")
                 .long("unique")
@@ -63,15 +64,15 @@ fn app_args<'a> () -> clap::ArgMatches<'a> {
 
 fn main() {
   let args = app_args();
-  let alphabet = args.value_of("alphabet").unwrap_or("querty");
+  let alphabet = args.value_of("alphabet").unwrap();
   let reverse = args.is_present("reverse");
   let unique = args.is_present("unique");
 
-  let foreground_color = colors::get_color(args.value_of("foreground_color").unwrap_or("green"));
-  let background_color = colors::get_color(args.value_of("background_color").unwrap_or("black"));
-  let hint_foreground_color = colors::get_color(args.value_of("hint_foreground_color").unwrap_or("yellow"));
-  let hint_background_color = colors::get_color(args.value_of("hint_background_color").unwrap_or("black"));
-  let select_foreground_color = colors::get_color(args.value_of("select_foreground_color").unwrap_or("blue"));
+  let foreground_color = colors::get_color(args.value_of("foreground_color").unwrap());
+  let background_color = colors::get_color(args.value_of("background_color").unwrap());
+  let hint_foreground_color = colors::get_color(args.value_of("hint_foreground_color").unwrap());
+  let hint_background_color = colors::get_color(args.value_of("hint_background_color").unwrap());
+  let select_foreground_color = colors::get_color(args.value_of("select_foreground_color").unwrap());
 
   let execution = exec_command(format!("tmux capture-pane -e -J -p"));
   let output = String::from_utf8_lossy(&execution.stdout);
