@@ -34,7 +34,7 @@ impl<'a> State<'a> {
     let mut patterns = Vec::new();
 
     patterns.push(Regex::new(r"((https?://|git@|git://|ssh://|ftp://|file:///)[\w?=%/_.:,;~@!#$&()*+-]*)").unwrap()); // Urls
-    patterns.push(Regex::new(r"/[^ ]+").unwrap()); // Paths
+    patterns.push(Regex::new(r"[^ ]+/[^ ]+").unwrap()); // Paths
     patterns.push(Regex::new(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}").unwrap()); // Uid
     patterns.push(Regex::new(r"[0-9a-f]{7,40}").unwrap()); // Sha id
     patterns.push(Regex::new(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}").unwrap()); // Ip address
@@ -145,7 +145,7 @@ mod tests {
 
   #[test]
   fn match_paths () {
-    let output = "Lorem /tmp/foo/bar lorem\n Lorem /var/log/bootstrap.log lorem /var/log/kern.log lorem";
+    let output = "Lorem /tmp/foo/bar lorem\n Lorem /var/log/bootstrap.log lorem ../log/kern.log lorem";
 
     assert_eq!(match_lines(output).len(), 3);
   }
