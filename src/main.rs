@@ -25,7 +25,7 @@ fn exec_command(command: String) -> std::process::Output {
 fn app_args<'a> () -> clap::ArgMatches<'a> {
   return App::new("tmux-thumbs")
     .version(crate_version!())
-    .about("hints for tmux")
+    .about("A lightning fast version of tmux-fingers, copy/pasting tmux like vimium/vimperator")
     .arg(Arg::with_name("alphabet")
                 .help("Sets the alphabet")
                 .long("alphabet")
