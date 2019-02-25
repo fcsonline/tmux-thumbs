@@ -57,7 +57,7 @@ impl<'a> State<'a> {
             hint: None
           });
 
-          chunk = chunk.get(first_match.end()..).unwrap();
+          chunk = chunk.get(first_match.end()..).expect("Unknown chunk");
           offset = offset + first_match.end() as i32;
         } else {
           break;

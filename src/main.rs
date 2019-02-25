@@ -104,7 +104,7 @@ fn main() {
 
   let mut typed_hint: String = "".to_owned();
   let matches = state.matches(reverse, unique);
-  let longest_hint = matches.last().unwrap().hint.clone().unwrap().len();
+  let longest_hint = matches.iter().filter(|&m| m.hint.clone().is_some()).last().unwrap().hint.clone().expect("Unknown hint").len();
 
   loop {
     let mut selected = matches.last();
