@@ -71,6 +71,9 @@ impl<'a> State<'a> {
     // This looks wrong but we do a pop after
     if !reverse {
       hints.reverse();
+    } else {
+      matches.reverse();
+      hints.reverse();
     }
 
     if unique {
@@ -90,6 +93,10 @@ impl<'a> State<'a> {
           mat.hint = Some(hint.to_string().clone());
         }
       }
+    }
+
+    if reverse {
+      matches.reverse();
     }
 
     return matches;
