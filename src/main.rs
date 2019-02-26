@@ -85,115 +85,121 @@ fn main() {
   let lines = output.split("\n").collect::<Vec<&str>>();
 
   let mut state = state::State::new(lines, alphabet);
+  let mut paste = false;
 
-  let mut rustbox = match RustBox::init(Default::default()) {
-    Result::Ok(v) => v,
-    Result::Err(e) => panic!("{}", e),
-  };
+  {
+    let mut rustbox = match RustBox::init(Default::default()) {
+      Result::Ok(v) => v,
+      Result::Err(e) => panic!("{}", e),
+    };
 
-  rustbox.set_output_mode(OutputMode::EightBit);
+    rustbox.set_output_mode(OutputMode::EightBit);
 
-  for (index, line) in state.lines.iter().enumerate() {
-    let clean = line.trim_right_matches(|c: char| c.is_whitespace());
+    for (index, line) in state.lines.iter().enumerate() {
+      let clean = line.trim_right_matches(|c: char| c.is_whitespace());
 
-    if clean.len() > 0 {
-      let formatted = format!("{}\n", line).to_string();
-      rustbox.print(0, index, rustbox::RB_NORMAL, Color::White, Color::Black, formatted.as_str());
+      if clean.len() > 0 {
+        let formatted = format!("{}\n", line).to_string();
+        rustbox.print(0, index, rustbox::RB_NORMAL, Color::White, Color::Black, formatted.as_str());
+      }
+    }
+
+    let mut typed_hint: String = "".to_owned();
+    let matches = state.matches(reverse, unique);
+    let longest_hint = matches.iter().filter(|&m| m.hint.clone().is_some()).last().unwrap().hint.clone().expect("Unknown hint").len();
+
+    loop {
+      let mut selected = matches.last();
+
+      match matches.iter().enumerate().find(|&h| h.0 == state.skip) {
+        Some(hm) => {
+          selected = Some(hm.1);
+        }
+        _ => {}
+      }
+
+      for mat in matches.iter() {
+        let selected_color = if selected == Some(mat) {
+          select_foreground_color
+        } else {
+          foreground_color
+        };
+
+        // TODO: Find long utf sequences and extract it from mat.x
+        // let re = regex::bytes::Regex::new(r"127").unwrap();
+        // let line = lines[mat.y as usize];
+        // let extra = re
+        //   .find_iter(line.as_bytes())
+        //   .fold(0, |sum, item| sum + item.as_bytes().len());
+
+        let extra = 0;
+
+        let offset = (mat.x as usize) - extra;
+
+        rustbox.print(offset, mat.y as usize, rustbox::RB_NORMAL, selected_color, background_color, mat.text);
+
+        if let Some(ref hint) = mat.hint {
+          let extra_position = if position == "left" { 0 } else { mat.text.len() - mat.hint.clone().unwrap().len() };
+
+          rustbox.print(offset + extra_position, mat.y as usize, rustbox::RB_BOLD, hint_foreground_color, hint_background_color, hint.as_str());
+        }
+      }
+
+      rustbox.present();
+
+      match rustbox.poll_event(false) {
+        Ok(rustbox::Event::KeyEvent(key)) => {
+          match key {
+            Key::Esc => { break; }
+            Key::Enter => {
+              let mut choosen = matches.first().unwrap();
+
+              match matches.iter().enumerate().find(|&h| h.0 == state.skip) {
+                Some(hm) => {
+                  choosen = hm.1;
+                }
+                _ => {}
+              }
+
+              exec_command(format!("tmux set-buffer {}", choosen.text));
+
+              break;
+            }
+            Key::Up => { state.prev(); }
+            Key::Down => { state.next(); }
+            Key::Left => { state.prev(); }
+            Key::Right => { state.next(); }
+            Key::Char(ch) => {
+              let key = ch.to_string();
+              let lower_key = key.to_lowercase();
+              typed_hint.push_str(lower_key.as_str());
+              match matches.iter().find(|mat| mat.hint == Some(typed_hint.clone())) {
+                Some(mat) => {
+                  exec_command(format!("tmux set-buffer {}", mat.text));
+
+                  if key == key.to_uppercase() {
+                    paste = true;
+                  }
+
+                  break;
+                },
+                None => {
+                  if typed_hint.len() > longest_hint {
+                    break;
+                  }
+                }
+              }
+            }
+            _ => {}
+          }
+        }
+        Err(e) => panic!("{}", e),
+        _ => { }
+      }
     }
   }
 
-  let mut typed_hint: String = "".to_owned();
-  let matches = state.matches(reverse, unique);
-  let longest_hint = matches.iter().filter(|&m| m.hint.clone().is_some()).last().unwrap().hint.clone().expect("Unknown hint").len();
-
-  loop {
-    let mut selected = matches.last();
-
-    match matches.iter().enumerate().find(|&h| h.0 == state.skip) {
-      Some(hm) => {
-        selected = Some(hm.1);
-      }
-      _ => {}
-    }
-
-    for mat in matches.iter() {
-      let selected_color = if selected == Some(mat) {
-        select_foreground_color
-      } else {
-        foreground_color
-      };
-
-      // TODO: Find long utf sequences and extract it from mat.x
-      // let re = regex::bytes::Regex::new(r"127").unwrap();
-      // let line = lines[mat.y as usize];
-      // let extra = re
-      //   .find_iter(line.as_bytes())
-      //   .fold(0, |sum, item| sum + item.as_bytes().len());
-
-      let extra = 0;
-
-      let offset = (mat.x as usize) - extra;
-
-      rustbox.print(offset, mat.y as usize, rustbox::RB_NORMAL, selected_color, background_color, mat.text);
-
-      if let Some(ref hint) = mat.hint {
-        let extra_position = if position == "left" { 0 } else { mat.text.len() - mat.hint.clone().unwrap().len() };
-
-        rustbox.print(offset + extra_position, mat.y as usize, rustbox::RB_BOLD, hint_foreground_color, hint_background_color, hint.as_str());
-      }
-    }
-
-    rustbox.present();
-
-    match rustbox.poll_event(false) {
-      Ok(rustbox::Event::KeyEvent(key)) => {
-        match key {
-          Key::Esc => { break; }
-          Key::Enter => {
-            let mut choosen = matches.first().unwrap();
-
-            match matches.iter().enumerate().find(|&h| h.0 == state.skip) {
-              Some(hm) => {
-                choosen = hm.1;
-              }
-              _ => {}
-            }
-
-            exec_command(format!("tmux set-buffer {}", choosen.text));
-
-            break;
-          }
-          Key::Up => { state.prev(); }
-          Key::Down => { state.next(); }
-          Key::Left => { state.prev(); }
-          Key::Right => { state.next(); }
-          Key::Char(ch) => {
-            let key = ch.to_string();
-            let lower_key = key.to_lowercase();
-            typed_hint.push_str(lower_key.as_str());
-            match matches.iter().find(|mat| mat.hint == Some(typed_hint.clone())) {
-              Some(mat) => {
-                exec_command(format!("tmux set-buffer {}", mat.text));
-
-                if key == key.to_uppercase() {
-                  // FIXME
-                  exec_command(format!("tmux paste-buffer"));
-                }
-
-                break;
-              },
-              None => {
-                if typed_hint.len() > longest_hint {
-                  break;
-                }
-              }
-            }
-          }
-          _ => {}
-        }
-      }
-      Err(e) => panic!("{}", e),
-      _ => { }
-    }
+  if paste {
+    exec_command(format!("tmux paste-buffer"));
   }
 }
