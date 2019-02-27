@@ -177,7 +177,7 @@ fn main() {
                 Some(mat) => {
                   exec_command(format!("tmux set-buffer {}", mat.text));
 
-                  if key == key.to_uppercase() {
+                  if key != lower_key {
                     paste = true;
                   }
 
