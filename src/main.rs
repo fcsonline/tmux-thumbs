@@ -96,7 +96,7 @@ fn main() {
     rustbox.set_output_mode(OutputMode::EightBit);
 
     for (index, line) in state.lines.iter().enumerate() {
-      let clean = line.trim_right_matches(|c: char| c.is_whitespace());
+      let clean = line.trim_end_matches(|c: char| c.is_whitespace());
 
       if clean.len() > 0 {
         let formatted = format!("{}\n", line).to_string();
