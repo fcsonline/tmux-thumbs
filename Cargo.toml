@@ -9,6 +9,6 @@ keywords = ["rust", "tmux", "tmux-plugin", "vimium", "vimperator"]
 license = "MIT"
 
 [dependencies]
-rustbox = "*"
+rustbox = "0.11.0"
 regex = "1"
 clap = "2.32.0"
