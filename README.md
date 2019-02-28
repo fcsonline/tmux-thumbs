@@ -1,5 +1,7 @@
 # tmux-thumbs
 
+![](https://travis-ci.com/fcsonline/tmux-thumbs.svg?branch=master)
+
 A lightning fast version of [tmux-fingers](https://github.com/Morantron/tmux-fingers) written in [Rust](https://www.rust-lang.org/) for copy pasting with vimium/vimperator like hints.
 
 :warning: This plugin is active development.
