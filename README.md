@@ -85,7 +85,7 @@ OPTIONS:
 
 ## Alphabets
 
-This is the list of available list of alphabets:
+This is the list of available alphabets:
 
 - `numeric`: 1234567890
 - `abcd`: abcd
@@ -109,6 +109,20 @@ This is the list of available list of alphabets:
 - `colemak-homerow`: arstneiodh
 - `colemak-left-hand`: arstqwfpzxcv
 - `colemak-right-hand`: neioluymjhk
+
+## Colors
+
+This is the list of available colors:
+
+- black
+- red
+- green
+- yellow
+- blue
+- magenta
+- cyan
+- white
+- default
 
 ## Extra features
 
