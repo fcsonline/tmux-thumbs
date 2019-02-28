@@ -37,6 +37,7 @@ impl<'a> State<'a> {
     patterns.push(Regex::new(r"--- a/([^ ]+)").unwrap()); // Diff
     patterns.push(Regex::new(r"\+\+\+ b/([^ ]+)").unwrap()); // Diff
     patterns.push(Regex::new(r"[^ ]+/[^ ]+").unwrap()); // Paths
+    patterns.push(Regex::new(r"#[0-9a-fA-F]{6}").unwrap()); // Hex colors
     patterns.push(Regex::new(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}").unwrap()); // Uid
     patterns.push(Regex::new(r"[0-9a-f]{7,40}").unwrap()); // Sha id
     patterns.push(Regex::new(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}").unwrap()); // Ip address
@@ -211,6 +212,13 @@ mod tests {
     let output = "Lorem 0xfd70b5695 0x5246ddf lorem\n Lorem 0x973113 lorem";
 
     assert_eq!(match_lines(output).len(), 3);
+  }
+
+  #[test]
+  fn match_hex_colors () {
+    let output = "Lorem #fd7b56 lorem #FF00FF\n Lorem #00fF05 lorem #abcd00 lorem #afRR00";
+
+    assert_eq!(match_lines(output).len(), 4);
   }
 
   #[test]
