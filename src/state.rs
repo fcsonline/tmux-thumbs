@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 use regex::Regex;
 
-const PATTERNS: [(&'static str, &'static str); 10] = [
+const PATTERNS: [(&'static str, &'static str); 11] = [
+  ("bash", r"[[:cntrl:]]\[([0-9]{1,2};)?([0-9]{1,2})m"),
   ("url", r"((https?://|git@|git://|ssh://|ftp://|file:///)[\w?=%/_.:,;~@!#$&()*+-]*)"),
   ("diff_a", r"--- a/([^ ]+)"),
   ("diff_b", r"\+\+\+ b/([^ ]+)"),
@@ -46,7 +47,7 @@ impl<'a> State<'a> {
     let mut matches = Vec::new();
 
     let patterns = PATTERNS.iter().map(|tuple|
-      Regex::new(tuple.1).unwrap()
+      (tuple.0, Regex::new(tuple.1).unwrap())
     ).collect::<Vec<_>>();
 
     for (index, line) in self.lines.iter().enumerate() {
@@ -54,17 +55,17 @@ impl<'a> State<'a> {
       let mut offset: i32 = 0;
 
       loop {
-        let submatches = patterns.iter().filter_map(|pattern|
-          match pattern.find_iter(chunk).nth(0) {
-            Some(m) => Some((pattern, m)),
+        let submatches = patterns.iter().filter_map(|tuple|
+          match tuple.1.find_iter(chunk).nth(0) {
+            Some(m) => Some((tuple.0, tuple.1.clone(), m)),
             None => None
           }
         ).collect::<Vec<_>>();
-        let first_match_option = submatches.iter().min_by(|x, y| x.1.start().cmp(&y.1.start()));
+        let first_match_option = submatches.iter().min_by(|x, y| x.2.start().cmp(&y.2.start()));
 
         if let Some(first_match) = first_match_option {
-          let (pattern, matching) = first_match;
-          let text = &chunk[matching.start()..matching.end()]; // FIXME? matching.as_str()
+          let (name, pattern, matching) = first_match;
+          let text = matching.as_str();
 
           if let Some(captures) = pattern.captures(text) {
             let (subtext, substart) = if let Some(capture) = captures.get(1) {
@@ -73,12 +74,15 @@ impl<'a> State<'a> {
               (matching.as_str(), 0)
             };
 
-            matches.push(Match{
-              x: offset + matching.start() as i32 + substart as i32,
-              y: index as i32,
-              text: subtext,
-              hint: None
-            });
+            // Never hint or broke bash color sequences
+            if *name != "bash" {
+              matches.push(Match{
+                x: offset + matching.start() as i32 + substart as i32,
+                y: index as i32,
+                text: subtext,
+                hint: None
+              });
+            }
 
             chunk = chunk.get(matching.end()..).expect("Unknown chunk");
             offset = offset + matching.end() as i32;
@@ -175,6 +179,13 @@ mod tests {
     assert_eq!(results.len(), 3);
     assert_eq!(results.first().unwrap().hint.clone().unwrap(), "a");
     assert_eq!(results.last().unwrap().hint.clone().unwrap(), "a");
+  }
+
+  #[test]
+  fn match_bash () {
+    let output = "path: [32m/var/log/nginx.log[m\npath: [32mtest/log/nginx.log[m";
+
+    assert_eq!(match_lines(output).len(), 2);
   }
 
   #[test]
