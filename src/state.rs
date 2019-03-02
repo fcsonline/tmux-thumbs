@@ -29,13 +29,13 @@ impl<'a> PartialEq for Match<'a> {
 }
 
 pub struct State<'a> {
-  pub lines: Vec<&'a str>,
+  pub lines: &'a Vec<&'a str>,
   alphabet: &'a str,
   pub skip: usize,
 }
 
 impl<'a> State<'a> {
-  pub fn new(lines: Vec<&'a str>, alphabet: &'a str) -> State<'a> {
+  pub fn new(lines: &'a Vec<&'a str>, alphabet: &'a str) -> State<'a> {
     State{
       lines: lines,
       alphabet: alphabet,

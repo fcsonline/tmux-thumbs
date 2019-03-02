@@ -84,7 +84,7 @@ fn main() {
   let output = String::from_utf8_lossy(&execution.stdout);
   let lines = output.split("\n").collect::<Vec<&str>>();
 
-  let mut state = state::State::new(lines, alphabet);
+  let mut state = state::State::new(&lines, alphabet);
   let mut paste = false;
 
   {
@@ -125,15 +125,10 @@ fn main() {
           foreground_color
         };
 
-        // TODO: Find long utf sequences and extract it from mat.x
-        // let re = regex::bytes::Regex::new(r"127").unwrap();
-        // let line = lines[mat.y as usize];
-        // let extra = re
-        //   .find_iter(line.as_bytes())
-        //   .fold(0, |sum, item| sum + item.as_bytes().len());
-
-        let extra = 0;
-
+        // Find long utf sequences and extract it from mat.x
+        let line = &lines[mat.y as usize];
+        let prefix = &line[0..mat.x as usize];
+        let extra = prefix.len() - prefix.chars().count();
         let offset = (mat.x as usize) - extra;
 
         rustbox.print(offset, mat.y as usize, rustbox::RB_NORMAL, selected_color, background_color, mat.text);
