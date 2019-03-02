@@ -1,0 +1,6 @@
+commit: [33m92329857fabcf913e61351b4e311c53d8c18c1af[m
+commit: [33md89189228a4b34ef5478bb24dc04ea3443dd73e0[m
+path: [32m/var/log/nginx.log[m
+path: [32mtest/log/nginx.log[m
+
+lorem /var/log/nginx.log lorem
