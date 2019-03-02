@@ -1,6 +1,19 @@
 use std::collections::HashMap;
 use regex::Regex;
 
+const PATTERNS: [(&'static str, &'static str); 10] = [
+  ("url", r"((https?://|git@|git://|ssh://|ftp://|file:///)[\w?=%/_.:,;~@!#$&()*+-]*)"),
+  ("diff_a", r"--- a/([^ ]+)"),
+  ("diff_b", r"\+\+\+ b/([^ ]+)"),
+  ("path", r"[^ ]+/[^ ]+"),
+  ("color", r"#[0-9a-fA-F]{6}"),
+  ("uid", r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"),
+  ("sha", r"[0-9a-f]{7,40}"),
+  ("ip", r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"),
+  ("address", r"0x[0-9a-fA-F]+"),
+  ("number", r"[0-9]{4,}"),
+];
+
 pub struct Match<'a> {
   pub x: i32,
   pub y: i32,
@@ -31,18 +44,10 @@ impl<'a> State<'a> {
 
   pub fn matches(&self, reverse: bool, unique: bool) -> Vec<Match<'a>> {
     let mut matches = Vec::new();
-    let mut patterns = Vec::new();
 
-    patterns.push(Regex::new(r"((https?://|git@|git://|ssh://|ftp://|file:///)[\w?=%/_.:,;~@!#$&()*+-]*)").unwrap()); // Urls
-    patterns.push(Regex::new(r"--- a/([^ ]+)").unwrap()); // Diff
-    patterns.push(Regex::new(r"\+\+\+ b/([^ ]+)").unwrap()); // Diff
-    patterns.push(Regex::new(r"[^ ]+/[^ ]+").unwrap()); // Paths
-    patterns.push(Regex::new(r"#[0-9a-fA-F]{6}").unwrap()); // Hex colors
-    patterns.push(Regex::new(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}").unwrap()); // Uid
-    patterns.push(Regex::new(r"[0-9a-f]{7,40}").unwrap()); // Sha id
-    patterns.push(Regex::new(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}").unwrap()); // Ip address
-    patterns.push(Regex::new(r"0x[0-9a-fA-F]+").unwrap()); // Address
-    patterns.push(Regex::new(r"[0-9]{4,}").unwrap()); // Process or ports
+    let patterns = PATTERNS.iter().map(|tuple|
+      Regex::new(tuple.1).unwrap()
+    ).collect::<Vec<_>>();
 
     for (index, line) in self.lines.iter().enumerate() {
       let mut chunk: &str = line;
