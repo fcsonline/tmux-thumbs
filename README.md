@@ -65,11 +65,14 @@ FLAGS:
 OPTIONS:
     -a, --alphabet <alphabet>                          Sets the alphabet [default: qwerty]
         --bg-color <background_color>                  Sets the background color for matches [default: black]
+        --command <command>                            Pick command [default: tmux set-buffer {}]
         --fg-color <foreground_color>                  Sets the foregroud color for matches [default: green]
         --hint-bg-color <hint_background_color>        Sets the background color for hints [default: black]
         --hint-fg-color <hint_foreground_color>        Sets the foregroud color for hints [default: yellow]
     -p, --position <position>                          Hint position [default: left]
         --select-fg-color <select_foreground_color>    Sets the foregroud color for selection [default: blue]
+        --upcase-command <upcase_command>              Upcase command [default: tmux paste-buffer]
+
 ```
 
 ### Arguments
@@ -78,6 +81,8 @@ OPTIONS:
 - **reverse:** Choose in which direction you want to assign hints. Useful to get shorter hints closer.
 - **unique:** Choose if you want to assign the same hint for the same matched strings.
 - **position:** Choose where do you want to show the hint in the matched string. Options (left, right). Default [left]
+- **command:** Choose whish command execute when you press a hint
+- **upcase-command:** Choose which command execute when you press a upcase hint
 
 - **bg-color:** Sets the background color for matches [default: black]
 - **fg-color:** Sets the foregroud color for matches [default: green]

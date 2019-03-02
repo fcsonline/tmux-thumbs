@@ -64,6 +64,14 @@ fn app_args<'a> () -> clap::ArgMatches<'a> {
                 .long("position")
                 .default_value("left")
                 .short("p"))
+    .arg(Arg::with_name("command")
+                .help("Pick command")
+                .long("command")
+                .default_value("tmux set-buffer {}"))
+    .arg(Arg::with_name("upcase_command")
+                .help("Upcase command")
+                .long("upcase-command")
+                .default_value("tmux paste-buffer"))
     .get_matches();
 }
 
@@ -80,12 +88,20 @@ fn main() {
   let hint_background_color = colors::get_color(args.value_of("hint_background_color").unwrap());
   let select_foreground_color = colors::get_color(args.value_of("select_foreground_color").unwrap());
 
+  let command = args.value_of("command").unwrap();
+  let upcase_command = args.value_of("upcase_command").unwrap();
+
   let execution = exec_command(format!("tmux capture-pane -e -J -p"));
   let output = String::from_utf8_lossy(&execution.stdout);
   let lines = output.split("\n").collect::<Vec<&str>>();
 
   let mut state = state::State::new(&lines, alphabet);
+  let mut selected;
   let mut paste = false;
+
+  let mut typed_hint: String = "".to_owned();
+  let matches = state.matches(reverse, unique);
+  let longest_hint = matches.iter().filter(|&m| m.hint.clone().is_some()).last().unwrap().hint.clone().expect("Unknown hint").len();
 
   {
     let mut rustbox = match RustBox::init(Default::default()) {
@@ -104,12 +120,8 @@ fn main() {
       }
     }
 
-    let mut typed_hint: String = "".to_owned();
-    let matches = state.matches(reverse, unique);
-    let longest_hint = matches.iter().filter(|&m| m.hint.clone().is_some()).last().unwrap().hint.clone().expect("Unknown hint").len();
-
     loop {
-      let mut selected = matches.last();
+      selected = matches.last();
 
       match matches.iter().enumerate().find(|&h| h.0 == state.skip) {
         Some(hm) => {
@@ -147,16 +159,14 @@ fn main() {
           match key {
             Key::Esc => { break; }
             Key::Enter => {
-              let mut choosen = matches.first().unwrap();
+              selected = Some(matches.first().unwrap());
 
               match matches.iter().enumerate().find(|&h| h.0 == state.skip) {
                 Some(hm) => {
-                  choosen = hm.1;
+                  selected = Some(hm.1);
                 }
                 _ => {}
               }
-
-              exec_command(format!("tmux set-buffer {}", choosen.text));
 
               break;
             }
@@ -167,19 +177,19 @@ fn main() {
             Key::Char(ch) => {
               let key = ch.to_string();
               let lower_key = key.to_lowercase();
+
               typed_hint.push_str(lower_key.as_str());
+
               match matches.iter().find(|mat| mat.hint == Some(typed_hint.clone())) {
                 Some(mat) => {
-                  exec_command(format!("tmux set-buffer {}", mat.text));
-
-                  if key != lower_key {
-                    paste = true;
-                  }
+                  selected = Some(mat);
+                  paste = key != lower_key;
 
                   break;
                 },
                 None => {
-                  if typed_hint.len() > longest_hint {
+                  if typed_hint.len() >= longest_hint {
+                    selected = None;
                     break;
                   }
                 }
@@ -194,7 +204,12 @@ fn main() {
     }
   }
 
-  if paste {
-    exec_command(format!("tmux paste-buffer"));
+  if let Some(mat) = selected {
+    exec_command(str::replace(command, "{}", mat.text));
+
+    if paste {
+      exec_command(upcase_command.to_string());
+    }
   }
+
 }
