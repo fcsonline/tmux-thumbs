@@ -4,14 +4,11 @@ extern crate clap;
 mod state;
 mod alphabets;
 mod colors;
+mod view;
 
 use self::clap::{Arg, App};
-use std::char;
-use std::default::Default;
 use std::process::Command;
 use clap::crate_version;
-use rustbox::{Color, RustBox, OutputMode};
-use rustbox::Key;
 
 fn exec_command(command: String) -> std::process::Output {
   let args: Vec<_> = command.split(" ").collect();
@@ -96,116 +93,25 @@ fn main() {
   let lines = output.split("\n").collect::<Vec<&str>>();
 
   let mut state = state::State::new(&lines, alphabet);
-  let mut selected;
-  let mut paste = false;
 
-  let mut typed_hint: String = "".to_owned();
-  let matches = state.matches(reverse, unique);
-  let longest_hint = matches.iter().filter(|&m| m.hint.clone().is_some()).last().unwrap().hint.clone().expect("Unknown hint").len();
+  let selected = {
+    let mut viewbox = view::View::new(
+      &mut state,
+      reverse,
+      unique,
+      position,
+      select_foreground_color,
+      foreground_color,
+      background_color,
+      hint_foreground_color,
+      hint_background_color
+    );
 
-  {
-    let mut rustbox = match RustBox::init(Default::default()) {
-      Result::Ok(v) => v,
-      Result::Err(e) => panic!("{}", e),
-    };
+    viewbox.present()
+  };
 
-    rustbox.set_output_mode(OutputMode::EightBit);
-
-    for (index, line) in state.lines.iter().enumerate() {
-      let clean = line.trim_end_matches(|c: char| c.is_whitespace());
-
-      if clean.len() > 0 {
-        let formatted = format!("{}\n", line).to_string();
-        rustbox.print(0, index, rustbox::RB_NORMAL, Color::White, Color::Black, formatted.as_str());
-      }
-    }
-
-    loop {
-      selected = matches.last();
-
-      match matches.iter().enumerate().find(|&h| h.0 == state.skip) {
-        Some(hm) => {
-          selected = Some(hm.1);
-        }
-        _ => {}
-      }
-
-      for mat in matches.iter() {
-        let selected_color = if selected == Some(mat) {
-          select_foreground_color
-        } else {
-          foreground_color
-        };
-
-        // Find long utf sequences and extract it from mat.x
-        let line = &lines[mat.y as usize];
-        let prefix = &line[0..mat.x as usize];
-        let extra = prefix.len() - prefix.chars().count();
-        let offset = (mat.x as usize) - extra;
-
-        rustbox.print(offset, mat.y as usize, rustbox::RB_NORMAL, selected_color, background_color, mat.text);
-
-        if let Some(ref hint) = mat.hint {
-          let extra_position = if position == "left" { 0 } else { mat.text.len() - mat.hint.clone().unwrap().len() };
-
-          rustbox.print(offset + extra_position, mat.y as usize, rustbox::RB_BOLD, hint_foreground_color, hint_background_color, hint.as_str());
-        }
-      }
-
-      rustbox.present();
-
-      match rustbox.poll_event(false) {
-        Ok(rustbox::Event::KeyEvent(key)) => {
-          match key {
-            Key::Esc => { break; }
-            Key::Enter => {
-              selected = Some(matches.first().unwrap());
-
-              match matches.iter().enumerate().find(|&h| h.0 == state.skip) {
-                Some(hm) => {
-                  selected = Some(hm.1);
-                }
-                _ => {}
-              }
-
-              break;
-            }
-            Key::Up => { state.prev(); }
-            Key::Down => { state.next(); }
-            Key::Left => { state.prev(); }
-            Key::Right => { state.next(); }
-            Key::Char(ch) => {
-              let key = ch.to_string();
-              let lower_key = key.to_lowercase();
-
-              typed_hint.push_str(lower_key.as_str());
-
-              match matches.iter().find(|mat| mat.hint == Some(typed_hint.clone())) {
-                Some(mat) => {
-                  selected = Some(mat);
-                  paste = key != lower_key;
-
-                  break;
-                },
-                None => {
-                  if typed_hint.len() >= longest_hint {
-                    selected = None;
-                    break;
-                  }
-                }
-              }
-            }
-            _ => {}
-          }
-        }
-        Err(e) => panic!("{}", e),
-        _ => { }
-      }
-    }
-  }
-
-  if let Some(mat) = selected {
-    exec_command(str::replace(command, "{}", mat.text));
+  if let Some((text, paste)) = selected {
+    exec_command(str::replace(command, "{}", text.as_str()));
 
     if paste {
       exec_command(upcase_command.to_string());

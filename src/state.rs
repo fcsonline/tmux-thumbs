@@ -39,15 +39,13 @@ impl<'a> PartialEq for Match<'a> {
 pub struct State<'a> {
   pub lines: &'a Vec<&'a str>,
   alphabet: &'a str,
-  pub skip: usize,
 }
 
 impl<'a> State<'a> {
   pub fn new(lines: &'a Vec<&'a str>, alphabet: &'a str) -> State<'a> {
     State{
       lines: lines,
-      alphabet: alphabet,
-      skip: 0
+      alphabet: alphabet
     }
   }
 
@@ -139,16 +137,6 @@ impl<'a> State<'a> {
     }
 
     return matches;
-  }
-
-  pub fn prev(&mut self) {
-    if self.skip > 0 {
-      self.skip = self.skip - 1;
-    }
-  }
-
-  pub fn next(&mut self) {
-    self.skip = self.skip + 1;
   }
 }
 
