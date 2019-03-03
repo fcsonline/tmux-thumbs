@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 use regex::Regex;
+use std::fmt;
 
 const PATTERNS: [(&'static str, &'static str); 11] = [
-  ("bash", r"[[:cntrl:]]\[([0-9]{1,2};)?([0-9]{1,2})m"),
+  ("bash", r"[[:cntrl:]]\[([0-9]{1,2};)?([0-9]{1,2})?m"),
   ("url", r"((https?://|git@|git://|ssh://|ftp://|file:///)[\w?=%/_.:,;~@!#$&()*+-]*)"),
   ("diff_a", r"--- a/([^ ]+)"),
   ("diff_b", r"\+\+\+ b/([^ ]+)"),
-  ("path", r"[^ ]+/[^ ]+"),
+  ("path", r"[^ ]+/[^ [[:cntrl:]]]+"),
   ("color", r"#[0-9a-fA-F]{6}"),
   ("uid", r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"),
   ("sha", r"[0-9a-f]{7,40}"),
@@ -21,6 +22,12 @@ pub struct Match<'a> {
   pub y: i32,
   pub text: &'a str,
   pub hint: Option<String>
+}
+
+impl<'a> fmt::Debug for Match<'a> {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(f, "Match {{ x: {}, y: {}, text: {}, hint: <{}> }}", self.x, self.y, self.text, self.hint.clone().unwrap_or("<undefined>".to_string()))
+  }
 }
 
 impl<'a> PartialEq for Match<'a> {
