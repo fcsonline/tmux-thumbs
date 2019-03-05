@@ -61,6 +61,10 @@ fn app_args<'a> () -> clap::ArgMatches<'a> {
                 .long("position")
                 .default_value("left")
                 .short("p"))
+    .arg(Arg::with_name("tmux_pane")
+                .help("Get this tmux pane as reference pane")
+                .long("tmux-pane")
+                .takes_value(true))
     .arg(Arg::with_name("command")
                 .help("Pick command")
                 .long("command")
@@ -87,8 +91,13 @@ fn main() {
 
   let command = args.value_of("command").unwrap();
   let upcase_command = args.value_of("upcase_command").unwrap();
+  let tmux_subcommand = if let Some(pane) = args.value_of("tmux_pane") {
+    format!(" -t {}", pane)
+  } else {
+    "".to_string()
+  };
 
-  let execution = exec_command(format!("tmux capture-pane -e -J -p"));
+  let execution = exec_command(format!("tmux capture-pane -e -J -p{}", tmux_subcommand));
   let output = String::from_utf8_lossy(&execution.stdout);
   let lines = output.split("\n").collect::<Vec<&str>>();
 
@@ -109,6 +118,11 @@ fn main() {
 
     viewbox.present()
   };
+
+  if let Some(pane) = args.value_of("tmux_pane") {
+    exec_command(format!("tmux swap-pane -t {}", pane));
+  };
+
 
   if let Some((text, paste)) = selected {
     exec_command(str::replace(command, "{}", text.as_str()));
