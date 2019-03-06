@@ -62,7 +62,7 @@ impl<'a> View<'a> {
 
     let mut typed_hint: String = "".to_owned();
     let matches = self.state.matches(self.reverse, self.unique);
-    let longest_hint = matches.iter().filter(|&m| m.hint.clone().is_some()).last().unwrap().hint.clone().expect("Unknown hint").len();
+    let longest_hint = matches.iter().filter_map(|m| m.hint.clone()).max_by(|x, y| x.len().cmp(&y.len())).unwrap().clone();
     let mut selected;
 
     loop {
@@ -126,7 +126,7 @@ impl<'a> View<'a> {
                   return Some((mat.text.to_string(), key != lower_key))
                 },
                 None => {
-                  if typed_hint.len() >= longest_hint {
+                  if typed_hint.len() >= longest_hint.len() {
                     break;
                   }
                 }
