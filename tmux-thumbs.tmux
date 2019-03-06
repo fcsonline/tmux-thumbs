@@ -1,3 +1,5 @@
 #!/usr/bin/env bash
 
-tmux bind-key space run-shell "/home/ubuntu/dev/tmux-thumbs/tmux-thumbs.sh"
+CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+tmux bind-key space run-shell "${CURRENT_DIR}/tmux-thumbs.sh"
