@@ -2,8 +2,11 @@ use std::collections::HashMap;
 use regex::Regex;
 use std::fmt;
 
-const PATTERNS: [(&'static str, &'static str); 11] = [
+const EXCLUDE_PATTERNS: [(&'static str, &'static str); 1] = [
   ("bash", r"[[:cntrl:]]\[([0-9]{1,2};)?([0-9]{1,2})?m"),
+];
+
+const PATTERNS: [(&'static str, &'static str); 10] = [
   ("url", r"((https?://|git@|git://|ssh://|ftp://|file:///)[\w?=%/_.:,;~@!#$&()*+-]*)"),
   ("diff_a", r"--- a/([^ ]+)"),
   ("diff_b", r"\+\+\+ b/([^ ]+)"),
@@ -39,29 +42,41 @@ impl<'a> PartialEq for Match<'a> {
 pub struct State<'a> {
   pub lines: &'a Vec<&'a str>,
   alphabet: &'a str,
+  regexp: &'a Vec<&'a str>,
 }
 
 impl<'a> State<'a> {
-  pub fn new(lines: &'a Vec<&'a str>, alphabet: &'a str) -> State<'a> {
+  pub fn new(lines: &'a Vec<&'a str>, alphabet: &'a str, regexp: &'a Vec<&'a str>) -> State<'a> {
     State{
       lines: lines,
-      alphabet: alphabet
+      alphabet: alphabet,
+      regexp: regexp
     }
   }
 
   pub fn matches(&self, reverse: bool, unique: bool) -> Vec<Match<'a>> {
     let mut matches = Vec::new();
 
+    let exclude_patterns = EXCLUDE_PATTERNS.iter().map(|tuple|
+      (tuple.0, Regex::new(tuple.1).unwrap())
+    ).collect::<Vec<_>>();
+
+    let custom_patterns = self.regexp.iter().map(|regexp|
+      ("custom", Regex::new(regexp).expect("Invalid custom regexp"))
+    ).collect::<Vec<_>>();
+
     let patterns = PATTERNS.iter().map(|tuple|
       (tuple.0, Regex::new(tuple.1).unwrap())
     ).collect::<Vec<_>>();
+
+    let all_patterns = [exclude_patterns, custom_patterns, patterns].concat();
 
     for (index, line) in self.lines.iter().enumerate() {
       let mut chunk: &str = line;
       let mut offset: i32 = 0;
 
       loop {
-        let submatches = patterns.iter().filter_map(|tuple|
+        let submatches = all_patterns.iter().filter_map(|tuple|
           match tuple.1.find_iter(chunk).nth(0) {
             Some(m) => Some((tuple.0, tuple.1.clone(), m)),
             None => None
@@ -151,7 +166,8 @@ mod tests {
   #[test]
   fn match_reverse () {
     let lines = split("lorem 127.0.0.1 lorem 255.255.255.255 lorem 127.0.0.1 lorem");
-    let results = State::new(&lines, "abcd").matches(false, false);
+    let custom = [].to_vec();
+    let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     assert_eq!(results.len(), 3);
     assert_eq!(results.first().unwrap().hint.clone().unwrap(), "a");
@@ -161,7 +177,8 @@ mod tests {
   #[test]
   fn match_unique () {
     let lines = split("lorem 127.0.0.1 lorem 255.255.255.255 lorem 127.0.0.1 lorem");
-    let results = State::new(&lines, "abcd").matches(false, true);
+    let custom = [].to_vec();
+    let results = State::new(&lines, "abcd", &custom).matches(false, true);
 
     assert_eq!(results.len(), 3);
     assert_eq!(results.first().unwrap().hint.clone().unwrap(), "a");
@@ -171,7 +188,8 @@ mod tests {
   #[test]
   fn match_bash () {
     let lines = split("path: [32m/var/log/nginx.log[m\npath: [32mtest/log/nginx.log[m");
-    let results = State::new(&lines, "abcd").matches(false, false);
+    let custom = [].to_vec();
+    let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     assert_eq!(results.len(), 2);
   }
@@ -179,7 +197,8 @@ mod tests {
   #[test]
   fn match_paths () {
     let lines = split("Lorem /tmp/foo/bar lorem\n Lorem /var/log/bootstrap.log lorem ../log/kern.log lorem");
-    let results = State::new(&lines, "abcd").matches(false, false);
+    let custom = [].to_vec();
+    let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     assert_eq!(results.len(), 3);
   }
@@ -187,7 +206,8 @@ mod tests {
   #[test]
   fn match_uids () {
     let lines = split("Lorem ipsum 123e4567-e89b-12d3-a456-426655440000 lorem\n Lorem lorem lorem");
-    let results = State::new(&lines, "abcd").matches(false, false);
+    let custom = [].to_vec();
+    let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     assert_eq!(results.len(), 1);
   }
@@ -195,7 +215,8 @@ mod tests {
   #[test]
   fn match_shas () {
     let lines = split("Lorem fd70b5695 5246ddf f924213 lorem\n Lorem 973113963b491874ab2e372ee60d4b4cb75f717c lorem");
-    let results = State::new(&lines, "abcd").matches(false, false);
+    let custom = [].to_vec();
+    let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     assert_eq!(results.len(), 4);
   }
@@ -203,7 +224,8 @@ mod tests {
   #[test]
   fn match_ips () {
     let lines = split("Lorem ipsum 127.0.0.1 lorem\n Lorem 255.255.10.255 lorem 127.0.0.1 lorem");
-    let results = State::new(&lines, "abcd").matches(false, false);
+    let custom = [].to_vec();
+    let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     assert_eq!(results.len(), 3);
   }
@@ -211,7 +233,8 @@ mod tests {
   #[test]
   fn match_urls () {
     let lines = split("Lorem ipsum https://www.rust-lang.org/tools lorem\n Lorem https://crates.io lorem https://github.io lorem ssh://github.io");
-    let results = State::new(&lines, "abcd").matches(false, false);
+    let custom = [].to_vec();
+    let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     assert_eq!(results.len(), 4);
   }
@@ -219,7 +242,8 @@ mod tests {
   #[test]
   fn match_addresses () {
     let lines = split("Lorem 0xfd70b5695 0x5246ddf lorem\n Lorem 0x973113 lorem");
-    let results = State::new(&lines, "abcd").matches(false, false);
+    let custom = [].to_vec();
+    let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     assert_eq!(results.len(), 3);
   }
@@ -227,7 +251,8 @@ mod tests {
   #[test]
   fn match_hex_colors () {
     let lines = split("Lorem #fd7b56 lorem #FF00FF\n Lorem #00fF05 lorem #abcd00 lorem #afRR00");
-    let results = State::new(&lines, "abcd").matches(false, false);
+    let custom = [].to_vec();
+    let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     assert_eq!(results.len(), 4);
   }
@@ -235,7 +260,8 @@ mod tests {
   #[test]
   fn match_process_port () {
     let lines = split("Lorem 5695 52463 lorem\n Lorem 973113 lorem 99999 lorem 8888 lorem\n   23456 lorem 5432 lorem 23444");
-    let results = State::new(&lines, "abcd").matches(false, false);
+    let custom = [].to_vec();
+    let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     assert_eq!(results.len(), 8);
   }
@@ -243,7 +269,8 @@ mod tests {
   #[test]
   fn match_diff_a () {
     let lines = split("Lorem lorem\n--- a/src/main.rs");
-    let results = State::new(&lines, "abcd").matches(false, false);
+    let custom = [].to_vec();
+    let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     assert_eq!(results.len(), 1);
     assert_eq!(results.first().unwrap().text.clone(), "src/main.rs");
@@ -252,7 +279,8 @@ mod tests {
   #[test]
   fn match_diff_b () {
     let lines = split("Lorem lorem\n+++ b/src/main.rs");
-    let results = State::new(&lines, "abcd").matches(false, false);
+    let custom = [].to_vec();
+    let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     assert_eq!(results.len(), 1);
     assert_eq!(results.first().unwrap().text.clone(), "src/main.rs");
@@ -260,16 +288,21 @@ mod tests {
 
   #[test]
   fn priority () {
-    let lines = split("Lorem /var/fd70b569/9999.log 52463 lorem\n Lorem 973113 lorem 123e4567-e89b-12d3-a456-426655440000 lorem 8888 lorem\n  https://crates.io/23456/fd70b569 lorem");
-    let results = State::new(&lines, "abcd").matches(false, false);
+    let lines = split("Lorem CUSTOM-52463 lorem ISSUE-123 lorem\nLorem /var/fd70b569/9999.log 52463 lorem\n Lorem 973113 lorem 123e4567-e89b-12d3-a456-426655440000 lorem 8888 lorem\n  https://crates.io/23456/fd70b569 lorem");
+    let custom = ["CUSTOM-[0-9]{4,}", "ISSUE-[0-9]{3}"].to_vec();
+    let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     // Matches
+    // CUSTOM-52463
+    // ISSUE-123
     // /var/fd70b569/9999.log
     // 52463
     // 973113
     // 123e4567-e89b-12d3-a456-426655440000
     // 8888
     // https://crates.io/23456/fd70b569
-    assert_eq!(results.len(), 6);
+    assert_eq!(results.len(), 8);
+    assert_eq!(results.get(0).unwrap().text.clone(), "CUSTOM-52463");
+    assert_eq!(results.get(1).unwrap().text.clone(), "ISSUE-123");
   }
 }

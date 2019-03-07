@@ -73,6 +73,12 @@ fn app_args<'a> () -> clap::ArgMatches<'a> {
                 .help("Upcase command")
                 .long("upcase-command")
                 .default_value("tmux paste-buffer"))
+    .arg(Arg::with_name("regexp")
+                .help("Use this regexp as extra pattern to match")
+                .long("regexp")
+                .short("x")
+                .takes_value(true)
+                .multiple(true))
     .get_matches();
 }
 
@@ -82,6 +88,11 @@ fn main() {
   let position = args.value_of("position").unwrap();
   let reverse = args.is_present("reverse");
   let unique = args.is_present("unique");
+  let regexp = if let Some(items) = args.values_of("regexp") {
+    items.collect::<Vec<_>>()
+  } else {
+    [].to_vec()
+  };
 
   let foreground_color = colors::get_color(args.value_of("foreground_color").unwrap());
   let background_color = colors::get_color(args.value_of("background_color").unwrap());
@@ -101,7 +112,7 @@ fn main() {
   let output = String::from_utf8_lossy(&execution.stdout);
   let lines = output.split("\n").collect::<Vec<&str>>();
 
-  let mut state = state::State::new(&lines, alphabet);
+  let mut state = state::State::new(&lines, alphabet, &regexp);
 
   let selected = {
     let mut viewbox = view::View::new(

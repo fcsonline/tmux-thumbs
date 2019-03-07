@@ -50,7 +50,7 @@ You can review all available options executing:
 ```
 > tmux-thumbs --help
 
-tmux-thumbs 0.1.0
+tmux-thumbs 0.2.2
 A lightning fast version of tmux-fingers, copy/pasting tmux like vimium/vimperator
 
 USAGE:
@@ -70,6 +70,7 @@ OPTIONS:
         --hint-bg-color <hint_background_color>        Sets the background color for hints [default: black]
         --hint-fg-color <hint_foreground_color>        Sets the foregroud color for hints [default: yellow]
     -p, --position <position>                          Hint position [default: left]
+    -x, --regexp <regexp>...                           Use this regexp as extra pattern to match
         --select-fg-color <select_foreground_color>    Sets the foregroud color for selection [default: blue]
         --upcase-command <upcase_command>              Upcase command [default: tmux paste-buffer]
 
@@ -81,6 +82,7 @@ OPTIONS:
 - **reverse:** Choose in which direction you want to assign hints. Useful to get shorter hints closer.
 - **unique:** Choose if you want to assign the same hint for the same matched strings.
 - **position:** Choose where do you want to show the hint in the matched string. Options (left, right). Default [left]
+- **regexp:** Add extra pattern to match. This paramenter can have multiple instances.
 - **command:** Choose whish command execute when you press a hint
 - **upcase-command:** Choose which command execute when you press a upcase hint
 
