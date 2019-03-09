@@ -4,9 +4,13 @@
 
 A lightning fast version of [tmux-fingers](https://github.com/Morantron/tmux-fingers) written in [Rust](https://www.rust-lang.org/) for copy pasting with vimium/vimperator like hints.
 
-:warning: This plugin is active development.
+## Usage
 
-## Matched patterns
+Press ( <kbd>prefix</kbd> + <kbd>Space</kbd> ) to highlist in you current tmux
+visible pane all text that match specific pattern. The press the highlighted
+letter hint to yank the text in your tmux buffer.
+
+### Matched patterns
 
 - File paths
 - File in diff
@@ -17,6 +21,34 @@ A lightning fast version of [tmux-fingers](https://github.com/Morantron/tmux-fin
 - IP4 addresses
 - kubernetes resources
 - UUIDs
+
+Those are the list of mattched patterns that will be highlighted by default. If
+you want to highlight a pattern that is not in this list you can add one or
+more with `--regexp` parameter.
+
+## Demo
+
+[![demo](https://asciinema.org/a/232775.png)](https://asciinema.org/a/232775?autoplay=1)
+
+## Tmux integration
+
+Clone the repo:
+
+```
+git clone https://github.com/fcsonline/tmux-thumbs ~/.tmux/plugins/tmux-thumbs
+```
+
+Source it in your `.tmux.conf`:
+
+```
+run-shell ~/.tmux/plugins/tmux-thumbs/tmux-thumbs.tmux
+```
+
+Reload TMUX conf by running:
+
+```
+tmux source-file ~/.tmux.conf
+```
 
 ## Install
 
@@ -34,13 +66,15 @@ git clone git@github.com:fcsonline/tmux-thumbs.git && cd tmux-thumbs
 cargo build --release
 ```
 
-## Demo
-
-[![demo](https://asciinema.org/a/232775.png)](https://asciinema.org/a/232775?autoplay=1)
-
 ## Configuration
 
-All `tmux-thumbs` configuration works settings custom paramenters to `tmux-thumbs` command.
+If you want to customize how is shown your tmux-thumbs hints you can run the
+command `tmux-thumbs` directly and play with all available parameters to set
+your perfect profile.
+
+Once completed, write those parameters in
+`~/.tmux/plugins/tmux-thumbs/tmux-thumbs.sh` file. There is a `COMMAND`
+variable where you can set all those options.
 
 Example:
 
@@ -95,7 +129,7 @@ OPTIONS:
 - **hint-fg-color:** Sets the foregroud color for hints [default: yellow]
 - **select-fg-color:** Sets the foregroud color for selection [default: blue]
 
-## Alphabets
+#### Alphabets
 
 This is the list of available alphabets:
 
@@ -122,7 +156,7 @@ This is the list of available alphabets:
 - `colemak-left-hand`: arstqwfpzxcv
 - `colemak-right-hand`: neioluymjhk
 
-## Colors
+#### Colors
 
 This is the list of available colors:
 
@@ -140,6 +174,13 @@ This is the list of available colors:
 
 - **Arrow navigation:** You can use the arrows to move arround between all matched items.
 - **Auto paste:** If your last typed hint character is uppercase, you are going to pick and paste the desired hint.
+
+
+## Contribute
+
+This project started as a side project to learn Rust, so I'm sure that is full
+of mistakes and areas to be improve. If you think you can tweak the code to
+make it better, I'll really appreaciate a pull request. ;)
 
 # License
 
