@@ -34,6 +34,9 @@ git clone git@github.com:fcsonline/tmux-thumbs.git && cd tmux-thumbs
 cargo build --release
 ```
 
+## Demo
+
+[![demo](https://asciinema.org/a/232775.png)](https://asciinema.org/a/232775?autoplay=1)
 
 ## Configuration
 
