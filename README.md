@@ -7,7 +7,7 @@ A lightning fast version of [tmux-fingers](https://github.com/Morantron/tmux-fin
 ## Usage
 
 Press ( <kbd>prefix</kbd> + <kbd>Space</kbd> ) to highlist in you current tmux
-visible pane all text that match specific pattern. The press the highlighted
+visible pane all text that match specific pattern. Then press the highlighted
 letter hint to yank the text in your tmux buffer.
 
 ### Matched patterns
@@ -22,7 +22,7 @@ letter hint to yank the text in your tmux buffer.
 - kubernetes resources
 - UUIDs
 
-Those are the list of mattched patterns that will be highlighted by default. If
+These are the list of mattched patterns that will be highlighted by default. If
 you want to highlight a pattern that is not in this list you can add one or
 more with `--regexp` parameter.
 
@@ -38,6 +38,13 @@ Clone the repo:
 git clone https://github.com/fcsonline/tmux-thumbs ~/.tmux/plugins/tmux-thumbs
 ```
 
+Compile it with [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html):
+
+```
+cd ~/.tmux/plugins/tmux-thumbs
+cargo build --release
+```
+
 Source it in your `.tmux.conf`:
 
 ```
@@ -50,27 +57,11 @@ Reload TMUX conf by running:
 tmux source-file ~/.tmux.conf
 ```
 
-## Install
-
-The easiest way right now is to install with [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html):
-
-```
-cargo install tmux-thumbs
-tmux-thumbs -
-```
-
-or download the source code and compile it:
-
-```
-git clone git@github.com:fcsonline/tmux-thumbs.git && cd tmux-thumbs
-cargo build --release
-```
-
 ## Configuration
 
 If you want to customize how is shown your tmux-thumbs hints you can run the
-command `tmux-thumbs` directly and play with all available parameters to set
-your perfect profile.
+command `target/release/tmux-thumbs` directly and play with all available
+parameters to set your perfect profile.
 
 Once completed, write those parameters in
 `~/.tmux/plugins/tmux-thumbs/tmux-thumbs.sh` file. There is a `COMMAND`
@@ -79,7 +70,7 @@ variable where you can set all those options.
 Example:
 
 ```
-tmux-thumbs -a qwerty -r -u
+./target/release/tmux-thumbs -a qwerty -r -u
 ```
 
 You can review all available options executing:
@@ -112,6 +103,11 @@ OPTIONS:
         --upcase-command <upcase_command>              Upcase command [default: tmux paste-buffer]
 
 ```
+
+## Extra features
+
+- **Arrow navigation:** You can use the arrows to move arround between all matched items.
+- **Auto paste:** If your last typed hint character is uppercase, you are going to pick and paste the desired hint.
 
 ### Arguments
 
@@ -170,11 +166,15 @@ This is the list of available colors:
 - white
 - default
 
-## Extra features
+## Background
 
-- **Arrow navigation:** You can use the arrows to move arround between all matched items.
-- **Auto paste:** If your last typed hint character is uppercase, you are going to pick and paste the desired hint.
+As I said, this project is based in [tmux-fingers](https://github.com/Morantron/tmux-fingers). He did an extraordinary job, building all necessary pieces in Bash to achieve the text picker behaviour. He only deserves my gratitude for all the time I have been using [tmux-fingers](https://github.com/Morantron/tmux-fingers).
 
+During a [Fosdem](https://fosdem.org/) conf, we had the idea to rewrite it to another language. He had these thoughts many times ago but it was hard to start from scratch. So, we decided to start playing with Node.js and [react-blessed](https://github.com/Yomguithereal/react-blessed), but we detected some unacceptable latency when the program booted. We didn't investigate much about this latency.
+
+During those days another alternative appeared, called [tmux-picker](https://github.com/RTBHOUSE/tmux-picker), implemented in python and reusing many parts from [tmux-fingers](https://github.com/Morantron/tmux-fingers). It was nice, because it was fast and added original terminal color support.
+
+I was curious to know if this was possible to be written in [Rust](https://www.rust-lang.org/), and soon I realized that was something doable. The ability to implement tests for all critic parts of the application give you a great confidence about it. On the other hand, Rust has an awesome community that lets you achieve this kind of project in a short period of time.
 
 ## Contribute
 
