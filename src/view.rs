@@ -55,8 +55,7 @@ impl<'a> View<'a> {
       let clean = line.trim_end_matches(|c: char| c.is_whitespace());
 
       if clean.len() > 0 {
-        let formatted = format!("{}\n", line).to_string();
-        rustbox.print(0, index, rustbox::RB_NORMAL, Color::White, Color::Black, formatted.as_str());
+        rustbox.print(0, index, rustbox::RB_NORMAL, Color::White, Color::Black, line);
       }
     }
 
