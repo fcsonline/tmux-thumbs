@@ -39,8 +39,10 @@ impl<'a> View<'a> {
     }
   }
 
-  pub fn next(&mut self) {
-    self.skip = self.skip + 1;
+  pub fn next(&mut self, maximum: usize) {
+    if self.skip < maximum {
+      self.skip = self.skip + 1;
+    }
   }
 
   pub fn present(&mut self) -> Option<(String, bool)> {
@@ -114,9 +116,9 @@ impl<'a> View<'a> {
               }
             }
             Key::Up => { self.prev(); }
-            Key::Down => { self.next(); }
+            Key::Down => { self.next(matches.len() - 1); }
             Key::Left => { self.prev(); }
-            Key::Right => { self.next(); }
+            Key::Right => { self.next(matches.len() - 1); }
             Key::Char(ch) => {
               let key = ch.to_string();
               let lower_key = key.to_lowercase();
