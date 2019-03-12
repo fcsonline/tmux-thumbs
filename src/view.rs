@@ -58,6 +58,8 @@ impl<'a> View<'a> {
     let longest_hint = matches.iter().filter_map(|m| m.hint.clone()).max_by(|x, y| x.len().cmp(&y.len())).unwrap().clone();
     let mut selected;
 
+    self.skip = if self.reverse { matches.len() - 1 } else { 0 };
+
     loop {
       rustbox.clear();
       rustbox.present();
@@ -70,14 +72,7 @@ impl<'a> View<'a> {
         }
       }
 
-      selected = matches.last();
-
-      match matches.iter().enumerate().find(|&h| h.0 == self.skip) {
-        Some(hm) => {
-          selected = Some(hm.1);
-        }
-        _ => {}
-      }
+      selected = matches.get(self.skip);
 
       for mat in matches.iter() {
         let selected_color = if selected == Some(mat) {
