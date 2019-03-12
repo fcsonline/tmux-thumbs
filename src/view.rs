@@ -51,20 +51,23 @@ impl<'a> View<'a> {
 
     rustbox.set_output_mode(OutputMode::EightBit);
 
-    for (index, line) in self.state.lines.iter().enumerate() {
-      let clean = line.trim_end_matches(|c: char| c.is_whitespace());
-
-      if clean.len() > 0 {
-        rustbox.print(0, index, rustbox::RB_NORMAL, Color::White, Color::Black, line);
-      }
-    }
-
     let mut typed_hint: String = "".to_owned();
     let matches = self.state.matches(self.reverse, self.unique);
     let longest_hint = matches.iter().filter_map(|m| m.hint.clone()).max_by(|x, y| x.len().cmp(&y.len())).unwrap().clone();
     let mut selected;
 
     loop {
+      rustbox.clear();
+      rustbox.present();
+
+      for (index, line) in self.state.lines.iter().enumerate() {
+        let clean = line.trim_end_matches(|c: char| c.is_whitespace());
+
+        if clean.len() > 0 {
+          rustbox.print(0, index, rustbox::RB_NORMAL, Color::White, Color::Black, format!("{}\n", line).to_string().as_str());
+        }
+      }
+
       selected = matches.last();
 
       match matches.iter().enumerate().find(|&h| h.0 == self.skip) {
