@@ -1,3 +1,5 @@
+colors: [31ma[m[32mb[m[33mc[m[34md[m[35me[m 30.6.23.42 lorem 135.2.4.4 lorem 235.23.33.34
+
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam et aliquet
 mauris, et ullamcorper enim. Nullam vitae orci eget tellus porta ullamcorper
 ut et lacus. 127.0.0.1 Proin sagittis, tortor nec egestas volutpat,
@@ -11,6 +13,10 @@ ultricies libero 5734d923afb8 efc9061663 ac, #ff00FF ex. Morbi
 123e4567-e89b-12d3-a456-426655440000 tempor mollis condimentum.
 
 lorem /var/log/123e4567/999.log lorem /etc/system.conf lorem
+
+cat ▶ cat ▶ cat ▶ cat ▶ cat 30.6.23.42 lorem 135.2.4.4 lorem 235.23.33.34
+
+path: /var/log/nginx.log[m
 
 10.3.23.42 lorem 123.2.3.4 lorem 230.23.33.34
 10.3.23.42 lorem 123.2.3.4 lorem 230.23.33.34
