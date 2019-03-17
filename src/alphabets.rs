@@ -26,14 +26,12 @@ const ALPHABETS: [(&'static str, &'static str); 22] = [
 ];
 
 pub struct Alphabet<'a> {
-  letters: &'a str
+  letters: &'a str,
 }
 
 impl<'a> Alphabet<'a> {
   fn new(letters: &'a str) -> Alphabet {
-    Alphabet{
-      letters: letters
-    }
+    Alphabet { letters: letters }
   }
 
   pub fn hints(&self, matches: usize) -> Vec<String> {
@@ -43,16 +41,28 @@ impl<'a> Alphabet<'a> {
     let mut expanded: Vec<String> = Vec::new();
 
     loop {
-      if expansion.len() + expanded.len() >= matches { break; }
-      if expansion.len() == 0 { break; }
+      if expansion.len() + expanded.len() >= matches {
+        break;
+      }
+      if expansion.len() == 0 {
+        break;
+      }
 
       let prefix = expansion.pop().expect("Ouch!");
-      let sub_expansion: Vec<String> = letters.iter().take(matches - expansion.len() - expanded.len()).map(|s| prefix.clone() + s).collect();
+      let sub_expansion: Vec<String> = letters
+        .iter()
+        .take(matches - expansion.len() - expanded.len())
+        .map(|s| prefix.clone() + s)
+        .collect();
 
       expanded.splice(0..0, sub_expansion);
     }
 
-    expansion = expansion.iter().take(matches - expanded.len()).map(|s| s.clone()).collect();
+    expansion = expansion
+      .iter()
+      .take(matches - expanded.len())
+      .map(|s| s.clone())
+      .collect();
     expansion.append(&mut expanded);
     expansion
   }
@@ -61,7 +71,9 @@ impl<'a> Alphabet<'a> {
 pub fn get_alphabet(alphabet_name: &str) -> Alphabet {
   let alphabets: HashMap<&str, &str> = ALPHABETS.iter().cloned().collect();
 
-  alphabets.get(alphabet_name).expect(format!("Unknown alphabet: {}", alphabet_name).as_str()); // FIXME
+  alphabets
+    .get(alphabet_name)
+    .expect(format!("Unknown alphabet: {}", alphabet_name).as_str()); // FIXME
 
   Alphabet::new(alphabets[alphabet_name])
 }
@@ -71,28 +83,28 @@ mod tests {
   use super::*;
 
   #[test]
-  fn simple_matches () {
+  fn simple_matches() {
     let alphabet = Alphabet::new("abcd");
     let hints = alphabet.hints(3);
     assert_eq!(hints, ["a", "b", "c"]);
   }
 
   #[test]
-  fn composed_matches () {
+  fn composed_matches() {
     let alphabet = Alphabet::new("abcd");
     let hints = alphabet.hints(6);
     assert_eq!(hints, ["a", "b", "c", "da", "db", "dc"]);
   }
 
   #[test]
-  fn composed_matches_multiple () {
+  fn composed_matches_multiple() {
     let alphabet = Alphabet::new("abcd");
     let hints = alphabet.hints(8);
     assert_eq!(hints, ["a", "b", "ca", "cb", "da", "db", "dc", "dd"]);
   }
 
   #[test]
-  fn composed_matches_max () {
+  fn composed_matches_max() {
     let alphabet = Alphabet::new("ab");
     let hints = alphabet.hints(8);
     assert_eq!(hints, ["aa", "ab", "ba", "bb"]);

@@ -1,8 +1,8 @@
+use super::*;
+use rustbox::Key;
+use rustbox::{Color, OutputMode, RustBox};
 use std::char;
 use std::default::Default;
-use rustbox::{Color, RustBox, OutputMode};
-use rustbox::Key;
-use super::*;
 
 pub struct View<'a> {
   state: &'a mut state::State<'a>,
@@ -14,12 +14,22 @@ pub struct View<'a> {
   foreground_color: Color,
   background_color: Color,
   hint_background_color: Color,
-  hint_foreground_color: Color
+  hint_foreground_color: Color,
 }
 
 impl<'a> View<'a> {
-  pub fn new(state: &'a mut state::State<'a>, reverse: bool, unique: bool, position: &'a str, select_foreground_color: Color, foreground_color: Color, background_color: Color, hint_foreground_color: Color, hint_background_color: Color) -> View<'a> {
-    View{
+  pub fn new(
+    state: &'a mut state::State<'a>,
+    reverse: bool,
+    unique: bool,
+    position: &'a str,
+    select_foreground_color: Color,
+    foreground_color: Color,
+    background_color: Color,
+    hint_foreground_color: Color,
+    hint_background_color: Color,
+  ) -> View<'a> {
+    View {
       state: state,
       skip: 0,
       reverse: reverse,
@@ -29,7 +39,7 @@ impl<'a> View<'a> {
       foreground_color: foreground_color,
       background_color: background_color,
       hint_foreground_color: hint_foreground_color,
-      hint_background_color: hint_background_color
+      hint_background_color: hint_background_color,
     }
   }
 
@@ -55,7 +65,12 @@ impl<'a> View<'a> {
 
     let mut typed_hint: String = "".to_owned();
     let matches = self.state.matches(self.reverse, self.unique);
-    let longest_hint = matches.iter().filter_map(|m| m.hint.clone()).max_by(|x, y| x.len().cmp(&y.len())).unwrap().clone();
+    let longest_hint = matches
+      .iter()
+      .filter_map(|m| m.hint.clone())
+      .max_by(|x, y| x.len().cmp(&y.len()))
+      .unwrap()
+      .clone();
     let mut selected;
 
     self.skip = if self.reverse { matches.len() - 1 } else { 0 };
@@ -68,7 +83,14 @@ impl<'a> View<'a> {
         let clean = line.trim_end_matches(|c: char| c.is_whitespace());
 
         if clean.len() > 0 {
-          rustbox.print(0, index, rustbox::RB_NORMAL, Color::White, Color::Black, line);
+          rustbox.print(
+            0,
+            index,
+            rustbox::RB_NORMAL,
+            Color::White,
+            Color::Black,
+            line,
+          );
         }
       }
 
@@ -87,55 +109,78 @@ impl<'a> View<'a> {
         let extra = prefix.len() - prefix.chars().count();
         let offset = (mat.x as usize) - extra;
 
-        rustbox.print(offset, mat.y as usize, rustbox::RB_NORMAL, selected_color, self.background_color, mat.text);
+        rustbox.print(
+          offset,
+          mat.y as usize,
+          rustbox::RB_NORMAL,
+          selected_color,
+          self.background_color,
+          mat.text,
+        );
 
         if let Some(ref hint) = mat.hint {
-          let extra_position = if self.position == "left" { 0 } else { mat.text.len() - mat.hint.clone().unwrap().len() };
+          let extra_position = if self.position == "left" {
+            0
+          } else {
+            mat.text.len() - mat.hint.clone().unwrap().len()
+          };
 
-          rustbox.print(offset + extra_position, mat.y as usize, rustbox::RB_BOLD, self.hint_foreground_color, self.hint_background_color, hint.as_str());
+          rustbox.print(
+            offset + extra_position,
+            mat.y as usize,
+            rustbox::RB_BOLD,
+            self.hint_foreground_color,
+            self.hint_background_color,
+            hint.as_str(),
+          );
         }
       }
 
       rustbox.present();
 
       match rustbox.poll_event(false) {
-        Ok(rustbox::Event::KeyEvent(key)) => {
-          match key {
-            Key::Esc => { break; }
-            Key::Enter => {
-              match matches.iter().enumerate().find(|&h| h.0 == self.skip) {
-                Some(hm) => {
-                  return Some((hm.1.text.to_string(), false))
-                }
-                _ => panic!("Match not found?"),
-              }
-            }
-            Key::Up => { self.prev(); }
-            Key::Down => { self.next(matches.len() - 1); }
-            Key::Left => { self.prev(); }
-            Key::Right => { self.next(matches.len() - 1); }
-            Key::Char(ch) => {
-              let key = ch.to_string();
-              let lower_key = key.to_lowercase();
-
-              typed_hint.push_str(lower_key.as_str());
-
-              match matches.iter().find(|mat| mat.hint == Some(typed_hint.clone())) {
-                Some(mat) => {
-                  return Some((mat.text.to_string(), key != lower_key))
-                },
-                None => {
-                  if typed_hint.len() >= longest_hint.len() {
-                    break;
-                  }
-                }
-              }
-            }
-            _ => {}
+        Ok(rustbox::Event::KeyEvent(key)) => match key {
+          Key::Esc => {
+            break;
           }
-        }
+          Key::Enter => match matches.iter().enumerate().find(|&h| h.0 == self.skip) {
+            Some(hm) => return Some((hm.1.text.to_string(), false)),
+            _ => panic!("Match not found?"),
+          },
+          Key::Up => {
+            self.prev();
+          }
+          Key::Down => {
+            self.next(matches.len() - 1);
+          }
+          Key::Left => {
+            self.prev();
+          }
+          Key::Right => {
+            self.next(matches.len() - 1);
+          }
+          Key::Char(ch) => {
+            let key = ch.to_string();
+            let lower_key = key.to_lowercase();
+
+            typed_hint.push_str(lower_key.as_str());
+
+            match matches
+              .iter()
+              .find(|mat| mat.hint == Some(typed_hint.clone()))
+            {
+              Some(mat) => return Some((mat.text.to_string(), key != lower_key)),
+              None => {
+                if typed_hint.len() >= longest_hint.len() {
+                  break;
+                }
+              }
+            }
+          }
+          _ => {}
+        },
         Err(e) => panic!("{}", e),
-        _ => { }
+        _ => {}
       }
     }
 

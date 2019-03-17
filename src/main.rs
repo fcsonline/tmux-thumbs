@@ -1,14 +1,14 @@
-extern crate rustbox;
 extern crate clap;
+extern crate rustbox;
 
-mod state;
 mod alphabets;
 mod colors;
+mod state;
 mod view;
 
-use self::clap::{Arg, App};
-use std::process::Command;
+use self::clap::{App, Arg};
 use clap::crate_version;
+use std::process::Command;
 
 fn exec_command(command: String) -> std::process::Output {
   let args: Vec<_> = command.split(" ").collect();
@@ -19,66 +19,92 @@ fn exec_command(command: String) -> std::process::Output {
     .expect("Couldn't run it");
 }
 
-fn app_args<'a> () -> clap::ArgMatches<'a> {
+fn app_args<'a>() -> clap::ArgMatches<'a> {
   return App::new("tmux-thumbs")
     .version(crate_version!())
     .about("A lightning fast version of tmux-fingers, copy/pasting tmux like vimium/vimperator")
-    .arg(Arg::with_name("alphabet")
-                .help("Sets the alphabet")
-                .long("alphabet")
-                .short("a")
-                .default_value("qwerty"))
-    .arg(Arg::with_name("foreground_color")
-                .help("Sets the foregroud color for matches")
-                .long("fg-color")
-                .default_value("green"))
-    .arg(Arg::with_name("background_color")
-                .help("Sets the background color for matches")
-                .long("bg-color")
-                .default_value("black"))
-    .arg(Arg::with_name("hint_foreground_color")
-                .help("Sets the foregroud color for hints")
-                .long("hint-fg-color")
-                .default_value("yellow"))
-    .arg(Arg::with_name("hint_background_color")
-                .help("Sets the background color for hints")
-                .long("hint-bg-color")
-                .default_value("black"))
-    .arg(Arg::with_name("select_foreground_color")
-                .help("Sets the foregroud color for selection")
-                .long("select-fg-color")
-                .default_value("blue"))
-    .arg(Arg::with_name("reverse")
-                .help("Reverse the order for assigned hints")
-                .long("reverse")
-                .short("r"))
-    .arg(Arg::with_name("unique")
-                .help("Don't show duplicated hints for the same match")
-                .long("unique")
-                .short("u"))
-    .arg(Arg::with_name("position")
-                .help("Hint position")
-                .long("position")
-                .default_value("left")
-                .short("p"))
-    .arg(Arg::with_name("tmux_pane")
-                .help("Get this tmux pane as reference pane")
-                .long("tmux-pane")
-                .takes_value(true))
-    .arg(Arg::with_name("command")
-                .help("Pick command")
-                .long("command")
-                .default_value("tmux set-buffer {}"))
-    .arg(Arg::with_name("upcase_command")
-                .help("Upcase command")
-                .long("upcase-command")
-                .default_value("tmux paste-buffer"))
-    .arg(Arg::with_name("regexp")
-                .help("Use this regexp as extra pattern to match")
-                .long("regexp")
-                .short("x")
-                .takes_value(true)
-                .multiple(true))
+    .arg(
+      Arg::with_name("alphabet")
+        .help("Sets the alphabet")
+        .long("alphabet")
+        .short("a")
+        .default_value("qwerty"),
+    )
+    .arg(
+      Arg::with_name("foreground_color")
+        .help("Sets the foregroud color for matches")
+        .long("fg-color")
+        .default_value("green"),
+    )
+    .arg(
+      Arg::with_name("background_color")
+        .help("Sets the background color for matches")
+        .long("bg-color")
+        .default_value("black"),
+    )
+    .arg(
+      Arg::with_name("hint_foreground_color")
+        .help("Sets the foregroud color for hints")
+        .long("hint-fg-color")
+        .default_value("yellow"),
+    )
+    .arg(
+      Arg::with_name("hint_background_color")
+        .help("Sets the background color for hints")
+        .long("hint-bg-color")
+        .default_value("black"),
+    )
+    .arg(
+      Arg::with_name("select_foreground_color")
+        .help("Sets the foregroud color for selection")
+        .long("select-fg-color")
+        .default_value("blue"),
+    )
+    .arg(
+      Arg::with_name("reverse")
+        .help("Reverse the order for assigned hints")
+        .long("reverse")
+        .short("r"),
+    )
+    .arg(
+      Arg::with_name("unique")
+        .help("Don't show duplicated hints for the same match")
+        .long("unique")
+        .short("u"),
+    )
+    .arg(
+      Arg::with_name("position")
+        .help("Hint position")
+        .long("position")
+        .default_value("left")
+        .short("p"),
+    )
+    .arg(
+      Arg::with_name("tmux_pane")
+        .help("Get this tmux pane as reference pane")
+        .long("tmux-pane")
+        .takes_value(true),
+    )
+    .arg(
+      Arg::with_name("command")
+        .help("Pick command")
+        .long("command")
+        .default_value("tmux set-buffer {}"),
+    )
+    .arg(
+      Arg::with_name("upcase_command")
+        .help("Upcase command")
+        .long("upcase-command")
+        .default_value("tmux paste-buffer"),
+    )
+    .arg(
+      Arg::with_name("regexp")
+        .help("Use this regexp as extra pattern to match")
+        .long("regexp")
+        .short("x")
+        .takes_value(true)
+        .multiple(true),
+    )
     .get_matches();
 }
 
@@ -98,7 +124,8 @@ fn main() {
   let background_color = colors::get_color(args.value_of("background_color").unwrap());
   let hint_foreground_color = colors::get_color(args.value_of("hint_foreground_color").unwrap());
   let hint_background_color = colors::get_color(args.value_of("hint_background_color").unwrap());
-  let select_foreground_color = colors::get_color(args.value_of("select_foreground_color").unwrap());
+  let select_foreground_color =
+    colors::get_color(args.value_of("select_foreground_color").unwrap());
 
   let command = args.value_of("command").unwrap();
   let upcase_command = args.value_of("upcase_command").unwrap();
@@ -124,7 +151,7 @@ fn main() {
       foreground_color,
       background_color,
       hint_foreground_color,
-      hint_background_color
+      hint_background_color,
     );
 
     viewbox.present()
@@ -134,7 +161,6 @@ fn main() {
     exec_command(format!("tmux swap-pane -t {}", pane));
   };
 
-
   if let Some((text, paste)) = selected {
     exec_command(str::replace(command, "{}", text.as_str()));
 
@@ -142,5 +168,4 @@ fn main() {
       exec_command(upcase_command.to_string());
     }
   }
-
 }
