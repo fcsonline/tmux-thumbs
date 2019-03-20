@@ -59,71 +59,180 @@ tmux source-file ~/.tmux.conf
 
 ## Configuration
 
-If you want to customize how is shown your tmux-thumbs hints you can run the
-command `target/release/tmux-thumbs` directly and play with all available
+If you want to customize how is shown your tmux-thumbs hints those all available
 parameters to set your perfect profile.
 
-Once completed, write those parameters in
-`~/.tmux/plugins/tmux-thumbs/tmux-thumbs.sh` file. There is a `COMMAND`
-variable where you can set all those options.
+NOTE: for changes to take effect, you'll need to source again your `.tmux.conf` file.
 
-Example:
+* [@thumbs-alphabet](#thumbs-alphabet)
+* [@thumbs-reverse](#thumbs-reverse)
+* [@thumbs-unique](#thumbs-unique)
+* [@thumbs-position](#thumbs-position)
+* [@thumbs-regexp-N](#thumbs-regexp-N)
+* [@thumbs-command](#thumbs-command)
+* [@thumbs-upcase-command](#thumbs-upcase-command)
+* [@thumbs-bg-color](#thumbs-bg-color)
+* [@thumbs-fg-color](#thumbs-fg-color)
+* [@thumbs-hint-bg-color](#thumbs-hint-bg-color)
+* [@thumbs-hint-fg-color](#thumbs-hint-fg-color)
+* [@thumbs-select-fg-color](#thumbs-select-fg-color)
 
-```
-./target/release/tmux-thumbs -a qwerty -r -u
-```
+### @thumbs-alphabet
 
-You can review all available options executing:
+`default: qwerty`
 
-```
-> tmux-thumbs --help
+Choose which set of characters is used to build hints. Review all [available alphabets](#Alphabets)
 
-tmux-thumbs 0.2.2
-A lightning fast version of tmux-fingers, copy/pasting tmux like vimium/vimperator
-
-USAGE:
-    tmux-thumbs [FLAGS] [OPTIONS]
-
-FLAGS:
-    -h, --help       Prints help information
-    -r, --reverse    Reverse the order for assigned hints
-    -u, --unique     Don't show duplicated hints for the same match
-    -V, --version    Prints version information
-
-OPTIONS:
-    -a, --alphabet <alphabet>                          Sets the alphabet [default: qwerty]
-        --bg-color <background_color>                  Sets the background color for matches [default: black]
-        --command <command>                            Pick command [default: tmux set-buffer {}]
-        --fg-color <foreground_color>                  Sets the foregroud color for matches [default: green]
-        --hint-bg-color <hint_background_color>        Sets the background color for hints [default: black]
-        --hint-fg-color <hint_foreground_color>        Sets the foregroud color for hints [default: yellow]
-    -p, --position <position>                          Hint position [default: left]
-    -x, --regexp <regexp>...                           Use this regexp as extra pattern to match
-        --select-fg-color <select_foreground_color>    Sets the foregroud color for selection [default: blue]
-        --upcase-command <upcase_command>              Upcase command [default: tmux paste-buffer]
+For example:
 
 ```
+set -g @thumbs-alphabet dvorak-homerow
+```
 
-## Extra features
+### @thumbs-reverse
 
-- **Arrow navigation:** You can use the arrows to move arround between all matched items.
-- **Auto paste:** If your last typed hint character is uppercase, you are going to pick and paste the desired hint.
+`default: disabled`
 
-### Arguments
+Choose in which direction you want to assign hints. Useful to get shorter hints closer to the cursor.
 
-- **alphabet:** Choose which set of characters is used to build hints. Default [qwerty]
-- **reverse:** Choose in which direction you want to assign hints. Useful to get shorter hints closer.
-- **unique:** Choose if you want to assign the same hint for the same matched strings.
-- **position:** Choose where do you want to show the hint in the matched string. Options (left, right). Default [left]
-- **regexp:** Add extra pattern to match. This paramenter can have multiple instances.
-- **command:** Choose whish command execute when you press a hint
-- **upcase-command:** Choose which command execute when you press a upcase hint
+For example:
 
-- **bg-color:** Sets the background color for matches [default: black]
-- **fg-color:** Sets the foregroud color for matches [default: green]
-- **hint-bg-color:** Sets the background color for hints [default: black]
-- **hint-fg-color:** Sets the foregroud color for hints [default: yellow]
-- **select-fg-color:** Sets the foregroud color for selection [default: blue]
+```
+set -g @thumbs-reverse
+```
+
+### @thumbs-unique
+
+`default: disabled`
+
+Choose if you want to assign the same hint for the same matched strings.
+
+For example:
+
+```
+set -g @thumbs-unique
+```
+
+### @thumbs-position
+
+`default: left`
+
+Choose where do you want to show the hint in the matched string. Options (left, right).
+
+For example:
+
+```
+set -g @thumbs-position right
+```
+
+### @thumbs-regexp-N
+
+Add extra patterns to match. This paramenter can have multiple instances.
+
+For example:
+
+```
+set @thumbs-regexp-1 '[a-z]+@[a-z]+.com' # Match emails
+set @thumbs-regexp-2 '[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:' # Match MAC addresses
+```
+
+### @thumbs-command
+
+`default: 'tmux set-buffer {}'`
+
+Choose which command execute when you press a hint.
+
+For example:
+
+```
+set -g @thumbs-command 'pbcopy'
+```
+
+### @thumbs-upcase-command
+
+`default: 'tmux paste-buffer'`
+
+Choose which command execute when you press a upcase hint
+
+For example:
+
+```
+set -g @thumbs-upcase-command 'pbcopy'
+```
+
+### @thumbs-bg-color
+
+`default: black`
+
+Sets the background color for matches
+
+For example:
+
+```
+set -g @thumbs-bg-color blue
+```
+
+### @thumbs-fg-color
+
+`default: green`
+
+Sets the foregroud color for matches
+
+For example:
+
+```
+set -g @thumbs-fg-color green
+```
+
+### @thumbs-hint-bg-color
+
+`default: black`
+
+Sets the background color for hints
+
+For example:
+
+```
+set -g @thumbs-hint-bg-color blue
+```
+
+### @thumbs-hint-fg-color
+
+`default: yellow`
+
+Sets the foregroud color for hints
+
+For example:
+
+```
+set -g @thumbs-hint-fg-color green
+```
+
+### @thumbs-select-fg-color
+
+`default: blue`
+
+Sets the foregroud color for selection
+
+For example:
+
+```
+set -g @thumbs-select-fg-color red
+```
+
+#### Colors
+
+This is the list of available colors:
+
+- black
+- red
+- green
+- yellow
+- blue
+- magenta
+- cyan
+- white
+- default
 
 #### Alphabets
 
@@ -152,19 +261,10 @@ This is the list of available alphabets:
 - `colemak-left-hand`: arstqwfpzxcv
 - `colemak-right-hand`: neioluymjhk
 
-#### Colors
+## Extra features
 
-This is the list of available colors:
-
-- black
-- red
-- green
-- yellow
-- blue
-- magenta
-- cyan
-- white
-- default
+- **Arrow navigation:** You can use the arrows to move arround between all matched items.
+- **Auto paste:** If your last typed hint character is uppercase, you are going to pick and paste the desired hint.
 
 ## Background
 
