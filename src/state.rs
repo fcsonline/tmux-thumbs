@@ -12,7 +12,7 @@ const PATTERNS: [(&'static str, &'static str); 10] = [
   ),
   ("diff_a", r"--- a/([^ ]+)"),
   ("diff_b", r"\+\+\+ b/([^ ]+)"),
-  ("path", r"[^ ]+/[^ [[:cntrl:]]]+"),
+  ("path", r"[^ ]+/[^: [[:cntrl:]]]+"),
   ("color", r"#[0-9a-fA-F]{6}"),
   (
     "uid",
@@ -205,11 +205,13 @@ mod tests {
 
   #[test]
   fn match_bash() {
-    let lines = split("path: [32m/var/log/nginx.log[m\npath: [32mtest/log/nginx.log[m");
+    let lines = split("path: [32m/var/log/nginx.log[m\npath: [32mtest/log/nginx.log:32[m");
     let custom = [].to_vec();
     let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     assert_eq!(results.len(), 2);
+    assert_eq!(results.first().unwrap().text, "/var/log/nginx.log");
+    assert_eq!(results.last().unwrap().text, "test/log/nginx.log");
   }
 
   #[test]
