@@ -28,7 +28,7 @@ more with `--regexp` parameter.
 
 ## Demo
 
-[![demo](https://asciinema.org/a/232775.png)](https://asciinema.org/a/232775?autoplay=1)
+[![demo](https://asciinema.org/a/232775.png?ts=1)](https://asciinema.org/a/232775?autoplay=1)
 
 ## Tmux integration
 
@@ -268,7 +268,7 @@ This is the list of available alphabets:
 
 ## Background
 
-As I said, this project is based in [tmux-fingers](https://github.com/Morantron/tmux-fingers). He did an extraordinary job, building all necessary pieces in Bash to achieve the text picker behaviour. He only deserves my gratitude for all the time I have been using [tmux-fingers](https://github.com/Morantron/tmux-fingers).
+As I said, this project is based in [tmux-fingers](https://github.com/Morantron/tmux-fingers). Morantron did an extraordinary job, building all necessary pieces in Bash to achieve the text picker behaviour. He only deserves my gratitude for all the time I have been using [tmux-fingers](https://github.com/Morantron/tmux-fingers).
 
 During a [Fosdem](https://fosdem.org/) conf, we had the idea to rewrite it to another language. He had these thoughts many times ago but it was hard to start from scratch. So, we decided to start playing with Node.js and [react-blessed](https://github.com/Yomguithereal/react-blessed), but we detected some unacceptable latency when the program booted. We didn't investigate much about this latency.
 
