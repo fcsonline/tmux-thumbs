@@ -3,7 +3,7 @@
 source ~/.bash_profile
 
 function boolean {
-  VALUE=$(tmux show -v @thumbs-$1 2> /dev/null)
+  VALUE=$(tmux show -vg @thumbs-$1 2> /dev/null)
 
   if [[ "${VALUE}" == "1" ]]; then
     echo "--$1"
@@ -11,7 +11,7 @@ function boolean {
 }
 
 function option {
-  VALUE=$(tmux show -v @thumbs-$1 2> /dev/null)
+  VALUE=$(tmux show -vg @thumbs-$1 2> /dev/null)
 
   if [[ ${VALUE} ]]; then
     echo "--$1 ${VALUE}"
@@ -21,9 +21,10 @@ function option {
 function multi {
   VALUES=""
 
-  while read -r VALUE; do
+  while read -r ITEM_KEY; do
+    VALUE=$(tmux show -vg $ITEM_KEY 2> /dev/null)
     VALUES="${VALUES} --$1 ${VALUE}"
-  done < <(tmux show 2> /dev/null | grep thumbs-$1- | cut -d' ' -f2 | sed s/\"//g)
+  done < <(tmux show -g 2> /dev/null | grep thumbs-$1- | cut -d' ' -f1)
 
   echo ${VALUES}
 }
