@@ -240,6 +240,10 @@ mod tests {
     let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     assert_eq!(results.len(), 4);
+    assert_eq!(results.get(0).unwrap().text.clone(), "fd70b5695");
+    assert_eq!(results.get(1).unwrap().text.clone(), "5246ddf");
+    assert_eq!(results.get(2).unwrap().text.clone(), "f924213");
+    assert_eq!(results.get(3).unwrap().text.clone(), "973113963b491874ab2e372ee60d4b4cb75f717c");
   }
 
   #[test]
@@ -249,24 +253,34 @@ mod tests {
     let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     assert_eq!(results.len(), 3);
+    assert_eq!(results.get(0).unwrap().text.clone(), "127.0.0.1");
+    assert_eq!(results.get(1).unwrap().text.clone(), "255.255.10.255");
+    assert_eq!(results.get(2).unwrap().text.clone(), "127.0.0.1");
   }
 
   #[test]
   fn match_urls() {
-    let lines = split("Lorem ipsum https://www.rust-lang.org/tools lorem\n Lorem https://crates.io lorem https://github.io lorem ssh://github.io");
+    let lines = split("Lorem ipsum https://www.rust-lang.org/tools lorem\n Lorem https://crates.io lorem https://github.io?foo=bar lorem ssh://github.io");
     let custom = [].to_vec();
     let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     assert_eq!(results.len(), 4);
+    assert_eq!(results.get(0).unwrap().text.clone(), "https://www.rust-lang.org/tools");
+    assert_eq!(results.get(1).unwrap().text.clone(), "https://crates.io");
+    assert_eq!(results.get(2).unwrap().text.clone(), "https://github.io?foo=bar");
+    assert_eq!(results.get(3).unwrap().text.clone(), "ssh://github.io");
   }
 
   #[test]
   fn match_addresses() {
-    let lines = split("Lorem 0xfd70b5695 0x5246ddf lorem\n Lorem 0x973113 lorem");
+    let lines = split("Lorem 0xfd70b5695 0x5246ddf lorem\n Lorem 0x973113tlorem");
     let custom = [].to_vec();
     let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     assert_eq!(results.len(), 3);
+    assert_eq!(results.get(0).unwrap().text.clone(), "0xfd70b5695");
+    assert_eq!(results.get(1).unwrap().text.clone(), "0x5246ddf");
+    assert_eq!(results.get(2).unwrap().text.clone(), "0x973113");
   }
 
   #[test]
@@ -276,6 +290,10 @@ mod tests {
     let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     assert_eq!(results.len(), 4);
+    assert_eq!(results.get(0).unwrap().text.clone(), "#fd7b56");
+    assert_eq!(results.get(1).unwrap().text.clone(), "#FF00FF");
+    assert_eq!(results.get(2).unwrap().text.clone(), "#00fF05");
+    assert_eq!(results.get(3).unwrap().text.clone(), "#abcd00");
   }
 
   #[test]
@@ -294,7 +312,7 @@ mod tests {
     let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     assert_eq!(results.len(), 1);
-    assert_eq!(results.first().unwrap().text.clone(), "src/main.rs");
+    assert_eq!(results.get(0).unwrap().text.clone(), "src/main.rs");
   }
 
   #[test]
@@ -304,7 +322,7 @@ mod tests {
     let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     assert_eq!(results.len(), 1);
-    assert_eq!(results.first().unwrap().text.clone(), "src/main.rs");
+    assert_eq!(results.get(0).unwrap().text.clone(), "src/main.rs");
   }
 
   #[test]
@@ -313,17 +331,14 @@ mod tests {
     let custom = ["CUSTOM-[0-9]{4,}", "ISSUE-[0-9]{3}"].to_vec();
     let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
-    // Matches
-    // CUSTOM-52463
-    // ISSUE-123
-    // /var/fd70b569/9999.log
-    // 52463
-    // 973113
-    // 123e4567-e89b-12d3-a456-426655440000
-    // 8888
-    // https://crates.io/23456/fd70b569
     assert_eq!(results.len(), 8);
     assert_eq!(results.get(0).unwrap().text.clone(), "CUSTOM-52463");
     assert_eq!(results.get(1).unwrap().text.clone(), "ISSUE-123");
+    assert_eq!(results.get(2).unwrap().text.clone(), "/var/fd70b569/9999.log");
+    assert_eq!(results.get(3).unwrap().text.clone(), "52463");
+    assert_eq!(results.get(4).unwrap().text.clone(), "973113");
+    assert_eq!(results.get(5).unwrap().text.clone(), "123e4567-e89b-12d3-a456-426655440000");
+    assert_eq!(results.get(6).unwrap().text.clone(), "8888");
+    assert_eq!(results.get(7).unwrap().text.clone(), "https://crates.io/23456/fd70b569");
   }
 }
