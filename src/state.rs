@@ -8,11 +8,11 @@ const EXCLUDE_PATTERNS: [(&'static str, &'static str); 1] =
 const PATTERNS: [(&'static str, &'static str); 10] = [
   (
     "url",
-    r"((https?://|git@|git://|ssh://|ftp://|file:///)[\w?=%/_.:,;~@!#$&()*+-]*)",
+    r"((https?://|git@|git://|ssh://|ftp://|file:///)[^ ]+)",
   ),
   ("diff_a", r"--- a/([^ ]+)"),
   ("diff_b", r"\+\+\+ b/([^ ]+)"),
-  ("path", r"[^ ]+/[^: [[:cntrl:]]]+"),
+  ("path", r"/?[^ :/]+/[^: [[:cntrl:]]]+"),
   ("color", r"#[0-9a-fA-F]{6}"),
   (
     "uid",
