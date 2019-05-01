@@ -28,6 +28,7 @@ const PATTERNS: [(&'static str, &'static str); 10] = [
 pub struct Match<'a> {
   pub x: i32,
   pub y: i32,
+  pub pattern: &'a str,
   pub text: &'a str,
   pub hint: Option<String>,
 }
@@ -36,9 +37,10 @@ impl<'a> fmt::Debug for Match<'a> {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     write!(
       f,
-      "Match {{ x: {}, y: {}, text: {}, hint: <{}> }}",
+      "Match {{ x: {}, y: {}, pattern: {}, text: {}, hint: <{}> }}",
       self.x,
       self.y,
+      self.pattern,
       self.text,
       self.hint.clone().unwrap_or("<undefined>".to_string())
     )
@@ -119,6 +121,7 @@ impl<'a> State<'a> {
               matches.push(Match {
                 x: offset + matching.start() as i32 + substart as i32,
                 y: index as i32,
+                pattern: name,
                 text: subtext,
                 hint: None,
               });
@@ -260,15 +263,19 @@ mod tests {
 
   #[test]
   fn match_urls() {
-    let lines = split("Lorem ipsum https://www.rust-lang.org/tools lorem\n Lorem https://crates.io lorem https://github.io?foo=bar lorem ssh://github.io");
+    let lines = split("Lorem ipsum https://www.rust-lang.org/tools lorem\n Lorem ipsumhttps://crates.io lorem https://github.io?foo=bar lorem ssh://github.io");
     let custom = [].to_vec();
     let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     assert_eq!(results.len(), 4);
     assert_eq!(results.get(0).unwrap().text.clone(), "https://www.rust-lang.org/tools");
+    assert_eq!(results.get(0).unwrap().pattern.clone(), "url");
     assert_eq!(results.get(1).unwrap().text.clone(), "https://crates.io");
+    assert_eq!(results.get(1).unwrap().pattern.clone(), "url");
     assert_eq!(results.get(2).unwrap().text.clone(), "https://github.io?foo=bar");
+    assert_eq!(results.get(2).unwrap().pattern.clone(), "url");
     assert_eq!(results.get(3).unwrap().text.clone(), "ssh://github.io");
+    assert_eq!(results.get(3).unwrap().pattern.clone(), "url");
   }
 
   #[test]
