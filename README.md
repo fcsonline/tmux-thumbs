@@ -18,6 +18,7 @@ letter hint to yank the text in your tmux buffer.
 - Colors in hex
 - Numbers ( 4+ digits )
 - Hex numbers
+- Markdown urls
 - IP4 addresses
 - kubernetes resources
 - UUIDs

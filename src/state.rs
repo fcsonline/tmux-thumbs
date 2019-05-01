@@ -5,7 +5,8 @@ use std::fmt;
 const EXCLUDE_PATTERNS: [(&'static str, &'static str); 1] =
   [("bash", r"[[:cntrl:]]\[([0-9]{1,2};)?([0-9]{1,2})?m")];
 
-const PATTERNS: [(&'static str, &'static str); 10] = [
+const PATTERNS: [(&'static str, &'static str); 11] = [
+  ("markdown_url", r"\[[^]]*\]\(([^)]+)\)"),
   (
     "url",
     r"((https?://|git@|git://|ssh://|ftp://|file:///)[^ ]+)",
@@ -262,6 +263,19 @@ mod tests {
   }
 
   #[test]
+  fn match_markdown_urls() {
+    let lines = split("Lorem ipsum [link](https://github.io?foo=bar) ![](http://cdn.com/img.jpg) lorem");
+    let custom = [].to_vec();
+    let results = State::new(&lines, "abcd", &custom).matches(false, false);
+
+    assert_eq!(results.len(), 2);
+    assert_eq!(results.get(0).unwrap().pattern.clone(), "markdown_url");
+    assert_eq!(results.get(0).unwrap().text.clone(), "https://github.io?foo=bar");
+    assert_eq!(results.get(1).unwrap().pattern.clone(), "markdown_url");
+    assert_eq!(results.get(1).unwrap().text.clone(), "http://cdn.com/img.jpg");
+  }
+
+  #[test]
   fn match_urls() {
     let lines = split("Lorem ipsum https://www.rust-lang.org/tools lorem\n Lorem ipsumhttps://crates.io lorem https://github.io?foo=bar lorem ssh://github.io");
     let custom = [].to_vec();
@@ -334,18 +348,19 @@ mod tests {
 
   #[test]
   fn priority() {
-    let lines = split("Lorem CUSTOM-52463 lorem ISSUE-123 lorem\nLorem /var/fd70b569/9999.log 52463 lorem\n Lorem 973113 lorem 123e4567-e89b-12d3-a456-426655440000 lorem 8888 lorem\n  https://crates.io/23456/fd70b569 lorem");
+    let lines = split("Lorem [link](http://foo.bar) ipsum CUSTOM-52463 lorem ISSUE-123 lorem\nLorem /var/fd70b569/9999.log 52463 lorem\n Lorem 973113 lorem 123e4567-e89b-12d3-a456-426655440000 lorem 8888 lorem\n  https://crates.io/23456/fd70b569 lorem");
     let custom = ["CUSTOM-[0-9]{4,}", "ISSUE-[0-9]{3}"].to_vec();
     let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
-    assert_eq!(results.len(), 8);
-    assert_eq!(results.get(0).unwrap().text.clone(), "CUSTOM-52463");
-    assert_eq!(results.get(1).unwrap().text.clone(), "ISSUE-123");
-    assert_eq!(results.get(2).unwrap().text.clone(), "/var/fd70b569/9999.log");
-    assert_eq!(results.get(3).unwrap().text.clone(), "52463");
-    assert_eq!(results.get(4).unwrap().text.clone(), "973113");
-    assert_eq!(results.get(5).unwrap().text.clone(), "123e4567-e89b-12d3-a456-426655440000");
-    assert_eq!(results.get(6).unwrap().text.clone(), "8888");
-    assert_eq!(results.get(7).unwrap().text.clone(), "https://crates.io/23456/fd70b569");
+    assert_eq!(results.len(), 9);
+    assert_eq!(results.get(0).unwrap().text.clone(), "http://foo.bar");
+    assert_eq!(results.get(1).unwrap().text.clone(), "CUSTOM-52463");
+    assert_eq!(results.get(2).unwrap().text.clone(), "ISSUE-123");
+    assert_eq!(results.get(3).unwrap().text.clone(), "/var/fd70b569/9999.log");
+    assert_eq!(results.get(4).unwrap().text.clone(), "52463");
+    assert_eq!(results.get(5).unwrap().text.clone(), "973113");
+    assert_eq!(results.get(6).unwrap().text.clone(), "123e4567-e89b-12d3-a456-426655440000");
+    assert_eq!(results.get(7).unwrap().text.clone(), "8888");
+    assert_eq!(results.get(8).unwrap().text.clone(), "https://crates.io/23456/fd70b569");
   }
 }
