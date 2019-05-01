@@ -247,7 +247,10 @@ mod tests {
     assert_eq!(results.get(0).unwrap().text.clone(), "fd70b5695");
     assert_eq!(results.get(1).unwrap().text.clone(), "5246ddf");
     assert_eq!(results.get(2).unwrap().text.clone(), "f924213");
-    assert_eq!(results.get(3).unwrap().text.clone(), "973113963b491874ab2e372ee60d4b4cb75f717c");
+    assert_eq!(
+      results.get(3).unwrap().text.clone(),
+      "973113963b491874ab2e372ee60d4b4cb75f717c"
+    );
   }
 
   #[test]
@@ -264,15 +267,22 @@ mod tests {
 
   #[test]
   fn match_markdown_urls() {
-    let lines = split("Lorem ipsum [link](https://github.io?foo=bar) ![](http://cdn.com/img.jpg) lorem");
+    let lines =
+      split("Lorem ipsum [link](https://github.io?foo=bar) ![](http://cdn.com/img.jpg) lorem");
     let custom = [].to_vec();
     let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     assert_eq!(results.len(), 2);
     assert_eq!(results.get(0).unwrap().pattern.clone(), "markdown_url");
-    assert_eq!(results.get(0).unwrap().text.clone(), "https://github.io?foo=bar");
+    assert_eq!(
+      results.get(0).unwrap().text.clone(),
+      "https://github.io?foo=bar"
+    );
     assert_eq!(results.get(1).unwrap().pattern.clone(), "markdown_url");
-    assert_eq!(results.get(1).unwrap().text.clone(), "http://cdn.com/img.jpg");
+    assert_eq!(
+      results.get(1).unwrap().text.clone(),
+      "http://cdn.com/img.jpg"
+    );
   }
 
   #[test]
@@ -282,11 +292,17 @@ mod tests {
     let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     assert_eq!(results.len(), 4);
-    assert_eq!(results.get(0).unwrap().text.clone(), "https://www.rust-lang.org/tools");
+    assert_eq!(
+      results.get(0).unwrap().text.clone(),
+      "https://www.rust-lang.org/tools"
+    );
     assert_eq!(results.get(0).unwrap().pattern.clone(), "url");
     assert_eq!(results.get(1).unwrap().text.clone(), "https://crates.io");
     assert_eq!(results.get(1).unwrap().pattern.clone(), "url");
-    assert_eq!(results.get(2).unwrap().text.clone(), "https://github.io?foo=bar");
+    assert_eq!(
+      results.get(2).unwrap().text.clone(),
+      "https://github.io?foo=bar"
+    );
     assert_eq!(results.get(2).unwrap().pattern.clone(), "url");
     assert_eq!(results.get(3).unwrap().text.clone(), "ssh://github.io");
     assert_eq!(results.get(3).unwrap().pattern.clone(), "url");
@@ -356,11 +372,20 @@ mod tests {
     assert_eq!(results.get(0).unwrap().text.clone(), "http://foo.bar");
     assert_eq!(results.get(1).unwrap().text.clone(), "CUSTOM-52463");
     assert_eq!(results.get(2).unwrap().text.clone(), "ISSUE-123");
-    assert_eq!(results.get(3).unwrap().text.clone(), "/var/fd70b569/9999.log");
+    assert_eq!(
+      results.get(3).unwrap().text.clone(),
+      "/var/fd70b569/9999.log"
+    );
     assert_eq!(results.get(4).unwrap().text.clone(), "52463");
     assert_eq!(results.get(5).unwrap().text.clone(), "973113");
-    assert_eq!(results.get(6).unwrap().text.clone(), "123e4567-e89b-12d3-a456-426655440000");
+    assert_eq!(
+      results.get(6).unwrap().text.clone(),
+      "123e4567-e89b-12d3-a456-426655440000"
+    );
     assert_eq!(results.get(7).unwrap().text.clone(), "8888");
-    assert_eq!(results.get(8).unwrap().text.clone(), "https://crates.io/23456/fd70b569");
+    assert_eq!(
+      results.get(8).unwrap().text.clone(),
+      "https://crates.io/23456/fd70b569"
+    );
   }
 }
