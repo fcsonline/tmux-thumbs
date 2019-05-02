@@ -2,4 +2,8 @@
 
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-tmux bind-key space run-shell "${CURRENT_DIR}/tmux-thumbs.sh"
+DEFAULT_THUMBS_KEY="space"
+THUMBS_KEY=$(tmux show-option -gqv @thumbs-key)
+THUMBS_KEY=${THUMBS_KEY:-$DEFAULT_THUMBS_KEY}
+
+tmux bind-key "$THUMBS_KEY" run-shell "${CURRENT_DIR}/tmux-thumbs.sh"

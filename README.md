@@ -65,6 +65,7 @@ parameters to set your perfect profile.
 
 NOTE: for changes to take effect, you'll need to source again your `.tmux.conf` file.
 
+* [@thumbs-key](#thumbs-key)
 * [@thumbs-alphabet](#thumbs-alphabet)
 * [@thumbs-reverse](#thumbs-reverse)
 * [@thumbs-unique](#thumbs-unique)
@@ -77,6 +78,18 @@ NOTE: for changes to take effect, you'll need to source again your `.tmux.conf` 
 * [@thumbs-hint-bg-color](#thumbs-hint-bg-color)
 * [@thumbs-hint-fg-color](#thumbs-hint-fg-color)
 * [@thumbs-select-fg-color](#thumbs-select-fg-color)
+
+### @thumbs-key
+
+`default: space`
+
+Choose which key is used to enter in thumbs mode.
+
+For example:
+
+```
+set -g @thumbs-key F
+```
 
 ### @thumbs-alphabet
 
