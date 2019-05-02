@@ -220,14 +220,18 @@ mod tests {
 
   #[test]
   fn match_paths() {
-    let lines =
-      split("Lorem /tmp/foo/bar_lol, lorem\n Lorem /var/log/boot-strap.log lorem ../log/kern.log lorem");
+    let lines = split(
+      "Lorem /tmp/foo/bar_lol, lorem\n Lorem /var/log/boot-strap.log lorem ../log/kern.log lorem",
+    );
     let custom = [].to_vec();
     let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
     assert_eq!(results.len(), 3);
     assert_eq!(results.get(0).unwrap().text.clone(), "/tmp/foo/bar_lol");
-    assert_eq!(results.get(1).unwrap().text.clone(), "/var/log/boot-strap.log");
+    assert_eq!(
+      results.get(1).unwrap().text.clone(),
+      "/var/log/boot-strap.log"
+    );
     assert_eq!(results.get(2).unwrap().text.clone(), "../log/kern.log");
   }
 
