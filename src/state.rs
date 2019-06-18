@@ -5,7 +5,7 @@ use std::fmt;
 const EXCLUDE_PATTERNS: [(&'static str, &'static str); 1] =
   [("bash", r"[[:cntrl:]]\[([0-9]{1,2};)?([0-9]{1,2})?m")];
 
-const PATTERNS: [(&'static str, &'static str); 11] = [
+const PATTERNS: [(&'static str, &'static str); 12] = [
   ("markdown_url", r"\[[^]]*\]\(([^)]+)\)"),
   (
     "url",
@@ -21,6 +21,7 @@ const PATTERNS: [(&'static str, &'static str); 11] = [
   ),
   ("sha", r"[0-9a-f]{7,40}"),
   ("ip", r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"),
+  ("ipv6", r"[A-f0-9:]+:+[A-f0-9:]+[%\w\d]+"),
   ("address", r"0x[0-9a-fA-F]+"),
   ("number", r"[0-9]{4,}"),
 ];
@@ -270,6 +271,25 @@ mod tests {
     assert_eq!(results.get(0).unwrap().text.clone(), "127.0.0.1");
     assert_eq!(results.get(1).unwrap().text.clone(), "255.255.10.255");
     assert_eq!(results.get(2).unwrap().text.clone(), "127.0.0.1");
+  }
+
+  #[test]
+  fn match_ipv6s() {
+    let lines = split("Lorem ipsum fe80::2:202:fe4 lorem\n Lorem 2001:67c:670:202:7ba8:5e41:1591:d723 lorem fe80::2:1 lorem ipsum fe80:22:312:fe::1%eth0");
+    let custom = [].to_vec();
+    let results = State::new(&lines, "abcd", &custom).matches(false, false);
+
+    assert_eq!(results.len(), 4);
+    assert_eq!(results.get(0).unwrap().text.clone(), "fe80::2:202:fe4");
+    assert_eq!(
+      results.get(1).unwrap().text.clone(),
+      "2001:67c:670:202:7ba8:5e41:1591:d723"
+    );
+    assert_eq!(results.get(2).unwrap().text.clone(), "fe80::2:1");
+    assert_eq!(
+      results.get(3).unwrap().text.clone(),
+      "fe80:22:312:fe::1%eth0"
+    );
   }
 
   #[test]
