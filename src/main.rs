@@ -105,6 +105,12 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
         .takes_value(true)
         .multiple(true),
     )
+    .arg(
+      Arg::with_name("contrast")
+        .help("Put square brackets around hint for visibility")
+        .long("contrast")
+        .short("c"),
+    )
     .get_matches();
 }
 
@@ -114,6 +120,7 @@ fn main() {
   let position = args.value_of("position").unwrap();
   let reverse = args.is_present("reverse");
   let unique = args.is_present("unique");
+  let contrast = args.is_present("contrast");
   let regexp = if let Some(items) = args.values_of("regexp") {
     items.collect::<Vec<_>>()
   } else {
@@ -146,6 +153,7 @@ fn main() {
       &mut state,
       reverse,
       unique,
+      contrast,
       position,
       select_foreground_color,
       foreground_color,

@@ -78,6 +78,7 @@ NOTE: for changes to take effect, you'll need to source again your `.tmux.conf` 
 * [@thumbs-hint-bg-color](#thumbs-hint-bg-color)
 * [@thumbs-hint-fg-color](#thumbs-hint-fg-color)
 * [@thumbs-select-fg-color](#thumbs-select-fg-color)
+* [@thumbs-contrast](#thumbs-contrast)
 
 ### @thumbs-key
 
@@ -232,6 +233,18 @@ For example:
 
 ```
 set -g @thumbs-select-fg-color red
+```
+
+### @thumbs-contrast
+
+`default: 0`
+
+Displays hint character in square brackets for extra visibility.
+
+For example:
+
+```
+set -g @thumbs-contrast 1
 ```
 
 #### Colors
