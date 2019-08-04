@@ -42,6 +42,7 @@ PARAMS[8]=$(option select-fg-color)
 PARAMS[9]=$(option command)
 PARAMS[10]=$(option upcase-command)
 PARAMS[11]=$(multi regexp)
+PARAMS[12]=$(boolean contrast)
 
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TARGET_RELEASE="/target/release/"
