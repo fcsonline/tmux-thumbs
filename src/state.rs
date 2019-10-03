@@ -13,7 +13,7 @@ const PATTERNS: [(&'static str, &'static str); 12] = [
   ),
   ("diff_a", r"--- a/([^ ]+)"),
   ("diff_b", r"\+\+\+ b/([^ ]+)"),
-  ("path", r"(([.\w-]+)?(/[.\w-]+)+)"),
+  ("path", r"(([.\w\-@]+)?(/[.\w\-@]+)+)"),
   ("color", r"#[0-9a-fA-F]{6}"),
   (
     "uid",
@@ -210,13 +210,14 @@ mod tests {
 
   #[test]
   fn match_bash() {
-    let lines = split("path: [32m/var/log/nginx.log[m\npath: [32mtest/log/nginx.log:32[m");
+    let lines = split("path: [32m/var/log/nginx.log[m\npath: [32mtest/log/nginx-2.log:32[mfolder/.nginx@4df2.log");
     let custom = [].to_vec();
     let results = State::new(&lines, "abcd", &custom).matches(false, false);
 
-    assert_eq!(results.len(), 2);
-    assert_eq!(results.first().unwrap().text, "/var/log/nginx.log");
-    assert_eq!(results.last().unwrap().text, "test/log/nginx.log");
+    assert_eq!(results.len(), 3);
+    assert_eq!(results.get(0).unwrap().text, "/var/log/nginx.log");
+    assert_eq!(results.get(1).unwrap().text, "test/log/nginx-2.log");
+    assert_eq!(results.get(2).unwrap().text, "folder/.nginx@4df2.log");
   }
 
   #[test]
