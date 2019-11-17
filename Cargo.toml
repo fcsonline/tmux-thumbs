@@ -1,6 +1,6 @@
 [package]
 name = "tmux-thumbs"
-version = "0.2.4"
+version = "0.2.5"
 authors = ["Ferran Basora <fcsonline@gmail.com>"]
 edition = "2018"
 description = "A lightning fast version of tmux-fingers, copy/pasting tmux like vimium/vimperator"
