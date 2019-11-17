@@ -5,7 +5,7 @@ use std::fmt;
 const EXCLUDE_PATTERNS: [(&'static str, &'static str); 1] =
   [("bash", r"[[:cntrl:]]\[([0-9]{1,2};)?([0-9]{1,2})?m")];
 
-const PATTERNS: [(&'static str, &'static str); 12] = [
+const PATTERNS: [(&'static str, &'static str); 13] = [
   ("markdown_url", r"\[[^]]*\]\(([^)]+)\)"),
   (
     "url",
@@ -19,6 +19,7 @@ const PATTERNS: [(&'static str, &'static str); 12] = [
     "uid",
     r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
   ),
+  ("ipfs", r"Qm[0-9a-zA-Z]{44}"),
   ("sha", r"[0-9a-f]{7,40}"),
   ("ip", r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"),
   ("ipv6", r"[A-f0-9:]+:+[A-f0-9:]+[%\w\d]+"),
@@ -361,6 +362,19 @@ mod tests {
     assert_eq!(results.get(1).unwrap().text.clone(), "#FF00FF");
     assert_eq!(results.get(2).unwrap().text.clone(), "#00fF05");
     assert_eq!(results.get(3).unwrap().text.clone(), "#abcd00");
+  }
+
+  #[test]
+  fn match_ipfs() {
+    let lines = split("Lorem QmRdbNSxDJBXmssAc9fvTtux4duptMvfSGiGuq6yHAQVKQ lorem Qmfoobar");
+    let custom = [].to_vec();
+    let results = State::new(&lines, "abcd", &custom).matches(false, false);
+
+    assert_eq!(results.len(), 1);
+    assert_eq!(
+      results.get(0).unwrap().text.clone(),
+      "QmRdbNSxDJBXmssAc9fvTtux4duptMvfSGiGuq6yHAQVKQ"
+    );
   }
 
   #[test]

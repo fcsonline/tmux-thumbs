@@ -15,6 +15,7 @@ letter hint to yank the text in your tmux buffer.
 - File paths
 - File in diff
 - Git SHAs
+- IPFS CID's
 - Colors in hex
 - Numbers ( 4+ digits )
 - Hex numbers
