@@ -40,6 +40,7 @@ add-option-param  "command"
 add-option-param  "upcase-command"
 add-multi-param   "regexp"
 add-boolean-param "contrast"
+add-boolean-param "osc52"
 
 # Remove empty arguments from PARAMS.
 # Otherwise, they would choke up tmux-thumbs when passed to it.
