@@ -156,24 +156,24 @@ set @thumbs-regexp-2 '[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2
 
 `default: 'tmux set-buffer {}'`
 
-Choose which command execute when you press a hint.
+Choose which command execute when you press a hint. `tmux-thumbs` will replace `{}` with the picked hint.
 
 For example:
 
 ```
-set -g @thumbs-command 'pbcopy'
+set -g @thumbs-command 'echo {} | pbcopy'
 ```
 
 ### @thumbs-upcase-command
 
 `default: 'tmux paste-buffer'`
 
-Choose which command execute when you press a upcase hint
+Choose which command execute when you press a upcase hint. `tmux-thumbs` will replace `{}` with the picked hint.
 
 For example:
 
 ```
-set -g @thumbs-upcase-command 'pbcopy'
+set -g @thumbs-upcase-command 'echo {} | pbcopy'
 ```
 
 ### @thumbs-bg-color
