@@ -10,9 +10,7 @@ use self::clap::{App, Arg};
 use clap::crate_version;
 use std::process::Command;
 
-fn exec_command(command: String) -> std::process::Output {
-  let args: Vec<_> = command.split(" ").collect();
-
+fn exec_command(args: Vec<&str>) -> std::process::Output {
   return Command::new(args[0])
     .args(&args[1..])
     .output()
@@ -136,13 +134,14 @@ fn main() {
 
   let command = args.value_of("command").unwrap();
   let upcase_command = args.value_of("upcase_command").unwrap();
-  let tmux_subcommand = if let Some(pane) = args.value_of("tmux_pane") {
-    format!(" -t {}", pane)
-  } else {
-    "".to_string()
-  };
 
-  let execution = exec_command(format!("tmux capture-pane -e -J -p{}", tmux_subcommand));
+  let mut capture_command = vec!["tmux", "capture-pane", "-e", "-J", "-p"];
+
+  if let Some(pane) = args.value_of("tmux_pane") {
+    capture_command.extend(vec!["-t", pane].iter().cloned());
+  }
+
+  let execution = exec_command(capture_command);
   let output = String::from_utf8_lossy(&execution.stdout);
   let lines = output.split("\n").collect::<Vec<&str>>();
 
@@ -166,14 +165,22 @@ fn main() {
   };
 
   if let Some(pane) = args.value_of("tmux_pane") {
-    exec_command(format!("tmux swap-pane -t {}", pane));
+    exec_command(vec!["tmux", "swap-pane", "-t", pane]);
   };
 
   if let Some((text, paste)) = selected {
-    exec_command(str::replace(command, "{}", text.as_str()));
+    exec_command(vec![
+      "bash",
+      "-c",
+      str::replace(command, "{}", text.as_str()).as_str(),
+    ]);
 
     if paste {
-      exec_command(upcase_command.to_string());
+      exec_command(vec![
+        "bash",
+        "-c",
+        str::replace(upcase_command, "{}", text.as_str()).as_str(),
+      ]);
     }
   }
 }
