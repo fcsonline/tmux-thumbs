@@ -294,6 +294,25 @@ This is the list of available alphabets:
 - **Arrow navigation:** You can use the arrows to move arround between all matched items.
 - **Auto paste:** If your last typed hint character is uppercase, you are going to pick and paste the desired hint.
 
+## Tmux compatibility
+
+This is the known list of versions of `tmux` compatible with `tmux-thumbs`:
+
+| Version | Compatible |
+|:-------:|:----------:|
+|   3.0a  |      ❓    |
+|   2.9a  |     ✅     |
+|   2.8   |      ❓    |
+|   2.7   |      ❓    |
+|   2.6   |     ✅     |
+|   2.5   |      ❓    |
+|   2.4   |      ❓    |
+|   2.3   |      ❓    |
+|   1.8   |      ❓    |
+|   1.7   |      ❓    |
+
+If you can check hat `tmux-thumbs` is or is not compatible with some specific version of `tmux`, let me know.
+
 ## Background
 
 As I said, this project is based in [tmux-fingers](https://github.com/Morantron/tmux-fingers). Morantron did an extraordinary job, building all necessary pieces in Bash to achieve the text picker behaviour. He only deserves my gratitude for all the time I have been using [tmux-fingers](https://github.com/Morantron/tmux-fingers).
