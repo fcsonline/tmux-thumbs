@@ -301,7 +301,7 @@ This is the known list of versions of `tmux` compatible with `tmux-thumbs`:
 | Version | Compatible |
 |:-------:|:----------:|
 |   3.0a  |      ❓    |
-|   2.9a  |     ✅     |
+|   2.9a  |      ⚠️     |
 |   2.8   |      ❓    |
 |   2.7   |      ❓    |
 |   2.6   |     ✅     |
