@@ -166,7 +166,7 @@ set -g @thumbs-command 'echo {} | pbcopy'
 
 ### @thumbs-upcase-command
 
-`default: 'tmux paste-buffer'`
+`default: 'tmux set-buffer {} && tmux paste-buffer'`
 
 Choose which command execute when you press a upcase hint. `tmux-thumbs` will replace `{}` with the picked hint.
 
