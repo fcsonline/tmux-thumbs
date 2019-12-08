@@ -93,7 +93,7 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
       Arg::with_name("upcase_command")
         .help("Upcase command")
         .long("upcase-command")
-        .default_value("tmux paste-buffer"),
+        .default_value("tmux set-buffer {} && tmux paste-buffer"),
     )
     .arg(
       Arg::with_name("regexp")
@@ -168,19 +168,13 @@ fn main() {
     exec_command(vec!["tmux", "swap-pane", "-t", pane]);
   };
 
-  if let Some((text, paste)) = selected {
-    exec_command(vec![
-      "bash",
-      "-c",
-      str::replace(command, "{}", text.as_str()).as_str(),
-    ]);
+  if let Some((text, upcase)) = selected {
+    let final_command = if upcase {
+      str::replace(upcase_command, "{}", text.as_str())
+    } else {
+      str::replace(command, "{}", text.as_str())
+    };
 
-    if paste {
-      exec_command(vec![
-        "bash",
-        "-c",
-        str::replace(upcase_command, "{}", text.as_str()).as_str(),
-      ]);
-    }
+    exec_command(vec!["bash", "-c", final_command.as_str()]);
   }
 }
