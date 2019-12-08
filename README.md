@@ -149,8 +149,8 @@ Add extra patterns to match. This paramenter can have multiple instances.
 For example:
 
 ```
-set @thumbs-regexp-1 '[a-z]+@[a-z]+.com' # Match emails
-set @thumbs-regexp-2 '[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:' # Match MAC addresses
+set -g @thumbs-regexp-1 '[a-z]+@[a-z]+.com' # Match emails
+set -g @thumbs-regexp-2 '[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:' # Match MAC addresses
 ```
 
 ### @thumbs-command

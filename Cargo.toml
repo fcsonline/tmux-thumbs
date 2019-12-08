@@ -12,3 +12,11 @@ license = "MIT"
 rustbox = "0.11.0"
 regex = "1.1.2"
 clap = "2.32.0"
+
+[[bin]]
+name = "thumbs"
+path = "src/main.rs"
+
+[[bin]]
+name = "tmux-thumbs"
+path = "src/swapper.rs"

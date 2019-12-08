@@ -8,17 +8,10 @@ mod view;
 
 use self::clap::{App, Arg};
 use clap::crate_version;
-use std::process::Command;
-
-fn exec_command(args: Vec<&str>) -> std::process::Output {
-  return Command::new(args[0])
-    .args(&args[1..])
-    .output()
-    .expect("Couldn't run it");
-}
+use std::io::{self, Read};
 
 fn app_args<'a>() -> clap::ArgMatches<'a> {
-  return App::new("tmux-thumbs")
+  return App::new("thumbs")
     .version(crate_version!())
     .about("A lightning fast version of tmux-fingers, copy/pasting tmux like vimium/vimperator")
     .arg(
@@ -27,6 +20,13 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
         .long("alphabet")
         .short("a")
         .default_value("qwerty"),
+    )
+    .arg(
+      Arg::with_name("format")
+        .help("Specifies the out format for the picked hint. (%U: Upcase, %H: Hint)")
+        .long("format")
+        .short("f")
+        .default_value("%H"),
     )
     .arg(
       Arg::with_name("foreground_color")
@@ -84,24 +84,6 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
         .short("p"),
     )
     .arg(
-      Arg::with_name("tmux_pane")
-        .help("Get this tmux pane as reference pane")
-        .long("tmux-pane")
-        .takes_value(true),
-    )
-    .arg(
-      Arg::with_name("command")
-        .help("Pick command")
-        .long("command")
-        .default_value("tmux set-buffer {}"),
-    )
-    .arg(
-      Arg::with_name("upcase_command")
-        .help("Upcase command")
-        .long("upcase-command")
-        .default_value("tmux set-buffer {} && tmux paste-buffer"),
-    )
-    .arg(
       Arg::with_name("regexp")
         .help("Use this regexp as extra pattern to match")
         .long("regexp")
@@ -120,6 +102,7 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
 
 fn main() {
   let args = app_args();
+  let format = args.value_of("format").unwrap();
   let alphabet = args.value_of("alphabet").unwrap();
   let position = args.value_of("position").unwrap();
   let reverse = args.is_present("reverse");
@@ -140,17 +123,12 @@ fn main() {
   let select_background_color =
     colors::get_color(args.value_of("select_background_color").unwrap());
 
-  let command = args.value_of("command").unwrap();
-  let upcase_command = args.value_of("upcase_command").unwrap();
+  let stdin = io::stdin();
+  let mut handle = stdin.lock();
+  let mut output = String::new();
 
-  let mut capture_command = vec!["tmux", "capture-pane", "-e", "-J", "-p"];
+  handle.read_to_string(&mut output).unwrap();
 
-  if let Some(pane) = args.value_of("tmux_pane") {
-    capture_command.extend(vec!["-t", pane].iter().cloned());
-  }
-
-  let execution = exec_command(capture_command);
-  let output = String::from_utf8_lossy(&execution.stdout);
   let lines = output.split("\n").collect::<Vec<&str>>();
 
   let mut state = state::State::new(&lines, alphabet, &regexp);
@@ -173,17 +151,20 @@ fn main() {
     viewbox.present()
   };
 
-  if let Some(pane) = args.value_of("tmux_pane") {
-    exec_command(vec!["tmux", "swap-pane", "-t", pane]);
-  };
-
   if let Some((text, upcase)) = selected {
-    let final_command = if upcase {
-      str::replace(upcase_command, "{}", text.as_str())
+    let mut output = format.to_string();
+
+    let upcase_value = if upcase {
+      "true"
     } else {
-      str::replace(command, "{}", text.as_str())
+      "false"
     };
 
-    exec_command(vec!["bash", "-c", final_command.as_str()]);
+    output = str::replace(&output, "%U", upcase_value);
+    output = str::replace(&output, "%H", text.as_str());
+
+    print!("{}", output);
+  } else {
+    ::std::process::exit(1);
   }
 }
