@@ -79,6 +79,7 @@ NOTE: for changes to take effect, you'll need to source again your `.tmux.conf` 
 * [@thumbs-hint-bg-color](#thumbs-hint-bg-color)
 * [@thumbs-hint-fg-color](#thumbs-hint-fg-color)
 * [@thumbs-select-fg-color](#thumbs-select-fg-color)
+* [@thumbs-select-bg-color](#thumbs-select-bg-color)
 * [@thumbs-contrast](#thumbs-contrast)
 
 ### @thumbs-key
@@ -192,7 +193,7 @@ set -g @thumbs-bg-color blue
 
 `default: green`
 
-Sets the foregroud color for matches
+Sets the foreground color for matches
 
 For example:
 
@@ -216,7 +217,7 @@ set -g @thumbs-hint-bg-color blue
 
 `default: yellow`
 
-Sets the foregroud color for hints
+Sets the foreground color for hints
 
 For example:
 
@@ -228,12 +229,24 @@ set -g @thumbs-hint-fg-color green
 
 `default: blue`
 
-Sets the foregroud color for selection
+Sets the foreground color for selection
 
 For example:
 
 ```
 set -g @thumbs-select-fg-color red
+```
+
+### @thumbs-select-bg-color
+
+`default: black`
+
+Sets the background color for selection
+
+For example:
+
+```
+set -g @thumbs-select-bg-color red
 ```
 
 ### @thumbs-contrast
