@@ -54,9 +54,15 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
     )
     .arg(
       Arg::with_name("select_foreground_color")
-        .help("Sets the foregroud color for selection")
+        .help("Sets the foreground color for selection")
         .long("select-fg-color")
         .default_value("blue"),
+    )
+    .arg(
+      Arg::with_name("select_background_color")
+        .help("Sets the background color for selection")
+        .long("select-bg-color")
+        .default_value("black"),
     )
     .arg(
       Arg::with_name("reverse")
@@ -131,6 +137,8 @@ fn main() {
   let hint_background_color = colors::get_color(args.value_of("hint_background_color").unwrap());
   let select_foreground_color =
     colors::get_color(args.value_of("select_foreground_color").unwrap());
+  let select_background_color =
+    colors::get_color(args.value_of("select_background_color").unwrap());
 
   let command = args.value_of("command").unwrap();
   let upcase_command = args.value_of("upcase_command").unwrap();
@@ -155,6 +163,7 @@ fn main() {
       contrast,
       position,
       select_foreground_color,
+      select_background_color,
       foreground_color,
       background_color,
       hint_foreground_color,
