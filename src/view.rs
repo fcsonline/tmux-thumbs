@@ -12,6 +12,7 @@ pub struct View<'a> {
   contrast: bool,
   position: &'a str,
   select_foreground_color: Color,
+  select_background_color: Color,
   foreground_color: Color,
   background_color: Color,
   hint_background_color: Color,
@@ -26,6 +27,7 @@ impl<'a> View<'a> {
     contrast: bool,
     position: &'a str,
     select_foreground_color: Color,
+    select_background_color: Color,
     foreground_color: Color,
     background_color: Color,
     hint_foreground_color: Color,
@@ -39,6 +41,7 @@ impl<'a> View<'a> {
       contrast: contrast,
       position: position,
       select_foreground_color: select_foreground_color,
+      select_background_color: select_background_color,
       foreground_color: foreground_color,
       background_color: background_color,
       hint_foreground_color: hint_foreground_color,
@@ -117,6 +120,11 @@ impl<'a> View<'a> {
         } else {
           self.foreground_color
         };
+        let selected_background_color = if selected == Some(mat) {
+          self.select_background_color
+        } else {
+          self.background_color
+        };
 
         // Find long utf sequences and extract it from mat.x
         let line = &self.state.lines[mat.y as usize];
@@ -130,7 +138,7 @@ impl<'a> View<'a> {
           mat.y as usize,
           rustbox::RB_NORMAL,
           selected_color,
-          self.background_color,
+          selected_background_color,
           &text,
         );
 
@@ -227,6 +235,7 @@ mod tests {
       contrast: false,
       position: &"",
       select_foreground_color: rustbox::Color::Default,
+      select_background_color: rustbox::Color::Default,
       foreground_color: rustbox::Color::Default,
       background_color: rustbox::Color::Default,
       hint_background_color: rustbox::Color::Default,

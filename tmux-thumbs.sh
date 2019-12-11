@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-source ~/.bash_profile
+[ -f ~/.bash_profile ] && source ~/.bash_profile
 
 PARAMS=()
 
@@ -36,6 +36,7 @@ add-option-param  "bg-color"
 add-option-param  "hint-bg-color"
 add-option-param  "hint-fg-color"
 add-option-param  "select-fg-color"
+add-option-param  "select-bg-color"
 add-option-param  "command"
 add-option-param  "upcase-command"
 add-multi-param   "regexp"
