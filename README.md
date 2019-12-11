@@ -173,7 +173,7 @@ Choose which command execute when you press a upcase hint. `tmux-thumbs` will re
 For example:
 
 ```
-set -g @thumbs-upcase-command 'echo {} | pbcopy'
+set -g @thumbs-upcase-command 'echo -n {} | pbcopy'
 ```
 
 ### @thumbs-bg-color
