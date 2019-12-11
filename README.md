@@ -161,7 +161,7 @@ Choose which command execute when you press a hint. `tmux-thumbs` will replace `
 For example:
 
 ```
-set -g @thumbs-command 'echo {} | pbcopy'
+set -g @thumbs-command 'echo -n {} | pbcopy'
 ```
 
 ### @thumbs-upcase-command
