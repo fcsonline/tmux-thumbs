@@ -65,6 +65,12 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
         .default_value("black"),
     )
     .arg(
+      Arg::with_name("multi")
+        .help("Enable multi-selection")
+        .long("multi")
+        .short("m"),
+    )
+    .arg(
       Arg::with_name("reverse")
         .help("Reverse the order for assigned hints")
         .long("reverse")
@@ -105,6 +111,7 @@ fn main() {
   let format = args.value_of("format").unwrap();
   let alphabet = args.value_of("alphabet").unwrap();
   let position = args.value_of("position").unwrap();
+  let multi = args.is_present("multi");
   let reverse = args.is_present("reverse");
   let unique = args.is_present("unique");
   let contrast = args.is_present("contrast");
@@ -136,6 +143,7 @@ fn main() {
   let selected = {
     let mut viewbox = view::View::new(
       &mut state,
+      multi,
       reverse,
       unique,
       contrast,
@@ -151,19 +159,21 @@ fn main() {
     viewbox.present()
   };
 
-  if let Some((text, upcase)) = selected {
-    let mut output = format.to_string();
+  if !selected.is_empty() {
+    for (text, upcase) in selected.iter() {
+      let mut output = format.to_string();
 
-    let upcase_value = if upcase {
-      "true"
-    } else {
-      "false"
-    };
+      let upcase_value = if *upcase { "true" } else { "false" };
 
-    output = str::replace(&output, "%U", upcase_value);
-    output = str::replace(&output, "%H", text.as_str());
+      output = str::replace(&output, "%U", upcase_value);
+      output = str::replace(&output, "%H", text.as_str());
 
-    print!("{}", output);
+      if multi {
+        println!("{}", output);
+      } else {
+        print!("{}", output);
+      }
+    }
   } else {
     ::std::process::exit(1);
   }

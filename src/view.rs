@@ -7,6 +7,7 @@ use std::default::Default;
 pub struct View<'a> {
   state: &'a mut state::State<'a>,
   skip: usize,
+  multi: bool,
   reverse: bool,
   unique: bool,
   contrast: bool,
@@ -22,6 +23,7 @@ pub struct View<'a> {
 impl<'a> View<'a> {
   pub fn new(
     state: &'a mut state::State<'a>,
+    multi: bool,
     reverse: bool,
     unique: bool,
     contrast: bool,
@@ -36,6 +38,7 @@ impl<'a> View<'a> {
     View {
       state: state,
       skip: 0,
+      multi: multi,
       reverse: reverse,
       unique: unique,
       contrast: contrast,
@@ -71,7 +74,7 @@ impl<'a> View<'a> {
     text
   }
 
-  pub fn present(&mut self) -> Option<(String, bool)> {
+  pub fn present(&mut self) -> Vec<(String, bool)> {
     let mut rustbox = match RustBox::init(Default::default()) {
       Result::Ok(v) => v,
       Result::Err(e) => panic!("{}", e),
@@ -88,6 +91,7 @@ impl<'a> View<'a> {
       .unwrap()
       .clone();
     let mut selected;
+    let mut chosen = vec![];
 
     self.skip = if self.reverse { matches.len() - 1 } else { 0 };
 
@@ -167,10 +171,20 @@ impl<'a> View<'a> {
       match rustbox.poll_event(false) {
         Ok(rustbox::Event::KeyEvent(key)) => match key {
           Key::Esc => {
-            break;
+            if self.multi && !typed_hint.is_empty() {
+              typed_hint.clear();
+            } else {
+              break;
+            }
           }
           Key::Enter => match matches.iter().enumerate().find(|&h| h.0 == self.skip) {
-            Some(hm) => return Some((hm.1.text.to_string(), false)),
+            Some(hm) => {
+              chosen.push((hm.1.text.to_string(), false));
+
+              if !self.multi {
+                return chosen;
+              }
+            }
             _ => panic!("Match not found?"),
           },
           Key::Up => {
@@ -186,6 +200,10 @@ impl<'a> View<'a> {
             self.next(matches.len() - 1);
           }
           Key::Char(ch) => {
+            if ch == ' ' && self.multi {
+              return chosen;
+            }
+
             let key = ch.to_string();
             let lower_key = key.to_lowercase();
 
@@ -195,9 +213,17 @@ impl<'a> View<'a> {
               .iter()
               .find(|mat| mat.hint == Some(typed_hint.clone()))
             {
-              Some(mat) => return Some((mat.text.to_string(), key != lower_key)),
+              Some(mat) => {
+                chosen.push((mat.text.to_string(), key != lower_key));
+
+                if self.multi {
+                  typed_hint.clear();
+                } else {
+                  return chosen;
+                }
+              }
               None => {
-                if typed_hint.len() >= longest_hint.len() {
+                if !self.multi && typed_hint.len() >= longest_hint.len() {
                   break;
                 }
               }
@@ -210,7 +236,7 @@ impl<'a> View<'a> {
       }
     }
 
-    None
+    chosen
   }
 }
 
@@ -230,6 +256,7 @@ mod tests {
     let mut view = View {
       state: &mut state,
       skip: 0,
+      multi: false,
       reverse: false,
       unique: false,
       contrast: false,
