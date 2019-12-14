@@ -13,7 +13,7 @@ use std::io::{self, Read};
 fn app_args<'a>() -> clap::ArgMatches<'a> {
   return App::new("thumbs")
     .version(crate_version!())
-    .about("A lightning fast version of tmux-fingers, copy/pasting tmux like vimium/vimperator")
+    .about("A lightning fast version copy/pasting like vimium/vimperator")
     .arg(
       Arg::with_name("alphabet")
         .help("Sets the alphabet")
