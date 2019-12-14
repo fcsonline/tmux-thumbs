@@ -306,6 +306,7 @@ This is the list of available alphabets:
 
 - **Arrow navigation:** You can use the arrows to move arround between all matched items.
 - **Auto paste:** If your last typed hint character is uppercase, you are going to pick and paste the desired hint.
+- **Multi selection:** If you run thumb with multi selection mode you will be able to choose multiple hints pressing the desired letter and `Space` to finalize the selection.
 
 ## Tmux compatibility
 
@@ -368,6 +369,14 @@ If you want to enjoy terminal hints, you can do things like this without `tmux`:
 ```
 > alias pick='thumbs -u -r | xsel --clipboard -i'
 > git log | pick
+```
+
+Or multi selection:
+
+```
+> git log | thumbs -m
+1df9fa69c8831ac042c6466af81e65402ee2a007
+4897dc4ecbd2ac90b17de95e00e9e75bb540e37f
 ```
 
 ## Background
