@@ -326,6 +326,50 @@ This is the known list of versions of `tmux` compatible with `tmux-thumbs`:
 
 If you can check hat `tmux-thumbs` is or is not compatible with some specific version of `tmux`, let me know.
 
+## Standalone `thumbs`
+
+This project started as a `tmux` plugin but after reviewing it with some
+friends we decided to explore all the possibilities of decopling thumbs from
+`tmux`. Standalone `thumbs` has some similarities to [FZF](https://github.com/junegunn/fzf).
+
+```
+thumbs 0.3.0
+A lightning fast version copy/pasting like vimium/vimperator
+
+USAGE:
+    thumbs [FLAGS] [OPTIONS]
+
+FLAGS:
+    -c, --contrast    Put square brackets around hint for visibility
+    -h, --help        Prints help information
+    -m, --multi       Enable multi-selection
+    -r, --reverse     Reverse the order for assigned hints
+    -u, --unique      Don't show duplicated hints for the same match
+    -V, --version     Prints version information
+
+OPTIONS:
+    -a, --alphabet <alphabet>                          Sets the alphabet [default: qwerty]
+        --bg-color <background_color>                  Sets the background color for matches [default: black]
+        --fg-color <foreground_color>                  Sets the foregroud color for matches [default: green]
+    -f, --format <format>
+            Specifies the out format for the picked hint. (%U: Upcase, %H: Hint) [default: %H]
+
+        --hint-bg-color <hint_background_color>        Sets the background color for hints [default: black]
+        --hint-fg-color <hint_foreground_color>        Sets the foregroud color for hints [default: yellow]
+    -p, --position <position>                          Hint position [default: left]
+    -x, --regexp <regexp>...                           Use this regexp as extra pattern to match
+        --select-bg-color <select_background_color>    Sets the background color for selection [default: black]
+        --select-fg-color <select_foreground_color>    Sets the foreground color for selection [default: blue]
+```
+
+
+If you want to enjoy terminal hints, you can do things like this without `tmux`:
+
+```
+> alias pick='thumbs -u -r | xsel --clipboard -i'
+> git log | pick
+```
+
 ## Background
 
 As I said, this project is based in [tmux-fingers](https://github.com/Morantron/tmux-fingers). Morantron did an extraordinary job, building all necessary pieces in Bash to achieve the text picker behaviour. He only deserves my gratitude for all the time I have been using [tmux-fingers](https://github.com/Morantron/tmux-fingers).
@@ -335,6 +379,12 @@ During a [Fosdem](https://fosdem.org/) conf, we had the idea to rewrite it to an
 During those days another alternative appeared, called [tmux-picker](https://github.com/RTBHOUSE/tmux-picker), implemented in python and reusing many parts from [tmux-fingers](https://github.com/Morantron/tmux-fingers). It was nice, because it was fast and added original terminal color support.
 
 I was curious to know if this was possible to be written in [Rust](https://www.rust-lang.org/), and soon I realized that was something doable. The ability to implement tests for all critic parts of the application give you a great confidence about it. On the other hand, Rust has an awesome community that lets you achieve this kind of project in a short period of time.
+
+## Roadmap
+
+- [X] Support multi selection
+- [X] Decouple `tmux-thumbs` from `tmux`
+- [ ] Code [Kitty](https://github.com/kovidgoyal/kitty) plugin, now that `thumbs` can run standalone
 
 ## Contribute
 
