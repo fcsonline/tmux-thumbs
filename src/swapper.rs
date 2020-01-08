@@ -4,6 +4,7 @@ use self::clap::{App, Arg};
 use clap::crate_version;
 use regex::Regex;
 use std::process::Command;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 trait Executor {
   fn execute(&mut self, args: Vec<String>) -> String;
@@ -29,7 +30,9 @@ impl Executor for RealShell {
 
     self.executed = Some(args);
 
-    String::from_utf8_lossy(&execution.stdout).into()
+    let output: String = String::from_utf8_lossy(&execution.stdout).into();
+
+    output.trim_end().to_string()
   }
 
   fn last_executed(&self) -> Option<Vec<String>> {
@@ -38,26 +41,39 @@ impl Executor for RealShell {
 }
 
 const TMP_FILE: &str = "/tmp/thumbs-last";
-const TMUX_SIGNAL: &str = "thumbs-finished";
 
 pub struct Swapper<'a> {
   executor: Box<&'a mut dyn Executor>,
+  dir: String,
   command: String,
   upcase_command: String,
   active_pane_id: Option<String>,
   thumbs_pane_id: Option<String>,
   content: Option<String>,
+  signal: String,
 }
 
 impl<'a> Swapper<'a> {
-  fn new(executor: Box<&'a mut dyn Executor>, command: String, upcase_command: String) -> Swapper {
+  fn new(
+    executor: Box<&'a mut dyn Executor>,
+    dir: String,
+    command: String,
+    upcase_command: String,
+  ) -> Swapper {
+    let since_the_epoch = SystemTime::now()
+      .duration_since(UNIX_EPOCH)
+      .expect("Time went backwards");
+    let signal = format!("thumbs-finished-{}", since_the_epoch.as_secs());
+
     Swapper {
       executor: executor,
+      dir: dir,
       command: command,
       upcase_command: upcase_command,
       active_pane_id: None,
       thumbs_pane_id: None,
       content: None,
+      signal: signal,
     }
   }
 
@@ -136,15 +152,21 @@ impl<'a> Swapper<'a> {
       })
       .collect::<Vec<String>>();
 
-    let pane_command = format!("tmux capture-pane -t \"{}\" -p | ./target/release/thumbs -f '%U:%H' {} | tee {}; tmux wait-for -S {}", self.active_pane_id.clone().unwrap(), args.join(" "), TMP_FILE, TMUX_SIGNAL);
+    let active_pane_id = self.active_pane_id.as_mut().unwrap().clone();
+
+    // NOTE: For debugging add echo $PWD && sleep 5 after tee
+    let pane_command = format!("tmux capture-pane -t {} -p | {}/target/release/thumbs -f '%U:%H' {} | tee {}; tmux swap-pane -t {}; tmux wait-for -S {}", active_pane_id, self.dir, args.join(" "), TMP_FILE, active_pane_id, self.signal);
+
     let thumbs_command = vec![
       "tmux",
       "new-window",
       "-P",
+      "-d",
       "-n",
       "[thumbs]",
       pane_command.as_str(),
     ];
+
     let params: Vec<String> = thumbs_command.iter().map(|arg| arg.to_string()).collect();
 
     self.thumbs_pane_id = Some(self.executor.execute(params));
@@ -169,7 +191,7 @@ impl<'a> Swapper<'a> {
   }
 
   pub fn wait_thumbs(&mut self) {
-    let wait_command = vec!["tmux", "wait-for", TMUX_SIGNAL];
+    let wait_command = vec!["tmux", "wait-for", self.signal.as_str()];
     let params = wait_command.iter().map(|arg| arg.to_string()).collect();
 
     self.executor.execute(params);
@@ -242,7 +264,12 @@ mod tests {
   fn retrieve_active_pane() {
     let last_command_outputs = vec!["%97:active\n%106:nope\n%107:nope\n".to_string()];
     let mut executor = TestShell::new(last_command_outputs);
-    let mut swapper = Swapper::new(Box::new(&mut executor), "".to_string(), "".to_string());
+    let mut swapper = Swapper::new(
+      Box::new(&mut executor),
+      "".to_string(),
+      "".to_string(),
+      "".to_string(),
+    );
 
     swapper.capture_active_pane();
 
@@ -258,7 +285,12 @@ mod tests {
       "%106:nope\n%98:active\n%107:nope\n".to_string(),
     ];
     let mut executor = TestShell::new(last_command_outputs);
-    let mut swapper = Swapper::new(Box::new(&mut executor), "".to_string(), "".to_string());
+    let mut swapper = Swapper::new(
+      Box::new(&mut executor),
+      "".to_string(),
+      "".to_string(),
+      "".to_string(),
+    );
 
     swapper.capture_active_pane();
     swapper.execute_thumbs();
@@ -274,6 +306,12 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
     .version(crate_version!())
     .about("A lightning fast version of tmux-fingers, copy/pasting tmux like vimium/vimperator")
     .arg(
+      Arg::with_name("dir")
+        .help("Directory where to execute thumbs")
+        .long("dir")
+        .default_value(""),
+    )
+    .arg(
       Arg::with_name("command")
         .help("Pick command")
         .long("command")
@@ -288,14 +326,16 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
     .get_matches();
 }
 
-fn main() {
+fn main() -> std::io::Result<()> {
   let args = app_args();
+  let dir = args.value_of("dir").unwrap();
   let command = args.value_of("command").unwrap();
   let upcase_command = args.value_of("upcase_command").unwrap();
 
   let mut executor = RealShell::new();
   let mut swapper = Swapper::new(
     Box::new(&mut executor),
+    dir.to_string(),
     command.to_string(),
     upcase_command.to_string(),
   );
@@ -307,4 +347,5 @@ fn main() {
   swapper.retrieve_content();
   swapper.destroy_content();
   swapper.execute_command();
+  Ok(())
 }
