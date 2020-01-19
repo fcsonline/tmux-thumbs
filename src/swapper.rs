@@ -48,6 +48,9 @@ pub struct Swapper<'a> {
   command: String,
   upcase_command: String,
   active_pane_id: Option<String>,
+  active_pane_height: Option<i32>,
+  active_pane_scroll_position: Option<i32>,
+  active_pane_in_copy_mode: Option<String>,
   thumbs_pane_id: Option<String>,
   content: Option<String>,
   signal: String,
@@ -71,6 +74,9 @@ impl<'a> Swapper<'a> {
       command: command,
       upcase_command: upcase_command,
       active_pane_id: None,
+      active_pane_height: None,
+      active_pane_scroll_position: None,
+      active_pane_in_copy_mode: None,
       thumbs_pane_id: None,
       content: None,
       signal: signal,
@@ -81,26 +87,49 @@ impl<'a> Swapper<'a> {
     let active_command = vec![
       "tmux",
       "list-panes",
+      "-s",
       "-F",
-      "#{pane_id}:#{?pane_active,active,nope}",
+      "#{pane_id}:#{?pane_in_mode,1,0}:#{pane_height}:#{scroll_position}:#{?pane_active,active,nope}",
     ];
+
     let output = self
       .executor
       .execute(active_command.iter().map(|arg| arg.to_string()).collect());
+
     let lines: Vec<&str> = output.split("\n").collect();
     let chunks: Vec<Vec<&str>> = lines
       .into_iter()
       .map(|line| line.split(":").collect())
       .collect();
 
-    let chunk = chunks
+    let active_pane = chunks
       .iter()
-      .find(|&chunks| *chunks.iter().nth(1).unwrap() == "active")
+      .find(|&chunks| *chunks.iter().nth(4).unwrap() == "active")
       .expect("Unable to find active pane");
 
-    let pane_id = chunk.iter().nth(0).unwrap().to_string();
+    let pane_id = active_pane.iter().nth(0).unwrap();
+    let pane_in_copy_mode = active_pane.iter().nth(1).unwrap().to_string();
 
-    self.active_pane_id = Some(pane_id);
+    self.active_pane_id = Some(pane_id.to_string());
+    self.active_pane_in_copy_mode = Some(pane_in_copy_mode);
+
+    if self.active_pane_in_copy_mode.clone().unwrap() == "1" {
+      let pane_height = active_pane
+        .iter()
+        .nth(2)
+        .unwrap()
+        .parse()
+        .expect("Unable to retrieve pane height");
+      let pane_scroll_position = active_pane
+        .iter()
+        .nth(3)
+        .unwrap()
+        .parse()
+        .expect("Unable to retrieve pane scroll");
+
+      self.active_pane_height = Some(pane_height);
+      self.active_pane_scroll_position = Some(pane_scroll_position);
+    }
   }
 
   pub fn execute_thumbs(&mut self) {
@@ -154,8 +183,34 @@ impl<'a> Swapper<'a> {
 
     let active_pane_id = self.active_pane_id.as_mut().unwrap().clone();
 
+    let scroll_params = if self.active_pane_in_copy_mode.is_some() {
+      if let (Some(pane_height), Some(scroll_position)) = (
+        self.active_pane_scroll_position,
+        self.active_pane_scroll_position,
+      ) {
+        format!(
+          " -S {} -E {}",
+          -scroll_position,
+          pane_height - scroll_position - 1
+        )
+      } else {
+        "".to_string()
+      }
+    } else {
+      "".to_string()
+    };
+
     // NOTE: For debugging add echo $PWD && sleep 5 after tee
-    let pane_command = format!("tmux capture-pane -t {} -p | {}/target/release/thumbs -f '%U:%H' {} | tee {}; tmux swap-pane -t {}; tmux wait-for -S {}", active_pane_id, self.dir, args.join(" "), TMP_FILE, active_pane_id, self.signal);
+    let pane_command = format!(
+        "tmux capture-pane -t {} -p{} | {}/target/release/thumbs -f '%U:%H' {} | tee {}; tmux swap-pane -t {}; tmux wait-for -S {}",
+        active_pane_id,
+        scroll_params,
+        self.dir,
+        args.join(" "),
+        TMP_FILE,
+        active_pane_id,
+        self.signal
+    );
 
     let thumbs_command = vec![
       "tmux",
@@ -262,7 +317,8 @@ mod tests {
 
   #[test]
   fn retrieve_active_pane() {
-    let last_command_outputs = vec!["%97:active\n%106:nope\n%107:nope\n".to_string()];
+    let last_command_outputs =
+      vec!["%97:100:24:1:active\n%106:100:24:1:nope\n%107:100:24:1:nope\n".to_string()];
     let mut executor = TestShell::new(last_command_outputs);
     let mut swapper = Swapper::new(
       Box::new(&mut executor),
@@ -282,7 +338,7 @@ mod tests {
       "".to_string(),
       "%100".to_string(),
       "".to_string(),
-      "%106:nope\n%98:active\n%107:nope\n".to_string(),
+      "%106:100:24:1:nope\n%98:100:24:1:active\n%107:100:24:1:nope\n".to_string(),
     ];
     let mut executor = TestShell::new(last_command_outputs);
     let mut swapper = Swapper::new(
