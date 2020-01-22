@@ -87,7 +87,6 @@ impl<'a> Swapper<'a> {
     let active_command = vec![
       "tmux",
       "list-panes",
-      "-s",
       "-F",
       "#{pane_id}:#{?pane_in_mode,1,0}:#{pane_height}:#{scroll_position}:#{?pane_active,active,nope}",
     ];
