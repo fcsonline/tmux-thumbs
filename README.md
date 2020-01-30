@@ -331,7 +331,13 @@ If you can check hat `tmux-thumbs` is or is not compatible with some specific ve
 
 This project started as a `tmux` plugin but after reviewing it with some
 friends we decided to explore all the possibilities of decopling thumbs from
-`tmux`. Standalone `thumbs` has some similarities to [FZF](https://github.com/junegunn/fzf).
+`tmux`. You can install it with a simple command:
+
+```
+cargo install thumbs
+```
+
+And those are all available options:
 
 ```
 thumbs 0.3.0
@@ -378,6 +384,8 @@ Or multi selection:
 1df9fa69c8831ac042c6466af81e65402ee2a007
 4897dc4ecbd2ac90b17de95e00e9e75bb540e37f
 ```
+
+Standalone `thumbs` has some similarities to [FZF](https://github.com/junegunn/fzf).
 
 ## Background
 
