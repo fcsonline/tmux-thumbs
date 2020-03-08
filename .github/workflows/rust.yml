@@ -1,0 +1,38 @@
+name: Rust
+
+on: [push]
+
+jobs:
+  build-mac:
+
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Build
+      run: cargo bundle --release
+
+    - uses: actions/upload-artifact@v1
+      with:
+        name: thumbs-macos.zip
+        path: ./target/release/thumbs
+
+  build-linux:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run:  |
+        sudo apt-get install -y curl gnupg ca-certificates git gcc-multilib g++-multilib cmake libssl-dev pkg-config python
+
+    - name: Build
+      run: cargo build --release
+
+    - uses: actions/upload-artifact@v1
+      with:
+        name: thumbs-linux.zip
+        path: ./target/release/thumbs
