@@ -59,6 +59,17 @@ Reload TMUX conf by running:
 tmux source-file ~/.tmux.conf
 ```
 
+## Using Tmux Plugin Manager
+
+You can add this line to your list of [TPM](https://github.com/tmux-plugins/tpm) plugins in `.tmux.conf`:
+
+```
+set -g @plugin 'fcsonline/tmux-thumbs'
+```
+
+To be able to install the plugin just hit <kbd>prefix</kbd> + <kbd>I</kbd>. You should now be able to use
+the plugin!
+
 ## Configuration
 
 If you want to customize how is shown your tmux-thumbs hints those all available
