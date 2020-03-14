@@ -3,20 +3,21 @@ name: Rust
 on: [push]
 
 jobs:
-  build-mac:
+  # Disabled until this issue is resolved: https://github.com/fcsonline/tmux-thumbs/issues/27
+  # build-mac:
 
-    runs-on: macos-latest
+  #   runs-on: macos-latest
 
-    steps:
-    - uses: actions/checkout@v2
+  #   steps:
+  #   - uses: actions/checkout@v2
 
-    - name: Build
-      run: cargo build --release
+  #   - name: Build
+  #     run: cargo build --release
 
-    - uses: actions/upload-artifact@v1
-      with:
-        name: thumbs-macos.zip
-        path: ./target/release/thumbs
+  #   - uses: actions/upload-artifact@v1
+  #     with:
+  #       name: thumbs-macos.zip
+  #       path: ./target/release/thumbs
 
   build-linux:
 
