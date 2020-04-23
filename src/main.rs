@@ -11,7 +11,7 @@ use clap::crate_version;
 use std::io::{self, Read};
 
 fn app_args<'a>() -> clap::ArgMatches<'a> {
-  return App::new("thumbs")
+  App::new("thumbs")
     .version(crate_version!())
     .about("A lightning fast version copy/pasting like vimium/vimperator")
     .arg(
@@ -103,7 +103,7 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
         .long("contrast")
         .short("c"),
     )
-    .get_matches();
+    .get_matches()
 }
 
 fn main() {
@@ -136,7 +136,7 @@ fn main() {
 
   handle.read_to_string(&mut output).unwrap();
 
-  let lines = output.split("\n").collect::<Vec<&str>>();
+  let lines = output.split('\n').collect::<Vec<&str>>();
 
   let mut state = state::State::new(&lines, alphabet, &regexp);
 

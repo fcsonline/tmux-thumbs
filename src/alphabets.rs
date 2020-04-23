@@ -31,7 +31,7 @@ pub struct Alphabet<'a> {
 
 impl<'a> Alphabet<'a> {
   fn new(letters: &'a str) -> Alphabet {
-    Alphabet { letters: letters }
+    Alphabet { letters }
   }
 
   pub fn hints(&self, matches: usize) -> Vec<String> {
@@ -44,7 +44,7 @@ impl<'a> Alphabet<'a> {
       if expansion.len() + expanded.len() >= matches {
         break;
       }
-      if expansion.len() == 0 {
+      if expansion.is_empty() {
         break;
       }
 
@@ -61,7 +61,7 @@ impl<'a> Alphabet<'a> {
     expansion = expansion
       .iter()
       .take(matches - expanded.len())
-      .map(|s| s.clone())
+      .cloned()
       .collect();
     expansion.append(&mut expanded);
     expansion

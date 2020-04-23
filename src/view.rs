@@ -36,42 +36,40 @@ impl<'a> View<'a> {
     hint_background_color: Color,
   ) -> View<'a> {
     View {
-      state: state,
+      state,
       skip: 0,
-      multi: multi,
-      reverse: reverse,
-      unique: unique,
-      contrast: contrast,
-      position: position,
-      select_foreground_color: select_foreground_color,
-      select_background_color: select_background_color,
-      foreground_color: foreground_color,
-      background_color: background_color,
-      hint_foreground_color: hint_foreground_color,
-      hint_background_color: hint_background_color,
+      multi,
+      reverse,
+      unique,
+      contrast,
+      position,
+      select_foreground_color,
+      select_background_color,
+      foreground_color,
+      background_color,
+      hint_foreground_color,
+      hint_background_color,
     }
   }
 
   pub fn prev(&mut self) {
     if self.skip > 0 {
-      self.skip = self.skip - 1;
+      self.skip -= 1;
     }
   }
 
   pub fn next(&mut self, maximum: usize) {
     if self.skip < maximum {
-      self.skip = self.skip + 1;
+      self.skip += 1;
     }
   }
 
   fn make_hint_text(&self, hint: &str) -> String {
-    let text = if self.contrast {
-      format!("[{}]", hint).to_string()
+    if self.contrast {
+      format!("[{}]", hint)
     } else {
       hint.to_string()
-    };
-
-    text
+    }
   }
 
   pub fn present(&mut self) -> Vec<(String, bool)> {
@@ -88,8 +86,7 @@ impl<'a> View<'a> {
       .iter()
       .filter_map(|m| m.hint.clone())
       .max_by(|x, y| x.len().cmp(&y.len()))
-      .unwrap()
-      .clone();
+      .unwrap();
     let mut selected;
     let mut chosen = vec![];
 
@@ -102,7 +99,7 @@ impl<'a> View<'a> {
       for (index, line) in self.state.lines.iter().enumerate() {
         let clean = line.trim_end_matches(|c: char| c.is_whitespace());
 
-        if clean.len() > 0 {
+        if !clean.is_empty() {
           let text = self.make_hint_text(line);
 
           rustbox.print(
