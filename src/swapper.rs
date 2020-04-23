@@ -69,17 +69,17 @@ impl<'a> Swapper<'a> {
     let signal = format!("thumbs-finished-{}", since_the_epoch.as_secs());
 
     Swapper {
-      executor: executor,
-      dir: dir,
-      command: command,
-      upcase_command: upcase_command,
+      executor,
+      dir,
+      command,
+      upcase_command,
       active_pane_id: None,
       active_pane_height: None,
       active_pane_scroll_position: None,
       active_pane_in_copy_mode: None,
       thumbs_pane_id: None,
       content: None,
-      signal: signal,
+      signal,
     }
   }
 
@@ -95,33 +95,31 @@ impl<'a> Swapper<'a> {
       .executor
       .execute(active_command.iter().map(|arg| arg.to_string()).collect());
 
-    let lines: Vec<&str> = output.split("\n").collect();
+    let lines: Vec<&str> = output.split('\n').collect();
     let chunks: Vec<Vec<&str>> = lines
       .into_iter()
-      .map(|line| line.split(":").collect())
+      .map(|line| line.split(':').collect())
       .collect();
 
     let active_pane = chunks
       .iter()
-      .find(|&chunks| *chunks.iter().nth(4).unwrap() == "active")
+      .find(|&chunks| *chunks.get(4).unwrap() == "active")
       .expect("Unable to find active pane");
 
-    let pane_id = active_pane.iter().nth(0).unwrap();
-    let pane_in_copy_mode = active_pane.iter().nth(1).unwrap().to_string();
+    let pane_id = active_pane.get(0).unwrap();
+    let pane_in_copy_mode = active_pane.get(1).unwrap().to_string();
 
     self.active_pane_id = Some(pane_id.to_string());
     self.active_pane_in_copy_mode = Some(pane_in_copy_mode);
 
     if self.active_pane_in_copy_mode.clone().unwrap() == "1" {
       let pane_height = active_pane
-        .iter()
-        .nth(2)
+        .get(2)
         .unwrap()
         .parse()
         .expect("Unable to retrieve pane height");
       let pane_scroll_position = active_pane
-        .iter()
-        .nth(3)
+        .get(3)
         .unwrap()
         .parse()
         .expect("Unable to retrieve pane scroll");
@@ -135,7 +133,7 @@ impl<'a> Swapper<'a> {
     let options_command = vec!["tmux", "show", "-g"];
     let params: Vec<String> = options_command.iter().map(|arg| arg.to_string()).collect();
     let options = self.executor.execute(params);
-    let lines: Vec<&str> = options.split("\n").collect();
+    let lines: Vec<&str> = options.split('\n').collect();
 
     let pattern = Regex::new(r#"@thumbs-([\w\-0-9]+) "(.*)""#).unwrap();
 
@@ -149,7 +147,7 @@ impl<'a> Swapper<'a> {
           let boolean_params = vec!["reverse", "unique", "contrast"];
 
           if boolean_params.iter().any(|&x| x == name) {
-            return vec![format!("--{}", name).to_string()];
+            return vec![format!("--{}", name)];
           }
 
           let string_params = vec![
@@ -164,13 +162,13 @@ impl<'a> Swapper<'a> {
 
           if string_params.iter().any(|&x| x == name) {
             return vec![
-              format!("--{}", name).to_string(),
-              format!("'{}'", value).to_string(),
+              format!("--{}", name),
+              format!("'{}'", value),
             ];
           }
 
           if name.starts_with("regexp") {
-            return vec!["--regexp".to_string(), format!("'{}'", value).to_string()];
+            return vec!["--regexp".to_string(), format!("'{}'", value)];
           }
 
           vec![]
@@ -298,7 +296,7 @@ mod tests {
     fn new(outputs: Vec<String>) -> TestShell {
       TestShell {
         executed: None,
-        outputs: outputs,
+        outputs,
       }
     }
   }
@@ -356,8 +354,9 @@ mod tests {
     assert_eq!(executor.last_executed().unwrap(), expectation);
   }
 }
+
 fn app_args<'a>() -> clap::ArgMatches<'a> {
-  return App::new("tmux-thumbs")
+  App::new("tmux-thumbs")
     .version(crate_version!())
     .about("A lightning fast version of tmux-fingers, copy/pasting tmux like vimium/vimperator")
     .arg(
@@ -378,7 +377,7 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
         .long("upcase-command")
         .default_value("tmux set-buffer {} && tmux paste-buffer"),
     )
-    .get_matches();
+    .get_matches()
 }
 
 fn main() -> std::io::Result<()> {

@@ -65,9 +65,9 @@ pub struct State<'a> {
 impl<'a> State<'a> {
   pub fn new(lines: &'a Vec<&'a str>, alphabet: &'a str, regexp: &'a Vec<&'a str>) -> State<'a> {
     State {
-      lines: lines,
-      alphabet: alphabet,
-      regexp: regexp,
+      lines,
+      alphabet,
+      regexp,
     }
   }
 
@@ -131,7 +131,7 @@ impl<'a> State<'a> {
             }
 
             chunk = chunk.get(matching.end()..).expect("Unknown chunk");
-            offset = offset + matching.end() as i32;
+            offset += matching.end() as i32;
           } else {
             panic!("No matching?");
           }
@@ -175,7 +175,7 @@ impl<'a> State<'a> {
       matches.reverse();
     }
 
-    return matches;
+    matches
   }
 }
 
