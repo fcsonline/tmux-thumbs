@@ -1,26 +1,18 @@
-use rustbox::Color;
-use std::collections::HashMap;
+use termion::color;
 
-const COLORS: [(&'static str, Color); 9] = [
-  ("black", Color::Black),
-  ("red", Color::Red),
-  ("green", Color::Green),
-  ("yellow", Color::Yellow),
-  ("blue", Color::Blue),
-  ("magenta", Color::Magenta),
-  ("cyan", Color::Cyan),
-  ("white", Color::White),
-  ("default", Color::Default),
-];
-
-pub fn get_color(color_name: &str) -> Color {
-  let available_colors: HashMap<&str, Color> = COLORS.iter().cloned().collect();
-
-  available_colors
-    .get(color_name)
-    .expect(format!("Unknown color: {}", color_name).as_str()); // FIXME
-
-  available_colors[&color_name]
+pub fn get_color(color_name: &str) -> Box<&dyn color::Color> {
+  match color_name {
+    "black" => Box::new(&color::Black),
+    "red" => Box::new(&color::Red),
+    "green" => Box::new(&color::Green),
+    "yellow" => Box::new(&color::Yellow),
+    "blue" => Box::new(&color::Blue),
+    "magenta" => Box::new(&color::Magenta),
+    "cyan" => Box::new(&color::Cyan),
+    "white" => Box::new(&color::White),
+    "default" => Box::new(&color::Reset),
+    _ => panic!("Unknown color: {}", color_name),
+  }
 }
 
 #[cfg(test)]
@@ -29,6 +21,15 @@ mod tests {
 
   #[test]
   fn match_color() {
-    assert_eq!(get_color("green"), Color::Green);
+    let text1 = println!("{}{}", color::Fg(*get_color("green")), "foo");
+    let text2 = println!("{}{}", color::Fg(color::Green), "foo");
+
+    assert_eq!(text1, text2);
+  }
+
+  #[test]
+  #[should_panic]
+  fn no_match_color() {
+    println!("{}{}", color::Fg(*get_color("wat")), "foo");
   }
 }

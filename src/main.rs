@@ -1,5 +1,5 @@
 extern crate clap;
-extern crate rustbox;
+extern crate termion;
 
 mod alphabets;
 mod colors;
@@ -8,6 +8,7 @@ mod view;
 
 use self::clap::{App, Arg};
 use clap::crate_version;
+use std::io::prelude::*;
 use std::io::{self, Read};
 
 fn app_args<'a>() -> clap::ArgMatches<'a> {
@@ -103,6 +104,13 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
         .long("contrast")
         .short("c"),
     )
+    .arg(
+      Arg::with_name("target")
+        .help("Stores the hint in the specified path")
+        .long("target")
+        .default_value("")
+        .short("t"),
+    )
     .get_matches()
 }
 
@@ -111,6 +119,7 @@ fn main() {
   let format = args.value_of("format").unwrap();
   let alphabet = args.value_of("alphabet").unwrap();
   let position = args.value_of("position").unwrap();
+  let target = args.value_of("target").unwrap();
   let multi = args.is_present("multi");
   let reverse = args.is_present("reverse");
   let unique = args.is_present("unique");
@@ -125,10 +134,8 @@ fn main() {
   let background_color = colors::get_color(args.value_of("background_color").unwrap());
   let hint_foreground_color = colors::get_color(args.value_of("hint_foreground_color").unwrap());
   let hint_background_color = colors::get_color(args.value_of("hint_background_color").unwrap());
-  let select_foreground_color =
-    colors::get_color(args.value_of("select_foreground_color").unwrap());
-  let select_background_color =
-    colors::get_color(args.value_of("select_background_color").unwrap());
+  let select_foreground_color = colors::get_color(args.value_of("select_foreground_color").unwrap());
+  let select_background_color = colors::get_color(args.value_of("select_background_color").unwrap());
 
   let stdin = io::stdin();
   let mut handle = stdin.lock();
@@ -162,16 +169,21 @@ fn main() {
   if !selected.is_empty() {
     for (text, upcase) in selected.iter() {
       let mut output = format.to_string();
+      let break_line = if multi { "\n" } else { "" };
 
       let upcase_value = if *upcase { "true" } else { "false" };
 
       output = str::replace(&output, "%U", upcase_value);
       output = str::replace(&output, "%H", text.as_str());
 
-      if multi {
-        println!("{}", output);
-      } else {
+      let output = format!("{}{}", output, break_line);
+
+      if target.is_empty() {
         print!("{}", output);
+      } else {
+        let mut file = std::fs::File::create(target).expect("Unable to open the target file");
+
+        file.write(output.as_bytes()).unwrap();
       }
     }
   } else {
