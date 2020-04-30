@@ -1,23 +1,30 @@
 use super::*;
-use rustbox::Key;
-use rustbox::{Color, OutputMode, RustBox};
 use std::char;
-use std::default::Default;
+use std::io::{stdout, Read, Write};
+use termion::async_stdin;
+use termion::event::Key;
+use termion::input::TermRead;
+use termion::raw::IntoRawMode;
+use termion::{clear, color, cursor};
 
 pub struct View<'a> {
   state: &'a mut state::State<'a>,
   skip: usize,
   multi: bool,
-  reverse: bool,
-  unique: bool,
   contrast: bool,
   position: &'a str,
-  select_foreground_color: Color,
-  select_background_color: Color,
-  foreground_color: Color,
-  background_color: Color,
-  hint_background_color: Color,
-  hint_foreground_color: Color,
+  matches: Vec<state::Match<'a>>,
+  select_foreground_color: Box<&'a dyn color::Color>,
+  select_background_color: Box<&'a dyn color::Color>,
+  foreground_color: Box<&'a dyn color::Color>,
+  background_color: Box<&'a dyn color::Color>,
+  hint_background_color: Box<&'a dyn color::Color>,
+  hint_foreground_color: Box<&'a dyn color::Color>,
+}
+
+enum CaptureEvent {
+  Exit,
+  Hint(Vec<(String, bool)>),
 }
 
 impl<'a> View<'a> {
@@ -28,21 +35,23 @@ impl<'a> View<'a> {
     unique: bool,
     contrast: bool,
     position: &'a str,
-    select_foreground_color: Color,
-    select_background_color: Color,
-    foreground_color: Color,
-    background_color: Color,
-    hint_foreground_color: Color,
-    hint_background_color: Color,
+    select_foreground_color: Box<&'a dyn color::Color>,
+    select_background_color: Box<&'a dyn color::Color>,
+    foreground_color: Box<&'a dyn color::Color>,
+    background_color: Box<&'a dyn color::Color>,
+    hint_foreground_color: Box<&'a dyn color::Color>,
+    hint_background_color: Box<&'a dyn color::Color>,
   ) -> View<'a> {
+    let matches = state.matches(reverse, unique);
+    let skip = if reverse { matches.len() - 1 } else { 0 };
+
     View {
       state,
-      skip: 0,
+      skip,
       multi,
-      reverse,
-      unique,
       contrast,
       position,
+      matches,
       select_foreground_color,
       select_background_color,
       foreground_color,
@@ -58,8 +67,8 @@ impl<'a> View<'a> {
     }
   }
 
-  pub fn next(&mut self, maximum: usize) {
-    if self.skip < maximum {
+  pub fn next(&mut self) {
+    if self.skip < self.matches.len() - 1 {
       self.skip += 1;
     }
   }
@@ -72,168 +81,184 @@ impl<'a> View<'a> {
     }
   }
 
-  pub fn present(&mut self) -> Vec<(String, bool)> {
-    let mut rustbox = match RustBox::init(Default::default()) {
-      Result::Ok(v) => v,
-      Result::Err(e) => panic!("{}", e),
-    };
+  fn render(&self, stdout: &mut dyn Write) -> () {
+    println!("{}{}", clear::All, cursor::Hide);
+    stdout.flush().unwrap();
 
-    rustbox.set_output_mode(OutputMode::EightBit);
+    for (index, line) in self.state.lines.iter().enumerate() {
+      let clean = line.trim_end_matches(|c: char| c.is_whitespace());
 
-    let mut typed_hint: String = "".to_owned();
-    let matches = self.state.matches(self.reverse, self.unique);
-    let longest_hint = matches
-      .iter()
-      .filter_map(|m| m.hint.clone())
-      .max_by(|x, y| x.len().cmp(&y.len()))
-      .unwrap();
-    let mut selected;
-    let mut chosen = vec![];
+      if !clean.is_empty() {
+        let text = self.make_hint_text(line);
 
-    self.skip = if self.reverse { matches.len() - 1 } else { 0 };
-
-    loop {
-      rustbox.clear();
-      rustbox.present();
-
-      for (index, line) in self.state.lines.iter().enumerate() {
-        let clean = line.trim_end_matches(|c: char| c.is_whitespace());
-
-        if !clean.is_empty() {
-          let text = self.make_hint_text(line);
-
-          rustbox.print(
-            0,
-            index,
-            rustbox::RB_NORMAL,
-            Color::White,
-            Color::Black,
-            &text,
-          );
-        }
-      }
-
-      selected = matches.get(self.skip);
-
-      for mat in matches.iter() {
-        let selected_color = if selected == Some(mat) {
-          self.select_foreground_color
-        } else {
-          self.foreground_color
-        };
-        let selected_background_color = if selected == Some(mat) {
-          self.select_background_color
-        } else {
-          self.background_color
-        };
-
-        // Find long utf sequences and extract it from mat.x
-        let line = &self.state.lines[mat.y as usize];
-        let prefix = &line[0..mat.x as usize];
-        let extra = prefix.len() - prefix.chars().count();
-        let offset = (mat.x as usize) - extra;
-        let text = self.make_hint_text(mat.text);
-
-        rustbox.print(
-          offset,
-          mat.y as usize,
-          rustbox::RB_NORMAL,
-          selected_color,
-          selected_background_color,
-          &text,
-        );
-
-        if let Some(ref hint) = mat.hint {
-          let extra_position = if self.position == "left" {
-            0
-          } else {
-            text.len() - mat.hint.clone().unwrap().len()
-          };
-
-          let text = self.make_hint_text(hint.as_str());
-
-          rustbox.print(
-            offset + extra_position,
-            mat.y as usize,
-            rustbox::RB_BOLD,
-            self.hint_foreground_color,
-            self.hint_background_color,
-            &text,
-          );
-        }
-      }
-
-      rustbox.present();
-
-      match rustbox.poll_event(false) {
-        Ok(rustbox::Event::KeyEvent(key)) => match key {
-          Key::Esc => {
-            if self.multi && !typed_hint.is_empty() {
-              typed_hint.clear();
-            } else {
-              break;
-            }
-          }
-          Key::Enter => match matches.iter().enumerate().find(|&h| h.0 == self.skip) {
-            Some(hm) => {
-              chosen.push((hm.1.text.to_string(), false));
-
-              if !self.multi {
-                return chosen;
-              }
-            }
-            _ => panic!("Match not found?"),
-          },
-          Key::Up => {
-            self.prev();
-          }
-          Key::Down => {
-            self.next(matches.len() - 1);
-          }
-          Key::Left => {
-            self.prev();
-          }
-          Key::Right => {
-            self.next(matches.len() - 1);
-          }
-          Key::Char(ch) => {
-            if ch == ' ' && self.multi {
-              return chosen;
-            }
-
-            let key = ch.to_string();
-            let lower_key = key.to_lowercase();
-
-            typed_hint.push_str(lower_key.as_str());
-
-            match matches
-              .iter()
-              .find(|mat| mat.hint == Some(typed_hint.clone()))
-            {
-              Some(mat) => {
-                chosen.push((mat.text.to_string(), key != lower_key));
-
-                if self.multi {
-                  typed_hint.clear();
-                } else {
-                  return chosen;
-                }
-              }
-              None => {
-                if !self.multi && typed_hint.len() >= longest_hint.len() {
-                  break;
-                }
-              }
-            }
-          }
-          _ => {}
-        },
-        Err(e) => panic!("{}", e),
-        _ => {}
+        println!("{goto}{text}", goto = cursor::Goto(1, index as u16 + 1), text = &text);
       }
     }
 
-    chosen
+    let selected = self.matches.get(self.skip);
+
+    for mat in self.matches.iter() {
+      let selected_color = if selected == Some(mat) {
+        &self.select_foreground_color
+      } else {
+        &self.foreground_color
+      };
+      let selected_background_color = if selected == Some(mat) {
+        &self.select_background_color
+      } else {
+        &self.background_color
+      };
+
+      // Find long utf sequences and extract it from mat.x
+      let line = &self.state.lines[mat.y as usize];
+      let prefix = &line[0..mat.x as usize];
+      let extra = prefix.len() - prefix.chars().count();
+      let offset = (mat.x as u16) - (extra as u16);
+      let text = self.make_hint_text(mat.text);
+
+      println!(
+        "{goto}{background}{foregroud}{text}{resetf}{resetb}",
+        goto = cursor::Goto(offset + 1, mat.y as u16 + 1),
+        foregroud = color::Fg(**selected_color),
+        background = color::Bg(**selected_background_color),
+        resetf = color::Fg(color::Reset),
+        resetb = color::Bg(color::Reset),
+        text = &text
+      );
+
+      if let Some(ref hint) = mat.hint {
+        let extra_position = if self.position == "left" {
+          0
+        } else {
+          text.len() - mat.hint.clone().unwrap().len()
+        };
+
+        let text = self.make_hint_text(hint.as_str());
+
+        println!(
+          "{goto}{background}{foregroud}{text}{resetf}{resetb}",
+          goto = cursor::Goto(offset + extra_position as u16 + 1, mat.y as u16 + 1),
+          foregroud = color::Fg(*self.hint_foreground_color),
+          background = color::Bg(*self.hint_background_color),
+          resetf = color::Fg(color::Reset),
+          resetb = color::Bg(color::Reset),
+          text = &text
+        );
+      }
+    }
+
+    stdout.flush().unwrap();
+  }
+
+  fn listen(&mut self, stdin: &mut dyn Read, stdout: &mut dyn Write) -> CaptureEvent {
+    let mut chosen = vec![];
+    let mut typed_hint: String = "".to_owned();
+    let longest_hint = self
+      .matches
+      .iter()
+      .filter_map(|m| m.hint.clone())
+      .max_by(|x, y| x.len().cmp(&y.len()))
+      .unwrap()
+      .clone();
+
+    self.render(stdout);
+
+    loop {
+      match stdin.keys().next() {
+        Some(key) => {
+          match key {
+            Ok(key) => {
+              match key {
+                Key::Esc => {
+                  if self.multi && !typed_hint.is_empty() {
+                    typed_hint.clear();
+                  } else {
+                    break;
+                  }
+                }
+                Key::Insert => match self.matches.iter().enumerate().find(|&h| h.0 == self.skip) {
+                  Some(hm) => {
+                    chosen.push((hm.1.text.to_string(), false));
+
+                    if !self.multi {
+                      return CaptureEvent::Hint(chosen);
+                    }
+                  }
+                  _ => panic!("Match not found?"),
+                },
+                Key::Up => {
+                  self.prev();
+                }
+                Key::Down => {
+                  self.next();
+                }
+                Key::Left => {
+                  self.prev();
+                }
+                Key::Right => {
+                  self.next();
+                }
+                Key::Char(ch) => {
+                  if ch == ' ' && self.multi {
+                    return CaptureEvent::Hint(chosen);
+                  }
+
+                  let key = ch.to_string();
+                  let lower_key = key.to_lowercase();
+
+                  typed_hint.push_str(lower_key.as_str());
+
+                  let selection = self.matches.iter().find(|mat| mat.hint == Some(typed_hint.clone()));
+
+                  match selection {
+                    Some(mat) => {
+                      chosen.push((mat.text.to_string(), key != lower_key));
+
+                      if self.multi {
+                        typed_hint.clear();
+                      } else {
+                        return CaptureEvent::Hint(chosen);
+                      }
+                    }
+                    None => {
+                      if !self.multi && typed_hint.len() >= longest_hint.len() {
+                        break;
+                      }
+                    }
+                  }
+                }
+                _ => {
+                  // Unknown key
+                }
+              }
+            }
+            Err(err) => panic!(err),
+          }
+        }
+        _ => {
+          // Nothing in the buffer. Wait for a bit...
+          std::thread::sleep(std::time::Duration::from_millis(100));
+        }
+      }
+
+      self.render(stdout);
+    }
+
+    CaptureEvent::Exit
+  }
+
+  pub fn present(&mut self) -> Vec<(String, bool)> {
+    let mut stdin = async_stdin();
+    let mut stdout = stdout().into_raw_mode().unwrap();
+
+    let hints = match self.listen(&mut stdin, &mut stdout) {
+      CaptureEvent::Exit => vec![],
+      CaptureEvent::Hint(chosen) => chosen,
+    };
+
+    write!(stdout, "{}", termion::cursor::Show).unwrap();
+
+    hints
   }
 }
 
@@ -254,16 +279,15 @@ mod tests {
       state: &mut state,
       skip: 0,
       multi: false,
-      reverse: false,
-      unique: false,
       contrast: false,
       position: &"",
-      select_foreground_color: rustbox::Color::Default,
-      select_background_color: rustbox::Color::Default,
-      foreground_color: rustbox::Color::Default,
-      background_color: rustbox::Color::Default,
-      hint_background_color: rustbox::Color::Default,
-      hint_foreground_color: rustbox::Color::Default,
+      matches: vec![],
+      select_foreground_color: colors::get_color("default"),
+      select_background_color: colors::get_color("default"),
+      foreground_color: colors::get_color("default"),
+      background_color: colors::get_color("default"),
+      hint_background_color: colors::get_color("default"),
+      hint_foreground_color: colors::get_color("default"),
     };
 
     let result = view.make_hint_text("a");

@@ -58,11 +58,7 @@ impl<'a> Alphabet<'a> {
       expanded.splice(0..0, sub_expansion);
     }
 
-    expansion = expansion
-      .iter()
-      .take(matches - expanded.len())
-      .cloned()
-      .collect();
+    expansion = expansion.iter().take(matches - expanded.len()).cloned().collect();
     expansion.append(&mut expanded);
     expansion
   }
