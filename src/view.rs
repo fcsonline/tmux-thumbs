@@ -5,7 +5,7 @@ use termion::async_stdin;
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
-use termion::{clear, color, cursor};
+use termion::{color, cursor};
 
 pub struct View<'a> {
   state: &'a mut state::State<'a>,
@@ -82,9 +82,6 @@ impl<'a> View<'a> {
   }
 
   fn render(&self, stdout: &mut dyn Write) -> () {
-    println!("{}{}", clear::All, cursor::Hide);
-    stdout.flush().unwrap();
-
     for (index, line) in self.state.lines.iter().enumerate() {
       let clean = line.trim_end_matches(|c: char| c.is_whitespace());
 
@@ -250,6 +247,8 @@ impl<'a> View<'a> {
   pub fn present(&mut self) -> Vec<(String, bool)> {
     let mut stdin = async_stdin();
     let mut stdout = stdout().into_raw_mode().unwrap();
+
+    println!("{}", cursor::Hide);
 
     let hints = match self.listen(&mut stdin, &mut stdout) {
       CaptureEvent::Exit => vec![],
