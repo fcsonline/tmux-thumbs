@@ -24,7 +24,7 @@ letter hint to yank the text in your tmux buffer.
 - kubernetes resources
 - UUIDs
 
-These are the list of mattched patterns that will be highlighted by default. If
+These are the list of matched patterns that will be highlighted by default. If
 you want to highlight a pattern that is not in this list you can add one or
 more with `--regexp` parameter.
 
@@ -155,7 +155,7 @@ set -g @thumbs-position right
 
 ### @thumbs-regexp-N
 
-Add extra patterns to match. This paramenter can have multiple instances.
+Add extra patterns to match. This parameter can have multiple instances.
 
 For example:
 
@@ -315,7 +315,7 @@ This is the list of available alphabets:
 
 ## Extra features
 
-- **Arrow navigation:** You can use the arrows to move arround between all matched items.
+- **Arrow navigation:** You can use the arrows to move around between all matched items.
 - **Auto paste:** If your last typed hint character is uppercase, you are going to pick and paste the desired hint.
 - **Multi selection:** If you run thumb with multi selection mode you will be able to choose multiple hints pressing the desired letter and `Space` to finalize the selection.
 
@@ -341,7 +341,7 @@ If you can check hat `tmux-thumbs` is or is not compatible with some specific ve
 ## Standalone `thumbs`
 
 This project started as a `tmux` plugin but after reviewing it with some
-friends we decided to explore all the possibilities of decopling thumbs from
+friends we decided to explore all the possibilities of decoupling thumbs from
 `tmux`. You can install it with a simple command:
 
 ```
