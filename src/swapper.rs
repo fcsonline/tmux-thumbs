@@ -250,20 +250,22 @@ impl<'a> Swapper<'a> {
   pub fn execute_command(&mut self) {
     let content = self.content.clone().unwrap();
     let mut splitter = content.splitn(2, ':');
-    let upcase = splitter.next().unwrap().trim_end();
-    let text = splitter.next().unwrap().trim_end();
 
-    let execute_command = if upcase == "true" {
-      self.upcase_command.clone()
-    } else {
-      self.command.clone()
-    };
+    if let Some(upcase) = splitter.next() {
+      if let Some(text) = splitter.next() {
+        let execute_command = if upcase.trim_end() == "true" {
+          self.upcase_command.clone()
+        } else {
+          self.command.clone()
+        };
 
-    let final_command = str::replace(execute_command.as_str(), "{}", text);
-    let retrieve_command = vec!["bash", "-c", final_command.as_str()];
-    let params = retrieve_command.iter().map(|arg| arg.to_string()).collect();
+        let final_command = str::replace(execute_command.as_str(), "{}", text.trim_end());
+        let retrieve_command = vec!["bash", "-c", final_command.as_str()];
+        let params = retrieve_command.iter().map(|arg| arg.to_string()).collect();
 
-    self.executor.execute(params);
+        self.executor.execute(params);
+      }
+    }
   }
 }
 
@@ -358,6 +360,10 @@ fn main() -> std::io::Result<()> {
   let dir = args.value_of("dir").unwrap();
   let command = args.value_of("command").unwrap();
   let upcase_command = args.value_of("upcase_command").unwrap();
+
+  if dir.is_empty() {
+    panic!("Invalid tmux-thumbs execution. Are you trying to execute tmux-thumbs directly?")
+  }
 
   let mut executor = RealShell::new();
   let mut swapper = Swapper::new(
