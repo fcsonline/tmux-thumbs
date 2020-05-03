@@ -8,6 +8,7 @@ mod view;
 
 use self::clap::{App, Arg};
 use clap::crate_version;
+use std::fs::OpenOptions;
 use std::io::prelude::*;
 use std::io::{self, Read};
 
@@ -167,24 +168,31 @@ fn main() {
   };
 
   if !selected.is_empty() {
-    for (text, upcase) in selected.iter() {
-      let mut output = format.to_string();
-      let break_line = if multi { "\n" } else { "" };
+    let output = selected
+      .iter()
+      .map(|(text, upcase)| {
+        let upcase_value = if *upcase { "true" } else { "false" };
 
-      let upcase_value = if *upcase { "true" } else { "false" };
+        let mut output = format.to_string();
 
-      output = str::replace(&output, "%U", upcase_value);
-      output = str::replace(&output, "%H", text.as_str());
+        output = str::replace(&output, "%U", upcase_value);
+        output = str::replace(&output, "%H", text.as_str());
+        output
+      })
+      .collect::<Vec<_>>()
+      .join("\n");
 
-      let output = format!("{}{}", output, break_line);
+    if target.is_empty() {
+      print!("{}", output);
+    } else {
+      let mut file = OpenOptions::new()
+        .create(true)
+        .truncate(true)
+        .write(true)
+        .open(target)
+        .expect("Unable to open the target file");
 
-      if target.is_empty() {
-        print!("{}", output);
-      } else {
-        let mut file = std::fs::File::create(target).expect("Unable to open the target file");
-
-        file.write(output.as_bytes()).unwrap();
-      }
+      file.write(output.as_bytes()).unwrap();
     }
   } else {
     ::std::process::exit(1);
