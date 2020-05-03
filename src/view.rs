@@ -88,7 +88,7 @@ impl<'a> View<'a> {
       if !clean.is_empty() {
         let text = self.make_hint_text(line);
 
-        println!("{goto}{text}", goto = cursor::Goto(1, index as u16 + 1), text = &text);
+        print!("{goto}{text}", goto = cursor::Goto(1, index as u16 + 1), text = &text);
       }
     }
 
@@ -113,7 +113,7 @@ impl<'a> View<'a> {
       let offset = (mat.x as u16) - (extra as u16);
       let text = self.make_hint_text(mat.text);
 
-      println!(
+      print!(
         "{goto}{background}{foregroud}{text}{resetf}{resetb}",
         goto = cursor::Goto(offset + 1, mat.y as u16 + 1),
         foregroud = color::Fg(**selected_color),
@@ -132,7 +132,7 @@ impl<'a> View<'a> {
 
         let text = self.make_hint_text(hint.as_str());
 
-        println!(
+        print!(
           "{goto}{background}{foregroud}{text}{resetf}{resetb}",
           goto = cursor::Goto(offset + extra_position as u16 + 1, mat.y as u16 + 1),
           foregroud = color::Fg(*self.hint_foreground_color),
