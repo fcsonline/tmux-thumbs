@@ -109,8 +109,8 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
       Arg::with_name("target")
         .help("Stores the hint in the specified path")
         .long("target")
-        .default_value("")
-        .short("t"),
+        .short("t")
+        .takes_value(true),
     )
     .get_matches()
 }
@@ -120,7 +120,7 @@ fn main() {
   let format = args.value_of("format").unwrap();
   let alphabet = args.value_of("alphabet").unwrap();
   let position = args.value_of("position").unwrap();
-  let target = args.value_of("target").unwrap();
+  let target = args.value_of("target");
   let multi = args.is_present("multi");
   let reverse = args.is_present("reverse");
   let unique = args.is_present("unique");
@@ -182,9 +182,7 @@ fn main() {
       .collect::<Vec<_>>()
       .join("\n");
 
-    if target.is_empty() {
-      print!("{}", output);
-    } else {
+    if let Some(target) = target {
       let mut file = OpenOptions::new()
         .create(true)
         .truncate(true)
@@ -193,6 +191,8 @@ fn main() {
         .expect("Unable to open the target file");
 
       file.write(output.as_bytes()).unwrap();
+    } else {
+      print!("{}", output);
     }
   } else {
     ::std::process::exit(1);
