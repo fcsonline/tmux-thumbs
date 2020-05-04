@@ -22,6 +22,8 @@ path: /var/log/nginx.log[m
 
 path: ./folder/.neomake@04fd.log
 
+home: ~/.gnu/.config.txt
+
 10.3.23.42 lorem 123.2.3.4 lorem 230.23.33.34
 10.3.23.42 lorem 123.2.3.4 lorem 230.23.33.34
 10.3.23.42 lorem 123.2.3.4 lorem 230.23.33.34
