@@ -378,6 +378,7 @@ OPTIONS:
     -x, --regexp <regexp>...                           Use this regexp as extra pattern to match
         --select-bg-color <select_background_color>    Sets the background color for selection [default: black]
         --select-fg-color <select_foreground_color>    Sets the foreground color for selection [default: blue]
+    -t, --target <target>                              Stores the hint in the specified path
 ```
 
 
