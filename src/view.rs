@@ -5,6 +5,7 @@ use termion::async_stdin;
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
+use termion::screen::AlternateScreen;
 use termion::{color, cursor};
 
 pub struct View<'a> {
@@ -82,6 +83,8 @@ impl<'a> View<'a> {
   }
 
   fn render(&self, stdout: &mut dyn Write) -> () {
+    write!(stdout, "{}", cursor::Hide).unwrap();
+
     for (index, line) in self.state.lines.iter().enumerate() {
       let clean = line.trim_end_matches(|c: char| c.is_whitespace());
 
@@ -246,16 +249,14 @@ impl<'a> View<'a> {
 
   pub fn present(&mut self) -> Vec<(String, bool)> {
     let mut stdin = async_stdin();
-    let mut stdout = stdout().into_raw_mode().unwrap();
-
-    println!("{}", cursor::Hide);
+    let mut stdout = AlternateScreen::from(stdout().into_raw_mode().unwrap());
 
     let hints = match self.listen(&mut stdin, &mut stdout) {
       CaptureEvent::Exit => vec![],
       CaptureEvent::Hint(chosen) => chosen,
     };
 
-    write!(stdout, "{}", termion::cursor::Show).unwrap();
+    write!(stdout, "{}", cursor::Show).unwrap();
 
     hints
   }
