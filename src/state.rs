@@ -4,11 +4,12 @@ use std::fmt;
 
 const EXCLUDE_PATTERNS: [(&'static str, &'static str); 1] = [("bash", r"[[:cntrl:]]\[([0-9]{1,2};)?([0-9]{1,2})?m")];
 
-const PATTERNS: [(&'static str, &'static str); 13] = [
+const PATTERNS: [(&'static str, &'static str); 14] = [
   ("markdown_url", r"\[[^]]*\]\(([^)]+)\)"),
   ("url", r"((https?://|git@|git://|ssh://|ftp://|file:///)[^ ]+)"),
   ("diff_a", r"--- a/([^ ]+)"),
   ("diff_b", r"\+\+\+ b/([^ ]+)"),
+  ("docker", r"sha256:([0-9a-f]{64})"),
   ("path", r"(([.\w\-@~]+)?(/[.\w\-@]+)+)"),
   ("color", r"#[0-9a-fA-F]{6}"),
   ("uid", r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"),
@@ -198,6 +199,19 @@ mod tests {
     assert_eq!(results.len(), 3);
     assert_eq!(results.first().unwrap().hint.clone().unwrap(), "a");
     assert_eq!(results.last().unwrap().hint.clone().unwrap(), "a");
+  }
+
+  #[test]
+  fn match_docker() {
+    let lines = split("latest sha256:30557a29d5abc51e5f1d5b472e79b7e296f595abcf19fe6b9199dbbc809c6ff4 20 hours ago");
+    let custom = [].to_vec();
+    let results = State::new(&lines, "abcd", &custom).matches(false, false);
+
+    assert_eq!(results.len(), 1);
+    assert_eq!(
+      results.get(0).unwrap().text,
+      "30557a29d5abc51e5f1d5b472e79b7e296f595abcf19fe6b9199dbbc809c6ff4"
+    );
   }
 
   #[test]

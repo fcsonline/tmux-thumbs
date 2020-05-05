@@ -21,6 +21,7 @@ letter hint to yank the text in your tmux buffer.
 - Hex numbers
 - Markdown urls
 - IP4 addresses
+- Docker images
 - kubernetes resources
 - UUIDs
 
