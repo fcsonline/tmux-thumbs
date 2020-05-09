@@ -127,7 +127,7 @@ impl<'a> Swapper<'a> {
     let options = self.executor.execute(params);
     let lines: Vec<&str> = options.split('\n').collect();
 
-    let pattern = Regex::new(r#"@thumbs-([\w\-0-9]+) "(.*)""#).unwrap();
+    let pattern = Regex::new(r#"@thumbs-([\w\-0-9]+) "?(\w+)"?"#).unwrap();
 
     let args = lines
       .iter()
