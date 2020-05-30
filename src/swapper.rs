@@ -1,5 +1,8 @@
 extern crate clap;
 
+use std::fs::File;
+
+use std::io::Write;
 use self::clap::{App, Arg};
 use clap::crate_version;
 use regex::Regex;
@@ -47,6 +50,7 @@ pub struct Swapper<'a> {
   dir: String,
   command: String,
   upcase_command: String,
+  osc52: bool,
   active_pane_id: Option<String>,
   active_pane_height: Option<i32>,
   active_pane_scroll_position: Option<i32>,
@@ -57,7 +61,7 @@ pub struct Swapper<'a> {
 }
 
 impl<'a> Swapper<'a> {
-  fn new(executor: Box<&'a mut dyn Executor>, dir: String, command: String, upcase_command: String) -> Swapper {
+  fn new(executor: Box<&'a mut dyn Executor>, dir: String, command: String, upcase_command: String, osc52: bool) -> Swapper {
     let since_the_epoch = SystemTime::now()
       .duration_since(UNIX_EPOCH)
       .expect("Time went backwards");
@@ -68,6 +72,7 @@ impl<'a> Swapper<'a> {
       dir,
       command,
       upcase_command,
+      osc52,
       active_pane_id: None,
       active_pane_height: None,
       active_pane_scroll_position: None,
@@ -247,12 +252,44 @@ impl<'a> Swapper<'a> {
     self.executor.execute(params);
   }
 
+  pub fn send_osc52(&mut self) {
+  }
+
+
   pub fn execute_command(&mut self) {
     let content = self.content.clone().unwrap();
     let mut splitter = content.splitn(2, ':');
 
     if let Some(upcase) = splitter.next() {
       if let Some(text) = splitter.next() {
+        if self.osc52 {
+          let base64_text = base64::encode(text.as_bytes());
+          let osc_seq = format!("\x1b]52;0;{}\x07", base64_text);
+          let tmux_seq = format!("\x1bPtmux;{}\x1b\\", osc_seq.replace("\x1b", "\x1b\x1b"));
+
+          // FIXME: Review if this comment is still rellevant
+          //
+          // When the user selects a match:
+          // 1. The `rustbox` object created in the `viewbox` above is dropped.
+          // 2. During its `drop`, the `rustbox` object sends a CSI 1049 escape
+          //    sequence to tmux.
+          // 3. This escape sequence causes the `window_pane_alternate_off` function
+          //    in tmux to be called.
+          // 4. In `window_pane_alternate_off`, tmux sets the needs-redraw flag in the
+          //    pane.
+          // 5. If we print the OSC copy escape sequence before the redraw is completed,
+          //    tmux will *not* send the sequence to the host terminal. See the following
+          //    call chain in tmux: `input_dcs_dispatch` -> `screen_write_rawstring`
+          //    -> `tty_write` -> `tty_client_ready`. In this case, `tty_client_ready`
+          //    will return false, thus preventing the escape sequence from being sent.
+          //
+          // Therefore, for now we wait a little bit here for the redraw to finish.
+          std::thread::sleep(std::time::Duration::from_millis(100));
+
+          std::io::stdout().write_all(tmux_seq.as_bytes()).unwrap();
+          std::io::stdout().flush().unwrap();
+        }
+
         let execute_command = if upcase.trim_end() == "true" {
           self.upcase_command.clone()
         } else {
@@ -302,7 +339,7 @@ mod tests {
   fn retrieve_active_pane() {
     let last_command_outputs = vec!["%97:100:24:1:active\n%106:100:24:1:nope\n%107:100:24:1:nope\n".to_string()];
     let mut executor = TestShell::new(last_command_outputs);
-    let mut swapper = Swapper::new(Box::new(&mut executor), "".to_string(), "".to_string(), "".to_string());
+    let mut swapper = Swapper::new(Box::new(&mut executor), "".to_string(), "".to_string(), "".to_string(), false);
 
     swapper.capture_active_pane();
 
@@ -318,7 +355,7 @@ mod tests {
       "%106:100:24:1:nope\n%98:100:24:1:active\n%107:100:24:1:nope\n".to_string(),
     ];
     let mut executor = TestShell::new(last_command_outputs);
-    let mut swapper = Swapper::new(Box::new(&mut executor), "".to_string(), "".to_string(), "".to_string());
+    let mut swapper = Swapper::new(Box::new(&mut executor), "".to_string(), "".to_string(), "".to_string(), false);
 
     swapper.capture_active_pane();
     swapper.execute_thumbs();
@@ -352,6 +389,12 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
         .long("upcase-command")
         .default_value("tmux set-buffer {} && tmux paste-buffer"),
     )
+    .arg(
+      Arg::with_name("osc52")
+        .help("Print OSC52 copy escape sequence in addition to running the pick command")
+        .long("osc52")
+        .short("o"),
+    )
     .get_matches()
 }
 
@@ -360,6 +403,7 @@ fn main() -> std::io::Result<()> {
   let dir = args.value_of("dir").unwrap();
   let command = args.value_of("command").unwrap();
   let upcase_command = args.value_of("upcase_command").unwrap();
+  let osc52 = args.is_present("osc52");
 
   if dir.is_empty() {
     panic!("Invalid tmux-thumbs execution. Are you trying to execute tmux-thumbs directly?")
@@ -371,6 +415,7 @@ fn main() -> std::io::Result<()> {
     dir.to_string(),
     command.to_string(),
     upcase_command.to_string(),
+    osc52,
   );
 
   swapper.capture_active_pane();

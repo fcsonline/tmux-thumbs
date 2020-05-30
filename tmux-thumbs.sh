@@ -4,6 +4,14 @@
 
 PARAMS=()
 
+function add-boolean-param {
+  VALUE=$(tmux show -vg @thumbs-$1 2> /dev/null)
+
+  if [[ "${VALUE}" == "1" ]]; then
+    PARAMS+=("--$1")
+  fi
+}
+
 function add-option-param {
   VALUE=$(tmux show -vg @thumbs-$1 2> /dev/null)
 
@@ -14,6 +22,7 @@ function add-option-param {
 
 add-option-param "command"
 add-option-param "upcase-command"
+add-boolean-param "osc52"
 
 # Remove empty arguments from PARAMS.
 # Otherwise, they would choke up tmux-thumbs when passed to it.
