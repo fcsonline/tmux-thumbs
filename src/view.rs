@@ -152,7 +152,7 @@ impl<'a> View<'a> {
 
   fn listen(&mut self, stdin: &mut dyn Read, stdout: &mut dyn Write) -> CaptureEvent {
     if self.matches.is_empty() {
-      return CaptureEvent::Exit
+      return CaptureEvent::Exit;
     }
 
     let mut chosen = vec![];
