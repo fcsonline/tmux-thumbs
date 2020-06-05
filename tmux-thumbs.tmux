@@ -11,5 +11,5 @@ tmux bind-key $THUMBS_KEY run-shell -b "${CURRENT_DIR}/tmux-thumbs.sh"
 BINARY="${CURRENT_DIR}/target/release/thumbs"
 
 if [ ! -f "$BINARY" ]; then
-  tmux split-window "cd ${CURRENT_DIR} && cargo build --release && echo 'Press any key to continue...' && read -k1"
+  tmux split-window "cd ${CURRENT_DIR} && cargo build --release --target-dir=target && echo 'Press any key to continue...' && read -k1"
 fi
