@@ -1,11 +1,9 @@
 extern crate clap;
 
-use std::fs::File;
-
-use std::io::Write;
 use self::clap::{App, Arg};
 use clap::crate_version;
 use regex::Regex;
+use std::io::Write;
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -61,7 +59,13 @@ pub struct Swapper<'a> {
 }
 
 impl<'a> Swapper<'a> {
-  fn new(executor: Box<&'a mut dyn Executor>, dir: String, command: String, upcase_command: String, osc52: bool) -> Swapper {
+  fn new(
+    executor: Box<&'a mut dyn Executor>,
+    dir: String,
+    command: String,
+    upcase_command: String,
+    osc52: bool,
+  ) -> Swapper {
     let since_the_epoch = SystemTime::now()
       .duration_since(UNIX_EPOCH)
       .expect("Time went backwards");
@@ -252,9 +256,7 @@ impl<'a> Swapper<'a> {
     self.executor.execute(params);
   }
 
-  pub fn send_osc52(&mut self) {
-  }
-
+  pub fn send_osc52(&mut self) {}
 
   pub fn execute_command(&mut self) {
     let content = self.content.clone().unwrap();
@@ -339,7 +341,13 @@ mod tests {
   fn retrieve_active_pane() {
     let last_command_outputs = vec!["%97:100:24:1:active\n%106:100:24:1:nope\n%107:100:24:1:nope\n".to_string()];
     let mut executor = TestShell::new(last_command_outputs);
-    let mut swapper = Swapper::new(Box::new(&mut executor), "".to_string(), "".to_string(), "".to_string(), false);
+    let mut swapper = Swapper::new(
+      Box::new(&mut executor),
+      "".to_string(),
+      "".to_string(),
+      "".to_string(),
+      false,
+    );
 
     swapper.capture_active_pane();
 
@@ -355,7 +363,13 @@ mod tests {
       "%106:100:24:1:nope\n%98:100:24:1:active\n%107:100:24:1:nope\n".to_string(),
     ];
     let mut executor = TestShell::new(last_command_outputs);
-    let mut swapper = Swapper::new(Box::new(&mut executor), "".to_string(), "".to_string(), "".to_string(), false);
+    let mut swapper = Swapper::new(
+      Box::new(&mut executor),
+      "".to_string(),
+      "".to_string(),
+      "".to_string(),
+      false,
+    );
 
     swapper.capture_active_pane();
     swapper.execute_thumbs();
