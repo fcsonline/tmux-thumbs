@@ -93,6 +93,7 @@ NOTE: for changes to take effect, you'll need to source again your `.tmux.conf` 
 * [@thumbs-select-fg-color](#thumbs-select-fg-color)
 * [@thumbs-select-bg-color](#thumbs-select-bg-color)
 * [@thumbs-contrast](#thumbs-contrast)
+* [@thumbs-osc52](#thumbs-osc52)
 
 ### @thumbs-key
 
@@ -271,6 +272,18 @@ For example:
 
 ```
 set -g @thumbs-contrast 1
+```
+
+### @thumbs-osc52
+
+`default: 0`
+
+If this is set to `1`, `tmux-thumbs` will print a OSC52 copy escape sequence when you select a match, in addition to running the pick command. This sequence, in terminals that support it (e.g. iTerm), allows the content to be copied into the system clipboard in addition to the tmux copy buffer.
+
+For example:
+
+```
+set -g @thumbs-osc52 1
 ```
 
 #### Colors

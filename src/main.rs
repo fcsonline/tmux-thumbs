@@ -1,3 +1,4 @@
+extern crate base64;
 extern crate clap;
 extern crate termion;
 
@@ -9,8 +10,7 @@ mod view;
 use self::clap::{App, Arg};
 use clap::crate_version;
 use std::fs::OpenOptions;
-use std::io::prelude::*;
-use std::io::{self, Read};
+use std::io::{self, Read, Write};
 
 fn app_args<'a>() -> clap::ArgMatches<'a> {
   App::new("thumbs")
