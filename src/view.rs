@@ -242,6 +242,7 @@ impl<'a> View<'a> {
         _ => {
           // Nothing in the buffer. Wait for a bit...
           std::thread::sleep(std::time::Duration::from_millis(100));
+          continue; // don't render again if nothing new to show
         }
       }
 
