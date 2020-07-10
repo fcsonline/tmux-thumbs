@@ -238,10 +238,12 @@ impl<'a> View<'a> {
             }
             Err(err) => panic!(err),
           }
+
+          stdin.keys().for_each(|_| { /* Skip the rest of stdin buffer */ })
         }
         _ => {
           // Nothing in the buffer. Wait for a bit...
-          std::thread::sleep(std::time::Duration::from_millis(100));
+          std::thread::sleep(std::time::Duration::from_millis(50));
           continue; // don't render again if nothing new to show
         }
       }
