@@ -89,7 +89,7 @@ impl<'a> View<'a> {
       let clean = line.trim_end_matches(|c: char| c.is_whitespace());
 
       if !clean.is_empty() {
-        let text = self.make_hint_text(line);
+        let text = line.to_string();
 
         print!("{goto}{text}", goto = cursor::Goto(1, index as u16 + 1), text = &text);
       }
