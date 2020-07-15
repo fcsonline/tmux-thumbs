@@ -6,7 +6,8 @@ os:
   - osx
 
 rust:
-  - nightly
+  # FIXME: Try again when component 'rustfmt' is available
+  # - nightly
   - stable
 
 before_script:
