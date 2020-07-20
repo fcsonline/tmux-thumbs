@@ -32,6 +32,10 @@ done
 
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-${CURRENT_DIR}/target/release/tmux-thumbs --dir "${CURRENT_DIR}" "${PARAMS[@]}"
+visual_activity=$(tmux show-options -g visual-activity | cut -f2 -d' ')
+
+tmux set-option -g visual-activity off
+  ${CURRENT_DIR}/target/release/tmux-thumbs --dir "${CURRENT_DIR}" "${PARAMS[@]}"
+tmux set-option -g visual-activity "${visual_activity}"
 
 true
