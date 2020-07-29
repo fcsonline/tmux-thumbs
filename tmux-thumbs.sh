@@ -2,41 +2,36 @@
 
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-PARAMS=()
-
-function get-option() {
+function get-opt-value() {
   tmux show -vg "@thumbs-${1}" 2> /dev/null
 }
 
-function add-boolean-param {
-  local opt
-  opt="${1}"
-  if [ "$(get-option "${opt}")" = 1 ]; then
-    PARAMS+=("--${opt}")
+function get-opt-arg() {
+  local opt type value
+  opt="${1}"; type="${2}"
+  value="$(get-opt-value "${opt}")" || true
+
+  if [ "${type}" = string ]; then
+    [ -n "${value}" ] && echo "--${opt}=${value}"
+  elif [ "${type}" = boolean ]; then
+    [ "${value}" = 1 ] && echo "--${opt}"
+  else
+    return 1
   fi
 }
 
-function add-option-param {
-  local opt value
-  opt="${1}"
-  value="$(get-option "${opt}")"
-  if [ -n "${value}" ]; then
-    PARAMS+=("--${opt}=${value}")
+PARAMS=(--dir "${CURRENT_DIR}")
+
+function add-param() {
+  local type opt arg
+  opt="${1}"; type="${2}"
+  if arg="$(get-opt-arg "${opt}" "${type}")"; then
+    PARAMS+=("${arg}")
   fi
 }
 
-add-option-param command
-add-option-param upcase-command
-add-boolean-param osc52
+add-param command        string
+add-param upcase-command string
+add-param osc52          boolean
 
-# Remove empty arguments from PARAMS.
-# Otherwise, they would choke up tmux-thumbs when passed to it.
-for i in "${!PARAMS[@]}"; do
-  [ -n "${PARAMS[$i]}" ] || unset "PARAMS[$i]"
-done
-
-CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-"${CURRENT_DIR}/target/release/tmux-thumbs" --dir "${CURRENT_DIR}" "${PARAMS[@]}"
-
-true
+"${CURRENT_DIR}/target/release/tmux-thumbs" "${PARAMS[@]}" || true
