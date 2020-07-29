@@ -298,8 +298,38 @@ impl<'a> Swapper<'a> {
           self.command.clone()
         };
 
-        let final_command = str::replace(execute_command.as_str(), "{}", text.trim_end());
-        let retrieve_command = vec!["bash", "-c", final_command.as_str()];
+        // The command we run has two arguments:
+        //  * The first arg is the (trimmed) text. This gets stored in a variable, in order to
+        //    preserve quoting and special characters.
+        //
+        //  * The second argument is the user's command, with the '{}' token replaced with an
+        //    unquoted reference to the variable containing the text.
+        //
+        // The reference is unquoted, unfortunately, because the token may already have been
+        // spliced into a string (e.g 'tmux display-message "Copied {}"'), and it's impossible (or
+        // at least exceedingly difficult) to determine the correct quoting level.
+        //
+        // The alternative of literally splicing the text into the command is bad and it causes all
+        // kinds of harmful escaping issues that the user cannot reasonable avoid.
+        //
+        // For example, imagine some pattern matched the text "foo;rm *" and the user's command was
+        // an innocuous "echo {}". With literal splicing, we would run the command "echo foo;rm *".
+        // That's BAD. Without splicing, instead we execute "echo ${THUMB}" which does mostly the
+        // right thing regardless the contents of the text. (At worst, bash will word-separate the
+        // unquoted variable; but it won't _execute_ those words in common scenarios).
+        //
+        // Ideally user commands would just use "${THUMB}" to begin with rather than having any
+        // sort of ad-hoc string splicing here at all, and then they could specify the quoting they
+        // want, but that would break backwards compatibility.
+        let final_command = str::replace(execute_command.as_str(), "{}", "${THUMB}");
+        let retrieve_command = vec![
+          "bash",
+          "-c",
+          "THUMB=\"$1\"; eval \"$2\"",
+          "--",
+          text.trim_end(),
+          final_command.as_str(),
+        ];
         let params = retrieve_command.iter().map(|arg| arg.to_string()).collect();
 
         self.executor.execute(params);
