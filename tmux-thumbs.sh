@@ -15,7 +15,7 @@ function add-boolean-param {
 function add-option-param {
   VALUE=$(tmux show -vg @thumbs-$1 2> /dev/null)
 
-  if [[ ${VALUE} ]]; then
+  if [ -n "${VALUE}" ]; then
     PARAMS+=("--$1=${VALUE}")
   fi
 }
