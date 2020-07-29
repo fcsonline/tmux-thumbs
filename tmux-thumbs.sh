@@ -5,24 +5,26 @@ CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PARAMS=()
 
 function add-boolean-param {
-  VALUE=$(tmux show -vg @thumbs-$1 2> /dev/null)
-
-  if [[ "${VALUE}" == "1" ]]; then
-    PARAMS+=("--$1")
+  local opt value
+  opt="${1}"
+  value="$(tmux show -vg "@thumbs-${opt}" 2> /dev/null)"
+  if [ "${value}" = 1 ]; then
+    PARAMS+=("--${opt}")
   fi
 }
 
 function add-option-param {
-  VALUE=$(tmux show -vg @thumbs-$1 2> /dev/null)
-
-  if [ -n "${VALUE}" ]; then
-    PARAMS+=("--$1=${VALUE}")
+  local opt value
+  opt="${1}"
+  value="$(tmux show -vg "@thumbs-${opt}" 2> /dev/null)"
+  if [ -n "${value}" ]; then
+    PARAMS+=("--${opt}=${value}")
   fi
 }
 
-add-option-param "command"
-add-option-param "upcase-command"
-add-boolean-param "osc52"
+add-option-param command
+add-option-param upcase-command
+add-boolean-param osc52
 
 # Remove empty arguments from PARAMS.
 # Otherwise, they would choke up tmux-thumbs when passed to it.
@@ -32,6 +34,6 @@ done
 
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-${CURRENT_DIR}/target/release/tmux-thumbs --dir "${CURRENT_DIR}" "${PARAMS[@]}"
+"${CURRENT_DIR}/target/release/tmux-thumbs" --dir "${CURRENT_DIR}" "${PARAMS[@]}"
 
 true
