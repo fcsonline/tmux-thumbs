@@ -4,11 +4,14 @@ CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 PARAMS=()
 
+function get-option() {
+  tmux show -vg "@thumbs-${1}" 2> /dev/null
+}
+
 function add-boolean-param {
-  local opt value
+  local opt
   opt="${1}"
-  value="$(tmux show -vg "@thumbs-${opt}" 2> /dev/null)"
-  if [ "${value}" = 1 ]; then
+  if [ "$(get-option "${opt}")" = 1 ]; then
     PARAMS+=("--${opt}")
   fi
 }
@@ -16,7 +19,7 @@ function add-boolean-param {
 function add-option-param {
   local opt value
   opt="${1}"
-  value="$(tmux show -vg "@thumbs-${opt}" 2> /dev/null)"
+  value="$(get-option "${opt}")"
   if [ -n "${value}" ]; then
     PARAMS+=("--${opt}=${value}")
   fi
