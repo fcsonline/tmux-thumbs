@@ -84,6 +84,7 @@ NOTE: for changes to take effect, you'll need to source again your `.tmux.conf` 
 * [@thumbs-unique](#thumbs-unique)
 * [@thumbs-position](#thumbs-position)
 * [@thumbs-regexp-N](#thumbs-regexp-N)
+* [@thumbs-disable-default-N](#thumbs-disable-default-N)
 * [@thumbs-command](#thumbs-command)
 * [@thumbs-upcase-command](#thumbs-upcase-command)
 * [@thumbs-bg-color](#thumbs-bg-color)
@@ -168,7 +169,7 @@ set -g @thumbs-regexp-2 '[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9
 
 ### @thumbs-disable-default-N
 
-Default patterns to disable. This parameter can have multiple instances. Review all [default filters](#Default Filters)
+Default patterns to disable. This parameter can have multiple instances. Review all [default filters](#Default-Filters)
 
 For example:
 
