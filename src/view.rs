@@ -127,21 +127,12 @@ impl<'a> View<'a> {
       if let Some(ref hint) = mat.hint {
         let extra_position = if self.position == "left" {
           0
-        } else if self.position == "off_left" {
-          0 - mat.hint.clone().unwrap().len()
-        } else if self.position == "off_right" {
-          text.len()
         } else {
           text.len() - mat.hint.clone().unwrap().len()
         };
 
         let text = self.make_hint_text(hint.as_str());
 
-        let final_position = if (offset as i32 + extra_position as i32) < 0 {
-          0
-        } else {
-          offset + extra_position as u16
-        };
         print!(
           "{goto}{background}{foregroud}{text}{resetf}{resetb}",
           goto = cursor::Goto(offset + extra_position as u16 + 1, mat.y as u16 + 1),
