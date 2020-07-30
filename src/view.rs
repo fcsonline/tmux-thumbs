@@ -125,14 +125,11 @@ impl<'a> View<'a> {
       );
 
       if let Some(ref hint) = mat.hint {
-        let extra_position = if self.position == "left" {
-          0
-        } else if self.position == "off_left" {
-          0 - mat.hint.clone().unwrap().len()
-        } else if self.position == "off_right" {
-          text.len()
-        } else {
-          text.len() - mat.hint.clone().unwrap().len()
+        let extra_position = match self.position {
+          "right" => text.len() - mat.hint.clone().unwrap().len(),
+          "off_left" => 0 - mat.hint.clone().unwrap().len(),
+          "off_right" => text.len(),
+          _ => 0,
         };
 
         let text = self.make_hint_text(hint.as_str());
