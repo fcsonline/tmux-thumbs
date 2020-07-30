@@ -147,7 +147,7 @@ set -g @thumbs-unique
 
 `default: left`
 
-Choose where do you want to show the hint in the matched string. Options (left, right).
+Choose where do you want to show the hint in the matched string. Options (left, right, off_left, off_right).
 
 For example:
 
