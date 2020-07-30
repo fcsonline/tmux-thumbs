@@ -144,7 +144,7 @@ impl<'a> View<'a> {
         };
         print!(
           "{goto}{background}{foregroud}{text}{resetf}{resetb}",
-          goto = cursor::Goto(offset + extra_position as u16 + 1, mat.y as u16 + 1),
+          goto = cursor::Goto(final_position as u16 + 1, mat.y as u16 + 1),
           foregroud = color::Fg(*self.hint_foreground_color),
           background = color::Bg(*self.hint_background_color),
           resetf = color::Fg(color::Reset),
