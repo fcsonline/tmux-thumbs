@@ -166,6 +166,17 @@ set -g @thumbs-regexp-1 '[a-z]+@[a-z]+.com' # Match emails
 set -g @thumbs-regexp-2 '[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:' # Match MAC addresses
 ```
 
+### @thumbs-disable-default-N
+
+Default patterns to disable. This parameter can have multiple instances. Review all [default filters](#Default Filters)
+
+For example:
+
+```
+set -g @thumbs-disable-default-1 'number' # Disable matching 4+ digits
+set -g @thumbs-disable-default-2 'url' # Disable matching urls
+```
+
 ### @thumbs-command
 
 `default: 'tmux set-buffer {}'`
@@ -327,6 +338,25 @@ This is the list of available alphabets:
 - `colemak-left-hand`: arstqwfpzxcv
 - `colemak-right-hand`: neioluymjhk
 
+#### Default Filters
+
+This is the list of default filters by name:
+
+- `markdown_url`
+- `url`
+- `diff_a`
+- `diff_b`
+- `docker`
+- `path`
+- `color`
+- `uid`
+- `ipfs`
+- `sha`
+- `ip`
+- `ipv6`
+- `address`
+- `number`
+
 ## Extra features
 
 - **Arrow navigation:** You can use the arrows to move around between all matched items.
@@ -390,6 +420,7 @@ OPTIONS:
         --hint-fg-color <hint_foreground_color>        Sets the foregroud color for hints [default: yellow]
     -p, --position <position>                          Hint position [default: left]
     -x, --regexp <regexp>...                           Use this regexp as extra pattern to match
+    -d, --disable-default <filter-name>...             Use this to disable matching of a default filter
         --select-bg-color <select_background_color>    Sets the background color for selection [default: black]
         --select-fg-color <select_foreground_color>    Sets the foreground color for selection [default: blue]
     -t, --target <target>                              Stores the hint in the specified path

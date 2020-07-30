@@ -169,6 +169,10 @@ impl<'a> Swapper<'a> {
             return vec!["--regexp".to_string(), format!("'{}'", value)];
           }
 
+          if name.starts_with("disable_default") {
+            return vec!["--disable_default".to_string(), format!("'{}'", value)];
+          }
+
           vec![]
         } else {
           vec![]

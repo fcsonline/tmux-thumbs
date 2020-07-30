@@ -54,14 +54,16 @@ pub struct State<'a> {
   pub lines: &'a Vec<&'a str>,
   alphabet: &'a str,
   regexp: &'a Vec<&'a str>,
+  disable_default: &'a Vec<&'a str>,
 }
 
 impl<'a> State<'a> {
-  pub fn new(lines: &'a Vec<&'a str>, alphabet: &'a str, regexp: &'a Vec<&'a str>) -> State<'a> {
+  pub fn new(lines: &'a Vec<&'a str>, alphabet: &'a str, regexp: &'a Vec<&'a str>, disable_default: &'a Vec<&'a str>) -> State<'a> {
     State {
       lines,
       alphabet,
       regexp,
+      disable_default,
     }
   }
 
@@ -81,6 +83,7 @@ impl<'a> State<'a> {
 
     let patterns = PATTERNS
       .iter()
+      .filter(|tuple| ! self.disable_default.iter().any(|&x| x == tuple.0))
       .map(|tuple| (tuple.0, Regex::new(tuple.1).unwrap()))
       .collect::<Vec<_>>();
 

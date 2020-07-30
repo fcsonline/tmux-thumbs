@@ -100,6 +100,14 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
         .multiple(true),
     )
     .arg(
+      Arg::with_name("disable_default")
+        .help("Use this to disable default regexp matches")
+        .long("disable_default")
+        .short("x")
+        .takes_value(true)
+        .multiple(true),
+    )
+    .arg(
       Arg::with_name("contrast")
         .help("Put square brackets around hint for visibility")
         .long("contrast")
@@ -130,6 +138,11 @@ fn main() {
   } else {
     [].to_vec()
   };
+  let disable_default = if let Some(items) = args.values_of("disable_default") {
+    items.collect::<Vec<_>>()
+  } else {
+    [].to_vec()
+  };
 
   let foreground_color = colors::get_color(args.value_of("foreground_color").unwrap());
   let background_color = colors::get_color(args.value_of("background_color").unwrap());
@@ -146,7 +159,7 @@ fn main() {
 
   let lines = output.split('\n').collect::<Vec<&str>>();
 
-  let mut state = state::State::new(&lines, alphabet, &regexp);
+  let mut state = state::State::new(&lines, alphabet, &regexp, &disable_default);
 
   let selected = {
     let mut viewbox = view::View::new(
