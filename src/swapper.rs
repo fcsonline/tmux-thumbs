@@ -409,6 +409,46 @@ mod tests {
 
     assert_eq!(executor.last_executed().unwrap(), expectation);
   }
+
+  #[test]
+  fn quoted_execution() {
+    let last_command_outputs = vec!["Blah blah blah, the ignored user script output".to_string()];
+    let mut executor = TestShell::new(last_command_outputs);
+
+    let user_command = "echo \"{}\"".to_string();
+    let upcase_command = "open \"{}\"".to_string();
+    let mut swapper = Swapper::new(
+      Box::new(&mut executor),
+      "".to_string(),
+      user_command,
+      upcase_command,
+      false,
+    );
+
+    swapper.content = Some(format!(
+      "{do_upcase}:{thumb_text}",
+      do_upcase = false,
+      thumb_text = "foobar;rm *",
+    ));
+    swapper.execute_command();
+
+    let expectation = vec![
+      "bash",
+      // The actual shell command:
+      "-c",
+      "THUMB=\"$1\"; eval \"$2\"",
+      // $0: The non-existent program name.
+      "--",
+      // $1: The value assigned to THUMB above.
+      //     Not interpreted as a shell expression!
+      "foobar;rm *",
+      // $2: The user script, with {} replaced with ${THUMB},
+      //     and will be eval'd with THUMB in scope.
+      "echo \"${THUMB}\"",
+    ];
+
+    assert_eq!(executor.last_executed().unwrap(), expectation);
+  }
 }
 
 fn app_args<'a>() -> clap::ArgMatches<'a> {
