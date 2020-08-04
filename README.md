@@ -168,7 +168,7 @@ set -g @thumbs-regexp-2 '[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9
 
 ### @thumbs-command
 
-`default: 'tmux set-buffer {}'`
+`default: 'tmux set-buffer {} && tmux display-message \"Copied {}\"'`
 
 Choose which command execute when you press a hint. `tmux-thumbs` will replace `{}` with the picked hint.
 
@@ -180,7 +180,7 @@ set -g @thumbs-command 'echo -n {} | pbcopy'
 
 ### @thumbs-upcase-command
 
-`default: 'tmux set-buffer {} && tmux paste-buffer'`
+`default: 'tmux set-buffer {} && tmux paste-buffer && tmux display-message \"Copied {}\"`
 
 Choose which command execute when you press a upcase hint. `tmux-thumbs` will replace `{}` with the picked hint.
 

@@ -465,13 +465,13 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
       Arg::with_name("command")
         .help("Pick command")
         .long("command")
-        .default_value("tmux set-buffer {}"),
+        .default_value("tmux set-buffer {} && tmux display-message \"Copied {}\""),
     )
     .arg(
       Arg::with_name("upcase_command")
         .help("Upcase command")
         .long("upcase-command")
-        .default_value("tmux set-buffer {} && tmux paste-buffer"),
+        .default_value("tmux set-buffer {} && tmux paste-buffer && tmux display-message \"Copied {}\""),
     )
     .arg(
       Arg::with_name("osc52")
