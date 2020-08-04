@@ -365,7 +365,7 @@ cargo install thumbs
 And those are all available options:
 
 ```
-thumbs 0.4.3
+thumbs 0.4.4
 A lightning fast version copy/pasting like vimium/vimperator
 
 USAGE:
@@ -433,7 +433,7 @@ I was curious to know if this was possible to be written in [Rust](https://www.r
 
 This project started as a side project to learn Rust, so I'm sure that is full
 of mistakes and areas to be improve. If you think you can tweak the code to
-make it better, I'll really appreaciate a pull request. ;)
+make it better, I'll really appreciate a pull request. ;)
 
 # License
 
