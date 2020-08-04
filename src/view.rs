@@ -126,19 +126,15 @@ impl<'a> View<'a> {
 
       if let Some(ref hint) = mat.hint {
         let extra_position = match self.position {
-          "right" => text.len() - mat.hint.clone().unwrap().len(),
-          "off_left" => 0 - mat.hint.clone().unwrap().len(),
+          "right" => text.len() - hint.len(),
+          "off_left" => 0 - hint.len(),
           "off_right" => text.len(),
           _ => 0,
         };
 
         let text = self.make_hint_text(hint.as_str());
+        let final_position = std::cmp::max(offset as i16 + extra_position as i16, 0);
 
-        let final_position = if (offset as i32 + extra_position as i32) < 0 {
-          0
-        } else {
-          offset + extra_position as u16
-        };
         print!(
           "{goto}{background}{foregroud}{text}{resetf}{resetb}",
           goto = cursor::Goto(final_position as u16 + 1, mat.y as u16 + 1),
