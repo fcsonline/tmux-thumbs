@@ -100,9 +100,9 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
         .multiple(true),
     )
     .arg(
-      Arg::with_name("disable_default")
+      Arg::with_name("disable")
         .help("Use this to disable default regexp matches")
-        .long("disable_default")
+        .long("disable")
         .short("x")
         .takes_value(true)
         .multiple(true),
@@ -138,7 +138,7 @@ fn main() {
   } else {
     [].to_vec()
   };
-  let disable_default = if let Some(items) = args.values_of("disable_default") {
+  let disable = if let Some(items) = args.values_of("disable") {
     items.collect::<Vec<_>>()
   } else {
     [].to_vec()
@@ -159,7 +159,7 @@ fn main() {
 
   let lines = output.split('\n').collect::<Vec<&str>>();
 
-  let mut state = state::State::new(&lines, alphabet, &regexp, &disable_default);
+  let mut state = state::State::new(&lines, alphabet, &regexp, &disable);
 
   let selected = {
     let mut viewbox = view::View::new(
