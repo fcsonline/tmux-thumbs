@@ -33,6 +33,11 @@ more with `--regexp` parameter.
 
 [![demo](https://asciinema.org/a/232775.png?ts=1)](https://asciinema.org/a/232775?autoplay=1)
 
+## Prerequisites
+
+`tmux-thums` is written in Rust. You will need `rustc` version 1.35.0 or higher. The
+recommended way to install Rust is from the official [download page](https://rustup.rs/).
+
 ## Tmux integration
 
 Clone the repo:
