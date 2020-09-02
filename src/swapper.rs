@@ -192,15 +192,15 @@ impl<'a> Swapper<'a> {
 
     // NOTE: For debugging add echo $PWD && sleep 5 after tee
     let pane_command = format!(
-        "tmux capture-pane -t {} -p{} | {}/target/release/thumbs -f '%U:%H' -t {} {}; tmux swap-pane -t {}; tmux wait-for -S {}",
-        active_pane_id,
-        scroll_params,
-        self.dir,
-        TMP_FILE,
-        args.join(" "),
-        active_pane_id,
-        self.signal
-    );
+            "tmux capture-pane -t {} -p{} | {}/target/release/thumbs -f '%U:%H' -t {} {}; tmux swap-pane -t {}; tmux wait-for -S {}",
+            active_pane_id,
+            scroll_params,
+            self.dir,
+            TMP_FILE,
+            args.join(" "),
+            active_pane_id,
+            self.signal
+        );
 
     let thumbs_command = vec![
       "tmux",
@@ -256,7 +256,12 @@ impl<'a> Swapper<'a> {
     self.executor.execute(params);
   }
 
-  pub fn send_osc52(&mut self) {}
+  pub fn send_osc52(&mut self, text: &str) {
+    let osc52_command = vec!["tmux", "set-buffer", "-w", text];
+    let params = osc52_command.iter().map(|arg| arg.to_string()).collect();
+
+    self.executor.execute(params);
+  }
 
   pub fn execute_command(&mut self) {
     let content = self.content.clone().unwrap();
@@ -265,31 +270,7 @@ impl<'a> Swapper<'a> {
     if let Some(upcase) = splitter.next() {
       if let Some(text) = splitter.next() {
         if self.osc52 {
-          let base64_text = base64::encode(text.as_bytes());
-          let osc_seq = format!("\x1b]52;0;{}\x07", base64_text);
-          let tmux_seq = format!("\x1bPtmux;{}\x1b\\", osc_seq.replace("\x1b", "\x1b\x1b"));
-
-          // FIXME: Review if this comment is still rellevant
-          //
-          // When the user selects a match:
-          // 1. The `rustbox` object created in the `viewbox` above is dropped.
-          // 2. During its `drop`, the `rustbox` object sends a CSI 1049 escape
-          //    sequence to tmux.
-          // 3. This escape sequence causes the `window_pane_alternate_off` function
-          //    in tmux to be called.
-          // 4. In `window_pane_alternate_off`, tmux sets the needs-redraw flag in the
-          //    pane.
-          // 5. If we print the OSC copy escape sequence before the redraw is completed,
-          //    tmux will *not* send the sequence to the host terminal. See the following
-          //    call chain in tmux: `input_dcs_dispatch` -> `screen_write_rawstring`
-          //    -> `tty_write` -> `tty_client_ready`. In this case, `tty_client_ready`
-          //    will return false, thus preventing the escape sequence from being sent.
-          //
-          // Therefore, for now we wait a little bit here for the redraw to finish.
-          std::thread::sleep(std::time::Duration::from_millis(100));
-
-          std::io::stdout().write_all(tmux_seq.as_bytes()).unwrap();
-          std::io::stdout().flush().unwrap();
+          self.send_osc52(text);
         }
 
         let execute_command = if upcase.trim_end() == "true" {
