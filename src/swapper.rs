@@ -3,7 +3,6 @@ extern crate clap;
 use self::clap::{App, Arg};
 use clap::crate_version;
 use regex::Regex;
-use std::io::Write;
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
