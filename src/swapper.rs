@@ -332,13 +332,7 @@ mod tests {
   fn retrieve_active_pane() {
     let last_command_outputs = vec!["%97:100:24:1:active\n%106:100:24:1:nope\n%107:100:24:1:nope\n".to_string()];
     let mut executor = TestShell::new(last_command_outputs);
-    let mut swapper = Swapper::new(
-      Box::new(&mut executor),
-      "".to_string(),
-      "".to_string(),
-      "".to_string(),
-      false,
-    );
+    let mut swapper = Swapper::new(Box::new(&mut executor), "".to_string(), "".to_string(), "".to_string());
 
     swapper.capture_active_pane();
 
@@ -354,13 +348,7 @@ mod tests {
       "%106:100:24:1:nope\n%98:100:24:1:active\n%107:100:24:1:nope\n".to_string(),
     ];
     let mut executor = TestShell::new(last_command_outputs);
-    let mut swapper = Swapper::new(
-      Box::new(&mut executor),
-      "".to_string(),
-      "".to_string(),
-      "".to_string(),
-      false,
-    );
+    let mut swapper = Swapper::new(Box::new(&mut executor), "".to_string(), "".to_string(), "".to_string());
 
     swapper.capture_active_pane();
     swapper.execute_thumbs();
@@ -378,13 +366,7 @@ mod tests {
 
     let user_command = "echo \"{}\"".to_string();
     let upcase_command = "open \"{}\"".to_string();
-    let mut swapper = Swapper::new(
-      Box::new(&mut executor),
-      "".to_string(),
-      user_command,
-      upcase_command,
-      false,
-    );
+    let mut swapper = Swapper::new(Box::new(&mut executor), "".to_string(), user_command, upcase_command);
 
     swapper.content = Some(format!(
       "{do_upcase}:{thumb_text}",
