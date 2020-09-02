@@ -183,8 +183,8 @@ set -g @thumbs-command 'echo -n {} | pbcopy'
 ```
 
 OSC52:
-Depends on tmux git
-Depends on `tmux set -s set-clipboard on|external`
+
+Depends on tmux git (at least fc9cdc)  and on `set -s set-clipboard on|external` in tmux config.
 
 ```
 set -g @thumbs-command 'tmux set-buffer -w {}'
