@@ -47,7 +47,6 @@ pub struct Swapper<'a> {
   dir: String,
   command: String,
   upcase_command: String,
-  osc52: bool,
   active_pane_id: Option<String>,
   active_pane_height: Option<i32>,
   active_pane_scroll_position: Option<i32>,
@@ -58,13 +57,7 @@ pub struct Swapper<'a> {
 }
 
 impl<'a> Swapper<'a> {
-  fn new(
-    executor: Box<&'a mut dyn Executor>,
-    dir: String,
-    command: String,
-    upcase_command: String,
-    osc52: bool,
-  ) -> Swapper {
+  fn new(executor: Box<&'a mut dyn Executor>, dir: String, command: String, upcase_command: String) -> Swapper {
     let since_the_epoch = SystemTime::now()
       .duration_since(UNIX_EPOCH)
       .expect("Time went backwards");
@@ -75,7 +68,6 @@ impl<'a> Swapper<'a> {
       dir,
       command,
       upcase_command,
-      osc52,
       active_pane_id: None,
       active_pane_height: None,
       active_pane_scroll_position: None,
@@ -255,23 +247,12 @@ impl<'a> Swapper<'a> {
     self.executor.execute(params);
   }
 
-  pub fn send_osc52(&mut self, text: &str) {
-    let osc52_command = vec!["tmux", "set-buffer", "-w", text];
-    let params = osc52_command.iter().map(|arg| arg.to_string()).collect();
-
-    self.executor.execute(params);
-  }
-
   pub fn execute_command(&mut self) {
     let content = self.content.clone().unwrap();
     let mut splitter = content.splitn(2, ':');
 
     if let Some(upcase) = splitter.next() {
       if let Some(text) = splitter.next() {
-        if self.osc52 {
-          self.send_osc52(text);
-        }
-
         let execute_command = if upcase.trim_end() == "true" {
           self.upcase_command.clone()
         } else {
@@ -453,12 +434,6 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
         .long("upcase-command")
         .default_value("tmux set-buffer {} && tmux paste-buffer && tmux display-message \"Copied {}\""),
     )
-    .arg(
-      Arg::with_name("osc52")
-        .help("Print OSC52 copy escape sequence in addition to running the pick command")
-        .long("osc52")
-        .short("o"),
-    )
     .get_matches()
 }
 
@@ -467,7 +442,6 @@ fn main() -> std::io::Result<()> {
   let dir = args.value_of("dir").unwrap();
   let command = args.value_of("command").unwrap();
   let upcase_command = args.value_of("upcase_command").unwrap();
-  let osc52 = args.is_present("osc52");
 
   if dir.is_empty() {
     panic!("Invalid tmux-thumbs execution. Are you trying to execute tmux-thumbs directly?")
@@ -479,7 +453,6 @@ fn main() -> std::io::Result<()> {
     dir.to_string(),
     command.to_string(),
     upcase_command.to_string(),
-    osc52,
   );
 
   swapper.capture_active_pane();
