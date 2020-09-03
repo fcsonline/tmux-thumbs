@@ -136,7 +136,7 @@ impl<'a> Swapper<'a> {
     let options = self.executor.execute(params);
     let lines: Vec<&str> = options.split('\n').collect();
 
-    let pattern = Regex::new(r#"@thumbs-([\w\-0-9]+) "?(\w+)"?"#).unwrap();
+    let pattern = Regex::new(r#"@thumbs-([\w\-0-9]+)\s+(.+)"#).unwrap();
 
     let args = lines
       .iter()
@@ -166,7 +166,7 @@ impl<'a> Swapper<'a> {
           }
 
           if name.starts_with("regexp") {
-            return vec!["--regexp".to_string(), format!("'{}'", value)];
+            return vec!["--regexp".to_string(), format!("'{}'", value.replace("\\\\", "\\"))];
           }
 
           vec![]
