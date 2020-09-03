@@ -167,9 +167,11 @@ Add extra patterns to match. This parameter can have multiple instances.
 For example:
 
 ```
-set -g @thumbs-regexp-1 [a-z]+@[a-z]+.com # Match emails
-set -g @thumbs-regexp-2 [a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}: # Match MAC addresses
-set -g @thumbs-regexp-3 Vlan\\d+ # match Vlan interface on network devices
+set -g @thumbs-regexp-1 '[a-z]+@[a-z]+.com' # Match emails
+set -g @thumbs-regexp-2 '[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:' # Match MAC addresses
+set -g @thumbs-regexp-3 'Vlan\d+' # match Vlan interface on network devices
+set -g @thumbs-regexp-4 "Vlan\\d+" # alternative method of defining regexp 
+set -g @thumbs-regexp-5 Vlan\\d+ # alternative method of defining regexp 
 ```
 
 ### @thumbs-command
