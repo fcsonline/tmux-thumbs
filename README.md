@@ -35,7 +35,7 @@ more with `--regexp` parameter.
 
 ## Prerequisites
 
-`tmux-thums` is written in Rust. You will need `rustc` version 1.35.0 or higher. The
+`tmux-thumbs` is written in Rust. You will need `rustc` version 1.35.0 or higher. The
 recommended way to install Rust is from the official [download page](https://rustup.rs/).
 
 ## Tmux integration
