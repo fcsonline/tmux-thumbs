@@ -180,7 +180,7 @@ impl<'a> View<'a> {
                     break;
                   }
                 }
-                Key::Insert => match self.matches.iter().enumerate().find(|&h| h.0 == self.skip) {
+                Key::Insert | Key::Char('\n')  => match self.matches.iter().enumerate().find(|&h| h.0 == self.skip) {
                   Some(hm) => {
                     chosen.push((hm.1.text.to_string(), false));
 
@@ -190,10 +190,10 @@ impl<'a> View<'a> {
                   }
                   _ => panic!("Match not found?"),
                 },
-                Key::Up => {
+                Key::Up | Key::Ctrl('p') => {
                   self.prev();
                 }
-                Key::Down => {
+                Key::Down | Key::Ctrl('n') => {
                   self.next();
                 }
                 Key::Left => {
