@@ -8,6 +8,8 @@ use termion::raw::IntoRawMode;
 use termion::screen::AlternateScreen;
 use termion::{color, cursor};
 
+use unicode_width::UnicodeWidthStr;
+
 pub struct View<'a> {
   state: &'a mut state::State<'a>,
   skip: usize,
@@ -110,7 +112,7 @@ impl<'a> View<'a> {
       // Find long utf sequences and extract it from mat.x
       let line = &self.state.lines[mat.y as usize];
       let prefix = &line[0..mat.x as usize];
-      let extra = prefix.len() - prefix.chars().count();
+      let extra = prefix.width_cjk() - prefix.chars().count();
       let offset = (mat.x as u16) - (extra as u16);
       let text = self.make_hint_text(mat.text);
 
@@ -126,9 +128,9 @@ impl<'a> View<'a> {
 
       if let Some(ref hint) = mat.hint {
         let extra_position = match self.position {
-          "right" => text.len() - hint.len(),
+          "right" => text.width_cjk() - hint.len(),
           "off_left" => 0 - hint.len(),
-          "off_right" => text.len(),
+          "off_right" => text.width_cjk(),
           _ => 0,
         };
 
