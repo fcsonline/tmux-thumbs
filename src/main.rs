@@ -85,6 +85,12 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
         .short("u"),
     )
     .arg(
+      Arg::with_name("no_pattern")
+        .help("Without default hint patterns")
+        .long("no-pattern")
+        .short("X"),
+    )
+    .arg(
       Arg::with_name("position")
         .help("Hint position")
         .long("position")
@@ -130,6 +136,7 @@ fn main() {
   } else {
     [].to_vec()
   };
+  let no_pattern = args.is_present("no_pattern");
 
   let foreground_color = colors::get_color(args.value_of("foreground_color").unwrap());
   let background_color = colors::get_color(args.value_of("background_color").unwrap());
@@ -146,7 +153,7 @@ fn main() {
 
   let lines = output.split('\n').collect::<Vec<&str>>();
 
-  let mut state = state::State::new(&lines, alphabet, &regexp);
+  let mut state = state::State::new(&lines, alphabet, &regexp, no_pattern);
 
   let selected = {
     let mut viewbox = view::View::new(

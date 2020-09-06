@@ -54,14 +54,16 @@ pub struct State<'a> {
   pub lines: &'a Vec<&'a str>,
   alphabet: &'a str,
   regexp: &'a Vec<&'a str>,
+  no_pattern: bool,
 }
 
 impl<'a> State<'a> {
-  pub fn new(lines: &'a Vec<&'a str>, alphabet: &'a str, regexp: &'a Vec<&'a str>) -> State<'a> {
+  pub fn new(lines: &'a Vec<&'a str>, alphabet: &'a str, regexp: &'a Vec<&'a str>, no_pattern: bool) -> State<'a> {
     State {
       lines,
       alphabet,
       regexp,
+      no_pattern,
     }
   }
 
@@ -84,7 +86,11 @@ impl<'a> State<'a> {
       .map(|tuple| (tuple.0, Regex::new(tuple.1).unwrap()))
       .collect::<Vec<_>>();
 
-    let all_patterns = [exclude_patterns, custom_patterns, patterns].concat();
+    let all_patterns = if self.no_pattern {
+	  [exclude_patterns, custom_patterns].concat()
+    } else {
+	  [exclude_patterns, custom_patterns, patterns].concat()
+    };
 
     for (index, line) in self.lines.iter().enumerate() {
       let mut chunk: &str = line;
