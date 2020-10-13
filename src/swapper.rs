@@ -229,6 +229,7 @@ impl<'a> Swapper<'a> {
       active_pane_id.as_str(),
       "-t",
       thumbs_pane_id.as_str(),
+      "-Z", // fix zoom
     ];
     let params = swap_command.iter().map(|arg| arg.to_string()).collect();
 
