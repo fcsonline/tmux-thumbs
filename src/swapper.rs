@@ -406,7 +406,7 @@ mod tests {
     swapper.execute_thumbs();
     swapper.swap_panes();
 
-    let expectation = vec!["tmux", "swap-pane", "-d", "-s", "%98", "-t", "%100"];
+    let expectation = vec!["tmux", "swap-pane", "-d", "-s", "%98", "-t", "%100", "-Z"];
 
     assert_eq!(executor.last_executed().unwrap(), expectation);
   }
