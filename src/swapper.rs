@@ -192,7 +192,7 @@ impl<'a> Swapper<'a> {
 
     // NOTE: For debugging add echo $PWD && sleep 5 after tee
     let pane_command = format!(
-        "tmux capture-pane -t {} -p{} | {}/target/release/thumbs -f '%U:%H' -t {} {}; tmux swap-pane -t {}; tmux wait-for -S {}",
+        "tmux capture-pane -t {} -p{} | {}/target/release/thumbs -f '%U:%H' -t {} {}; tmux swap-pane -t {} -Z; tmux wait-for -S {}",
         active_pane_id,
         scroll_params,
         self.dir,
