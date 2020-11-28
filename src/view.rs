@@ -182,16 +182,6 @@ impl<'a> View<'a> {
                     break;
                   }
                 }
-                Key::Insert => match self.matches.iter().enumerate().find(|&h| h.0 == self.skip) {
-                  Some(hm) => {
-                    chosen.push((hm.1.text.to_string(), false));
-
-                    if !self.multi {
-                      return CaptureEvent::Hint(chosen);
-                    }
-                  }
-                  _ => panic!("Match not found?"),
-                },
                 Key::Up => {
                   self.prev();
                 }
@@ -205,6 +195,19 @@ impl<'a> View<'a> {
                   self.next();
                 }
                 Key::Char(ch) => {
+                  if ch == '\n' {
+                    match self.matches.iter().enumerate().find(|&h| h.0 == self.skip) {
+                      Some(hm) => {
+                        chosen.push((hm.1.text.to_string(), false));
+
+                        if !self.multi {
+                          return CaptureEvent::Hint(chosen);
+                        }
+                      }
+                      _ => panic!("Match not found?"),
+                    }
+                  }
+
                   if ch == ' ' && self.multi {
                     return CaptureEvent::Hint(chosen);
                   }
