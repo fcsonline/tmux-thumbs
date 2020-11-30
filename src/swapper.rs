@@ -56,6 +56,7 @@ pub struct Swapper<'a> {
   thumbs_pane_id: Option<String>,
   content: Option<String>,
   signal: String,
+  version: f32,
 }
 
 impl<'a> Swapper<'a> {
@@ -70,6 +71,7 @@ impl<'a> Swapper<'a> {
       .duration_since(UNIX_EPOCH)
       .expect("Time went backwards");
     let signal = format!("thumbs-finished-{}", since_the_epoch.as_secs());
+    let version = f32::MAX;
 
     Swapper {
       executor,
@@ -84,6 +86,24 @@ impl<'a> Swapper<'a> {
       thumbs_pane_id: None,
       content: None,
       signal,
+      version,
+    }
+  }
+
+  pub fn retrieve_version(&mut self) {
+    let verions_command = vec!["tmux", "-V"];
+
+    let output = self
+      .executor
+      .execute(verions_command.iter().map(|arg| arg.to_string()).collect());
+
+    let regexp = Regex::new(r"\d{1,3}\.\d{1,3}").unwrap();
+    let mat = regexp.find(&output);
+
+    // If we are not able to parse the version, just assume f32::MAX. This cover tmux, compiled
+    // from the source code.
+    if let Some(version) = mat {
+      self.version = version.as_str().parse::<f32>().expect("Unable to parse tmux version");
     }
   }
 
@@ -190,15 +210,19 @@ impl<'a> Swapper<'a> {
       "".to_string()
     };
 
+    // TODO: Confirm this 4.0 value
+    let zoom = if self.version >= 4.0 { "-Z" } else { "" };
+
     // NOTE: For debugging add echo $PWD && sleep 5 after tee
     let pane_command = format!(
-        "tmux capture-pane -t {} -p{} | {}/target/release/thumbs -f '%U:%H' -t {} {}; tmux swap-pane -t {} -Z; tmux wait-for -S {}",
+        "tmux capture-pane -t {} -p{} | {}/target/release/thumbs -f '%U:%H' -t {} {}; tmux swap-pane -t {} {}; tmux wait-for -S {}",
         active_pane_id,
         scroll_params,
         self.dir,
         TMP_FILE,
         args.join(" "),
         active_pane_id,
+        zoom,
         self.signal
     );
 
@@ -221,6 +245,9 @@ impl<'a> Swapper<'a> {
     let active_pane_id = self.active_pane_id.as_mut().unwrap().clone();
     let thumbs_pane_id = self.thumbs_pane_id.as_mut().unwrap().clone();
 
+    // TODO: Confirm this 4.0 value
+    let zoom = if self.version >= 4.0 { "-Z" } else { "" };
+
     let swap_command = vec![
       "tmux",
       "swap-pane",
@@ -229,9 +256,13 @@ impl<'a> Swapper<'a> {
       active_pane_id.as_str(),
       "-t",
       thumbs_pane_id.as_str(),
-      "-Z", // fix zoom
+      zoom,
     ];
-    let params = swap_command.iter().map(|arg| arg.to_string()).collect();
+    let params = swap_command
+      .iter()
+      .filter(|&s| !s.is_empty())
+      .map(|arg| arg.to_string())
+      .collect();
 
     self.executor.execute(params);
   }
@@ -402,6 +433,34 @@ mod tests {
       false,
     );
 
+    swapper.version = 3.0;
+    swapper.capture_active_pane();
+    swapper.execute_thumbs();
+    swapper.swap_panes();
+
+    let expectation = vec!["tmux", "swap-pane", "-d", "-s", "%98", "-t", "%100", ""];
+
+    assert_eq!(executor.last_executed().unwrap(), expectation);
+  }
+
+  #[test]
+  fn swap_panes_zoom() {
+    let last_command_outputs = vec![
+      "".to_string(),
+      "%100".to_string(),
+      "".to_string(),
+      "%106:100:24:1:nope\n%98:100:24:1:active\n%107:100:24:1:nope\n".to_string(),
+    ];
+    let mut executor = TestShell::new(last_command_outputs);
+    let mut swapper = Swapper::new(
+      Box::new(&mut executor),
+      "".to_string(),
+      "".to_string(),
+      "".to_string(),
+      false,
+    );
+
+    swapper.version = 4.0; // Or the default MAX value.
     swapper.capture_active_pane();
     swapper.execute_thumbs();
     swapper.swap_panes();
@@ -503,6 +562,7 @@ fn main() -> std::io::Result<()> {
     osc52,
   );
 
+  swapper.retrieve_version();
   swapper.capture_active_pane();
   swapper.execute_thumbs();
   swapper.swap_panes();
@@ -510,5 +570,6 @@ fn main() -> std::io::Result<()> {
   swapper.retrieve_content();
   swapper.destroy_content();
   swapper.execute_command();
+
   Ok(())
 }
