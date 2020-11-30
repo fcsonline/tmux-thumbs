@@ -170,8 +170,8 @@ For example:
 set -g @thumbs-regexp-1 '[a-z]+@[a-z]+.com' # Match emails
 set -g @thumbs-regexp-2 '[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:' # Match MAC addresses
 set -g @thumbs-regexp-3 'Vlan\d+' # match Vlan interface on network devices
-set -g @thumbs-regexp-4 "Vlan\\d+" # alternative method of defining regexp 
-set -g @thumbs-regexp-5 Vlan\\d+ # alternative method of defining regexp 
+set -g @thumbs-regexp-4 "Vlan\\d+" # alternative method of defining regexp
+set -g @thumbs-regexp-5 Vlan\\d+ # alternative method of defining regexp
 ```
 
 ### @thumbs-command
@@ -373,7 +373,7 @@ cargo install thumbs
 And those are all available options:
 
 ```
-thumbs 0.4.4
+thumbs 0.5.0
 A lightning fast version copy/pasting like vimium/vimperator
 
 USAGE:
