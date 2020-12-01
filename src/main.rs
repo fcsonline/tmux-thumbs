@@ -12,6 +12,16 @@ use clap::crate_version;
 use std::fs::OpenOptions;
 use std::io::{self, Read, Write};
 
+#[allow(dead_code)]
+fn dbg(msg: &str) {
+  let mut file = std::fs::OpenOptions::new()
+    .append(true)
+    .open("/tmp/thumbs.log")
+    .expect("Unable to open log file");
+
+  writeln!(&mut file, "{}", msg).expect("Unable to write log file");
+}
+
 fn app_args<'a>() -> clap::ArgMatches<'a> {
   App::new("thumbs")
     .version(crate_version!())

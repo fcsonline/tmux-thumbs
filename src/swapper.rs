@@ -43,6 +43,16 @@ impl Executor for RealShell {
 
 const TMP_FILE: &str = "/tmp/thumbs-last";
 
+#[allow(dead_code)]
+fn dbg(msg: &str) {
+  let mut file = std::fs::OpenOptions::new()
+    .append(true)
+    .open("/tmp/thumbs.log")
+    .expect("Unable to open log file");
+
+  writeln!(&mut file, "{}", msg).expect("Unable to write log file");
+}
+
 pub struct Swapper<'a> {
   executor: Box<&'a mut dyn Executor>,
   dir: String,
