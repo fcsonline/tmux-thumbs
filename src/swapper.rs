@@ -62,7 +62,6 @@ pub struct Swapper<'a> {
   active_pane_id: Option<String>,
   active_pane_height: Option<i32>,
   active_pane_scroll_position: Option<i32>,
-  active_pane_in_copy_mode: Option<String>,
   thumbs_pane_id: Option<String>,
   content: Option<String>,
   signal: String,
@@ -92,7 +91,6 @@ impl<'a> Swapper<'a> {
       active_pane_id: None,
       active_pane_height: None,
       active_pane_scroll_position: None,
-      active_pane_in_copy_mode: None,
       thumbs_pane_id: None,
       content: None,
       signal,
@@ -138,24 +136,24 @@ impl<'a> Swapper<'a> {
       .expect("Unable to find active pane");
 
     let pane_id = active_pane.get(0).unwrap();
-    let pane_in_copy_mode = active_pane.get(1).unwrap().to_string();
 
     self.active_pane_id = Some(pane_id.to_string());
-    self.active_pane_in_copy_mode = Some(pane_in_copy_mode);
 
-    if self.active_pane_in_copy_mode.clone().unwrap() == "1" {
-      let pane_height = active_pane
-        .get(2)
-        .unwrap()
-        .parse()
-        .expect("Unable to retrieve pane height");
+    let pane_height = active_pane
+      .get(2)
+      .unwrap()
+      .parse()
+      .expect("Unable to retrieve pane height");
+
+    self.active_pane_height = Some(pane_height);
+
+    if active_pane.get(1).unwrap().to_string() == "1" {
       let pane_scroll_position = active_pane
         .get(3)
         .unwrap()
         .parse()
         .expect("Unable to retrieve pane scroll");
 
-      self.active_pane_height = Some(pane_height);
       self.active_pane_scroll_position = Some(pane_scroll_position);
     }
   }
@@ -208,32 +206,26 @@ impl<'a> Swapper<'a> {
 
     let active_pane_id = self.active_pane_id.as_mut().unwrap().clone();
 
-    let scroll_params = if self.active_pane_in_copy_mode.is_some() {
-      if let (Some(pane_height), Some(scroll_position)) =
-        (self.active_pane_scroll_position, self.active_pane_scroll_position)
-      {
+    let scroll_params =
+      if let (Some(pane_height), Some(scroll_position)) = (self.active_pane_height, self.active_pane_scroll_position) {
         format!(" -S {} -E {}", -scroll_position, pane_height - scroll_position - 1)
       } else {
         "".to_string()
-      }
-    } else {
-      "".to_string()
-    };
+      };
 
     // TODO: Confirm this 4.0 value
     let zoom = if self.version >= 4.0 { "-Z" } else { "" };
 
-    // NOTE: For debugging add echo $PWD && sleep 5 after tee
     let pane_command = format!(
-        "tmux capture-pane -t {} -p{} | {}/target/release/thumbs -f '%U:%H' -t {} {}; tmux swap-pane -t {} {}; tmux wait-for -S {}",
-        active_pane_id,
-        scroll_params,
-        self.dir,
-        TMP_FILE,
-        args.join(" "),
-        active_pane_id,
-        zoom,
-        self.signal
+        "tmux capture-pane -t {active_pane_id} -p{scroll_params} | tail -n {height} | {dir}/target/release/thumbs -f '%U:%H' -t {tmp} {args}; tmux swap-pane -t {active_pane_id} {zoom}; tmux wait-for -S {signal}",
+        active_pane_id = active_pane_id,
+        scroll_params = scroll_params,
+        height = self.active_pane_height.unwrap_or(i32::MAX),
+        dir = self.dir,
+        tmp = TMP_FILE,
+        args = args.join(" "),
+        zoom = zoom,
+        signal = self.signal
     );
 
     let thumbs_command = vec![
