@@ -164,6 +164,7 @@ version = "0.5.0"
 dependencies = [
  "base64",
  "clap",
+ "lazy_static",
  "regex",
  "termion",
  "unicode-width",
