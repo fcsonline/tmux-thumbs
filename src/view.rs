@@ -17,12 +17,12 @@ pub struct View<'a> {
   contrast: bool,
   position: &'a str,
   matches: Vec<state::Match<'a>>,
-  select_foreground_color: Box<&'a dyn color::Color>,
-  select_background_color: Box<&'a dyn color::Color>,
-  foreground_color: Box<&'a dyn color::Color>,
-  background_color: Box<&'a dyn color::Color>,
-  hint_background_color: Box<&'a dyn color::Color>,
-  hint_foreground_color: Box<&'a dyn color::Color>,
+  select_foreground_color: Box<dyn color::Color>,
+  select_background_color: Box<dyn color::Color>,
+  foreground_color: Box<dyn color::Color>,
+  background_color: Box<dyn color::Color>,
+  hint_background_color: Box<dyn color::Color>,
+  hint_foreground_color: Box<dyn color::Color>,
 }
 
 enum CaptureEvent {
@@ -38,12 +38,12 @@ impl<'a> View<'a> {
     unique: bool,
     contrast: bool,
     position: &'a str,
-    select_foreground_color: Box<&'a dyn color::Color>,
-    select_background_color: Box<&'a dyn color::Color>,
-    foreground_color: Box<&'a dyn color::Color>,
-    background_color: Box<&'a dyn color::Color>,
-    hint_foreground_color: Box<&'a dyn color::Color>,
-    hint_background_color: Box<&'a dyn color::Color>,
+    select_foreground_color: Box<dyn color::Color>,
+    select_background_color: Box<dyn color::Color>,
+    foreground_color: Box<dyn color::Color>,
+    background_color: Box<dyn color::Color>,
+    hint_foreground_color: Box<dyn color::Color>,
+    hint_background_color: Box<dyn color::Color>,
   ) -> View<'a> {
     let matches = state.matches(reverse, unique);
     let skip = if reverse { matches.len() - 1 } else { 0 };
@@ -119,8 +119,8 @@ impl<'a> View<'a> {
       print!(
         "{goto}{background}{foregroud}{text}{resetf}{resetb}",
         goto = cursor::Goto(offset + 1, mat.y as u16 + 1),
-        foregroud = color::Fg(**selected_color),
-        background = color::Bg(**selected_background_color),
+        foregroud = color::Fg(&**selected_color),
+        background = color::Bg(&**selected_background_color),
         resetf = color::Fg(color::Reset),
         resetb = color::Bg(color::Reset),
         text = &text
@@ -140,8 +140,8 @@ impl<'a> View<'a> {
         print!(
           "{goto}{background}{foregroud}{text}{resetf}{resetb}",
           goto = cursor::Goto(final_position as u16 + 1, mat.y as u16 + 1),
-          foregroud = color::Fg(*self.hint_foreground_color),
-          background = color::Bg(*self.hint_background_color),
+          foregroud = color::Fg(&*self.hint_foreground_color),
+          background = color::Bg(&*self.hint_background_color),
           resetf = color::Fg(color::Reset),
           resetb = color::Bg(color::Reset),
           text = &text
