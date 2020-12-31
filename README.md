@@ -296,7 +296,7 @@ set -g @thumbs-osc52 1
 
 #### Colors
 
-This is the list of available colors:
+This is the list of predefined colors:
 
 - black
 - red
@@ -307,6 +307,8 @@ This is the list of available colors:
 - cyan
 - white
 - default
+
+There is also support for using hex colors in the form of `#RRGGBB`.
 
 #### Alphabets
 
