@@ -64,10 +64,10 @@ pub struct Swapper<'a> {
   active_pane_id: Option<String>,
   active_pane_height: Option<i32>,
   active_pane_scroll_position: Option<i32>,
+  active_pane_zoomed: Option<bool>,
   thumbs_pane_id: Option<String>,
   content: Option<String>,
   signal: String,
-  version: f32,
 }
 
 impl<'a> Swapper<'a> {
@@ -82,7 +82,6 @@ impl<'a> Swapper<'a> {
       .duration_since(UNIX_EPOCH)
       .expect("Time went backwards");
     let signal = format!("thumbs-finished-{}", since_the_epoch.as_secs());
-    let version = f32::MAX;
 
     Swapper {
       executor,
@@ -93,27 +92,10 @@ impl<'a> Swapper<'a> {
       active_pane_id: None,
       active_pane_height: None,
       active_pane_scroll_position: None,
+      active_pane_zoomed: None,
       thumbs_pane_id: None,
       content: None,
       signal,
-      version,
-    }
-  }
-
-  pub fn retrieve_version(&mut self) {
-    let verions_command = vec!["tmux", "-V"];
-
-    let output = self
-      .executor
-      .execute(verions_command.iter().map(|arg| arg.to_string()).collect());
-
-    let regexp = Regex::new(r"\d{1,3}\.\d{1,3}").unwrap();
-    let mat = regexp.find(&output);
-
-    // If we are not able to parse the version, just assume f32::MAX. This cover tmux, compiled
-    // from the source code.
-    if let Some(version) = mat {
-      self.version = version.as_str().parse::<f32>().expect("Unable to parse tmux version");
     }
   }
 
@@ -122,7 +104,7 @@ impl<'a> Swapper<'a> {
       "tmux",
       "list-panes",
       "-F",
-      "#{pane_id}:#{?pane_in_mode,1,0}:#{pane_height}:#{scroll_position}:#{?pane_active,active,nope}",
+      "#{pane_id}:#{?pane_in_mode,1,0}:#{pane_height}:#{scroll_position}:#{window_zoomed_flag}:#{?pane_active,active,nope}",
     ];
 
     let output = self
@@ -134,7 +116,7 @@ impl<'a> Swapper<'a> {
 
     let active_pane = chunks
       .iter()
-      .find(|&chunks| *chunks.get(4).unwrap() == "active")
+      .find(|&chunks| *chunks.get(5).unwrap() == "active")
       .expect("Unable to find active pane");
 
     let pane_id = active_pane.get(0).unwrap();
@@ -158,6 +140,10 @@ impl<'a> Swapper<'a> {
 
       self.active_pane_scroll_position = Some(pane_scroll_position);
     }
+
+    let zoomed_pane = *active_pane.get(4).expect("Unable to retrieve zoom pane property") == "1";
+
+    self.active_pane_zoomed = Some(zoomed_pane);
   }
 
   pub fn execute_thumbs(&mut self) {
@@ -215,18 +201,22 @@ impl<'a> Swapper<'a> {
         "".to_string()
       };
 
-    // TODO: Confirm this 4.0 value
-    let zoom = if self.version >= 4.0 { "-Z" } else { "" };
+    let active_pane_zoomed = self.active_pane_zoomed.as_mut().unwrap().clone();
+    let zoom_command = if active_pane_zoomed {
+      format!("tmux resize-pane -t {} -Z;", active_pane_id)
+    } else {
+      "".to_string()
+    };
 
     let pane_command = format!(
-        "tmux capture-pane -t {active_pane_id} -p{scroll_params} | tail -n {height} | {dir}/target/release/thumbs -f '%U:%H' -t {tmp} {args}; tmux swap-pane -t {active_pane_id} {zoom}; tmux wait-for -S {signal}",
+        "tmux capture-pane -t {active_pane_id} -p{scroll_params} | tail -n {height} | {dir}/target/release/thumbs -f '%U:%H' -t {tmp} {args}; tmux swap-pane -t {active_pane_id}; {zoom_command} tmux wait-for -S {signal}",
         active_pane_id = active_pane_id,
         scroll_params = scroll_params,
         height = self.active_pane_height.unwrap_or(i32::MAX),
         dir = self.dir,
         tmp = TMP_FILE,
         args = args.join(" "),
-        zoom = zoom,
+        zoom_command = zoom_command,
         signal = self.signal
     );
 
@@ -234,6 +224,8 @@ impl<'a> Swapper<'a> {
       "tmux",
       "new-window",
       "-P",
+      "-F",
+      "#{pane_id}",
       "-d",
       "-n",
       "[thumbs]",
@@ -249,9 +241,6 @@ impl<'a> Swapper<'a> {
     let active_pane_id = self.active_pane_id.as_mut().unwrap().clone();
     let thumbs_pane_id = self.thumbs_pane_id.as_mut().unwrap().clone();
 
-    // TODO: Confirm this 4.0 value
-    let zoom = if self.version >= 4.0 { "-Z" } else { "" };
-
     let swap_command = vec![
       "tmux",
       "swap-pane",
@@ -260,9 +249,29 @@ impl<'a> Swapper<'a> {
       active_pane_id.as_str(),
       "-t",
       thumbs_pane_id.as_str(),
-      zoom,
     ];
+
     let params = swap_command
+      .iter()
+      .filter(|&s| !s.is_empty())
+      .map(|arg| arg.to_string())
+      .collect();
+
+    self.executor.execute(params);
+  }
+
+  pub fn resize_pane(&mut self) {
+    let active_pane_zoomed = self.active_pane_zoomed.as_mut().unwrap().clone();
+
+    if !active_pane_zoomed {
+      return;
+    }
+
+    let thumbs_pane_id = self.thumbs_pane_id.as_mut().unwrap().clone();
+
+    let resize_command = vec!["tmux", "resize-pane", "-t", thumbs_pane_id.as_str(), "-Z"];
+
+    let params = resize_command
       .iter()
       .filter(|&s| !s.is_empty())
       .map(|arg| arg.to_string())
@@ -405,7 +414,7 @@ mod tests {
 
   #[test]
   fn retrieve_active_pane() {
-    let last_command_outputs = vec!["%97:100:24:1:active\n%106:100:24:1:nope\n%107:100:24:1:nope\n".to_string()];
+    let last_command_outputs = vec!["%97:100:24:1:0:active\n%106:100:24:1:0:nope\n%107:100:24:1:0:nope\n".to_string()];
     let mut executor = TestShell::new(last_command_outputs);
     let mut swapper = Swapper::new(
       Box::new(&mut executor),
@@ -426,7 +435,7 @@ mod tests {
       "".to_string(),
       "%100".to_string(),
       "".to_string(),
-      "%106:100:24:1:nope\n%98:100:24:1:active\n%107:100:24:1:nope\n".to_string(),
+      "%106:100:24:1:0:nope\n%98:100:24:1:0:active\n%107:100:24:1:0:nope\n".to_string(),
     ];
     let mut executor = TestShell::new(last_command_outputs);
     let mut swapper = Swapper::new(
@@ -437,39 +446,11 @@ mod tests {
       false,
     );
 
-    swapper.version = 3.0;
     swapper.capture_active_pane();
     swapper.execute_thumbs();
     swapper.swap_panes();
 
     let expectation = vec!["tmux", "swap-pane", "-d", "-s", "%98", "-t", "%100"];
-
-    assert_eq!(executor.last_executed().unwrap(), expectation);
-  }
-
-  #[test]
-  fn swap_panes_zoom() {
-    let last_command_outputs = vec![
-      "".to_string(),
-      "%100".to_string(),
-      "".to_string(),
-      "%106:100:24:1:nope\n%98:100:24:1:active\n%107:100:24:1:nope\n".to_string(),
-    ];
-    let mut executor = TestShell::new(last_command_outputs);
-    let mut swapper = Swapper::new(
-      Box::new(&mut executor),
-      "".to_string(),
-      "".to_string(),
-      "".to_string(),
-      false,
-    );
-
-    swapper.version = 4.0; // Or the default MAX value.
-    swapper.capture_active_pane();
-    swapper.execute_thumbs();
-    swapper.swap_panes();
-
-    let expectation = vec!["tmux", "swap-pane", "-d", "-s", "%98", "-t", "%100", "-Z"];
 
     assert_eq!(executor.last_executed().unwrap(), expectation);
   }
@@ -566,10 +547,10 @@ fn main() -> std::io::Result<()> {
     osc52,
   );
 
-  swapper.retrieve_version();
   swapper.capture_active_pane();
   swapper.execute_thumbs();
   swapper.swap_panes();
+  swapper.resize_pane();
   swapper.wait_thumbs();
   swapper.retrieve_content();
   swapper.destroy_content();
