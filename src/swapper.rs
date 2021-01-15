@@ -46,6 +46,8 @@ const TMP_FILE: &str = "/tmp/thumbs-last";
 #[allow(dead_code)]
 fn dbg(msg: &str) {
   let mut file = std::fs::OpenOptions::new()
+    .create(true)
+    .write(true)
     .append(true)
     .open("/tmp/thumbs.log")
     .expect("Unable to open log file");
