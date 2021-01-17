@@ -129,7 +129,7 @@ impl<'a> View<'a> {
       if let Some(ref hint) = mat.hint {
         let extra_position = match self.position {
           "right" => text.width_cjk() - hint.len(),
-          "off_left" => 0 - hint.len(),
+          "off_left" => 0 - hint.len() - if self.contrast { 2 } else { 0 },
           "off_right" => text.width_cjk(),
           _ => 0,
         };
