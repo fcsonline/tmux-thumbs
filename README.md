@@ -112,6 +112,16 @@ For example:
 set -g @thumbs-key F
 ```
 
+### @thumbs-key-options
+
+Choose which arguments do you want for your key.
+
+For example:
+
+```
+set -g @thumbs-key-options -n
+```
+
 ### @thumbs-alphabet
 
 `default: qwerty`
