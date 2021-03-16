@@ -176,7 +176,7 @@ set -g @thumbs-regexp-5 Vlan\\d+ # alternative method of defining regexp
 
 ### @thumbs-command
 
-`default: 'tmux set-buffer {} && tmux display-message \"Copied {}\"'`
+`default: 'tmux set-buffer -- {} && tmux display-message \"Copied {}\"'`
 
 Choose which command execute when you press a hint. `tmux-thumbs` will replace `{}` with the picked hint.
 
@@ -188,7 +188,7 @@ set -g @thumbs-command 'echo -n {} | pbcopy'
 
 ### @thumbs-upcase-command
 
-`default: 'tmux set-buffer {} && tmux paste-buffer && tmux display-message \"Copied {}\"`
+`default: 'tmux set-buffer -- {} && tmux paste-buffer && tmux display-message \"Copied {}\"'`
 
 Choose which command execute when you press a upcase hint. `tmux-thumbs` will replace `{}` with the picked hint.
 
