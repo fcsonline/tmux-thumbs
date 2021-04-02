@@ -6,8 +6,8 @@ A lightning fast version of [tmux-fingers](https://github.com/Morantron/tmux-fin
 
 ## Usage
 
-Press ( <kbd>prefix</kbd> + <kbd>Space</kbd> ) to highlist in you current tmux
-visible pane all text that match specific pattern. Then press the highlighted
+Press ( <kbd>prefix</kbd> + <kbd>Space</kbd> ) to highlight in you current tmux
+visible pane all text that match specific patterns. Then press the highlighted
 letter hint to yank the text in your tmux buffer.
 
 ### Matched patterns
