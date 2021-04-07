@@ -20,7 +20,7 @@ letter hint to yank the text in your tmux buffer.
 - Numbers ( 4+ digits )
 - Hex numbers
 - Markdown urls
-- IP4 addresses
+- IPv4, IPv6 addresses
 - Docker images
 - kubernetes resources
 - UUIDs
