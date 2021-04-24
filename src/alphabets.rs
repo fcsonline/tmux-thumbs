@@ -23,6 +23,9 @@ const ALPHABETS: [(&'static str, &'static str); 22] = [
   ("colemak-homerow", "arstneiodh"),
   ("colemak-left-hand", "arstqwfpzxcv"),
   ("colemak-right-hand", "neioluymjhk"),
+  ("workman-homerow", "ashtgyneoi"),
+  ("workman-left-hand", "ashtqdrwzxmc"),
+  ("workman-right-hand", "neoifupl"),
 ];
 
 pub struct Alphabet<'a> {
