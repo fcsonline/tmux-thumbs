@@ -133,7 +133,7 @@ Choose in which direction you want to assign hints. Useful to get shorter hints 
 For example:
 
 ```
-set -g @thumbs-reverse
+set -g @thumbs-reverse enabled
 ```
 
 ### @thumbs-unique
@@ -145,7 +145,7 @@ Choose if you want to assign the same hint for the same matched strings.
 For example:
 
 ```
-set -g @thumbs-unique
+set -g @thumbs-unique enabled
 ```
 
 ### @thumbs-position
