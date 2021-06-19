@@ -91,12 +91,15 @@ NOTE: for changes to take effect, you'll need to source again your `.tmux.conf` 
 * [@thumbs-regexp-N](#thumbs-regexp-N)
 * [@thumbs-command](#thumbs-command)
 * [@thumbs-upcase-command](#thumbs-upcase-command)
+* [@thumbs-multi-command](#thumbs-multi-command)
 * [@thumbs-bg-color](#thumbs-bg-color)
 * [@thumbs-fg-color](#thumbs-fg-color)
 * [@thumbs-hint-bg-color](#thumbs-hint-bg-color)
 * [@thumbs-hint-fg-color](#thumbs-hint-fg-color)
 * [@thumbs-select-fg-color](#thumbs-select-fg-color)
 * [@thumbs-select-bg-color](#thumbs-select-bg-color)
+* [@thumbs-multi-fg-color](#thumbs-multi-fg-color)
+* [@thumbs-multi-bg-color](#thumbs-multi-bg-color)
 * [@thumbs-contrast](#thumbs-contrast)
 * [@thumbs-osc52](#thumbs-osc52)
 
@@ -198,6 +201,18 @@ For example:
 set -g @thumbs-upcase-command 'echo -n {} | pbcopy'
 ```
 
+### @thumbs-multi-command
+
+`default: 'tmux set-buffer -- {} && tmux paste-buffer && tmux send-keys ' ' && tmux display-message \"Copied multiple items!\"'`
+
+Choose which command execute when you select multiple items. `tmux-thumbs` will replace `{}` with the picked hint for each one.
+
+For example:
+
+```
+set -g @thumbs-multi-command 'echo -n {}'
+```
+
 ### @thumbs-bg-color
 
 `default: black`
@@ -263,6 +278,30 @@ set -g @thumbs-select-fg-color red
 `default: black`
 
 Sets the background color for selection
+
+For example:
+
+```
+set -g @thumbs-select-bg-color red
+```
+
+### @thumbs-multi-fg-color
+
+`default: yellow`
+
+Sets the foreground color for multi selected item
+
+For example:
+
+```
+set -g @thumbs-multi-fg-color green
+```
+
+### @thumbs-select-bg-color
+
+`default: black`
+
+Sets the background color for multi selected item
 
 For example:
 
@@ -341,7 +380,15 @@ This is the list of available alphabets:
 
 - **Arrow navigation:** You can use the arrows to move around between all matched items.
 - **Auto paste:** If your last typed hint character is uppercase, you are going to pick and paste the desired hint.
-- **Multi selection:** If you run thumb with multi selection mode you will be able to choose multiple hints pressing the desired letter and `Space` to finalize the selection.
+
+### Multi selection
+
+If you want to enable the capability to choose multiple matches, you have to
+press <kbd>Space</kbd>. Then, choose the matches with highlighted hints or
+<kbd>Enter</kbd> (moving with cursors) and then <kbd>Space</kbd> again to
+output all of them.
+
+If you run standalone `thumbs` with multi selection mode (-m) you will be able to choose multiple hints pressing the desired letter and <kbd>Space</kbd> to finalize the selection.
 
 ## Tmux compatibility
 
@@ -402,6 +449,8 @@ OPTIONS:
     -x, --regexp <regexp>...                           Use this regexp as extra pattern to match
         --select-bg-color <select_background_color>    Sets the background color for selection [default: black]
         --select-fg-color <select_foreground_color>    Sets the foreground color for selection [default: blue]
+        --multi-bg-color <multi_background_color>      Sets the background color for a multi selected item [default: black]
+        --multi-fg-color <multi_foreground_color>      Sets the foreground color for a multi selected item [default: cyan]
     -t, --target <target>                              Stores the hint in the specified path
 ```
 

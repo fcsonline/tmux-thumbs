@@ -60,6 +60,7 @@ pub struct Swapper<'a> {
   dir: String,
   command: String,
   upcase_command: String,
+  multi_command: String,
   osc52: bool,
   active_pane_id: Option<String>,
   active_pane_height: Option<i32>,
@@ -76,6 +77,7 @@ impl<'a> Swapper<'a> {
     dir: String,
     command: String,
     upcase_command: String,
+    multi_command: String,
     osc52: bool,
   ) -> Swapper {
     let since_the_epoch = SystemTime::now()
@@ -88,6 +90,7 @@ impl<'a> Swapper<'a> {
       dir,
       command,
       upcase_command,
+      multi_command,
       osc52,
       active_pane_id: None,
       active_pane_height: None,
@@ -306,7 +309,24 @@ impl<'a> Swapper<'a> {
 
   pub fn execute_command(&mut self) {
     let content = self.content.clone().unwrap();
-    let mut splitter = content.splitn(2, ':');
+    let items: Vec<&str> = content.split('\n').collect();
+
+    if items.len() > 1 {
+      let text = items
+        .iter()
+        .map(|item| item.splitn(2, ':').last().unwrap())
+        .collect::<Vec<&str>>()
+        .join(" ");
+
+      self.execute_final_command(&text, &self.multi_command.clone());
+
+      return;
+    }
+
+    // Only one item
+    let item: &str = items.first().unwrap();
+
+    let mut splitter = item.splitn(2, ':');
 
     if let Some(upcase) = splitter.next() {
       if let Some(text) = splitter.next() {
@@ -367,20 +387,25 @@ impl<'a> Swapper<'a> {
         // Ideally user commands would just use "${THUMB}" to begin with rather than having any
         // sort of ad-hoc string splicing here at all, and then they could specify the quoting they
         // want, but that would break backwards compatibility.
-        let final_command = str::replace(execute_command.as_str(), "{}", "${THUMB}");
-        let retrieve_command = vec![
-          "bash",
-          "-c",
-          "THUMB=\"$1\"; eval \"$2\"",
-          "--",
-          text.trim_end(),
-          final_command.as_str(),
-        ];
-        let params = retrieve_command.iter().map(|arg| arg.to_string()).collect();
-
-        self.executor.execute(params);
+        self.execute_final_command(text.trim_end(), &execute_command);
       }
     }
+  }
+
+  pub fn execute_final_command(&mut self, text: &str, execute_command: &str) {
+    let final_command = str::replace(execute_command, "{}", "${THUMB}");
+    let retrieve_command = vec![
+      "bash",
+      "-c",
+      "THUMB=\"$1\"; eval \"$2\"",
+      "--",
+      text,
+      final_command.as_str(),
+    ];
+
+    let params = retrieve_command.iter().map(|arg| arg.to_string()).collect();
+
+    self.executor.execute(params);
   }
 }
 
@@ -422,6 +447,7 @@ mod tests {
       "".to_string(),
       "".to_string(),
       "".to_string(),
+      "".to_string(),
       false,
     );
 
@@ -444,6 +470,7 @@ mod tests {
       "".to_string(),
       "".to_string(),
       "".to_string(),
+      "".to_string(),
       false,
     );
 
@@ -463,11 +490,13 @@ mod tests {
 
     let user_command = "echo \"{}\"".to_string();
     let upcase_command = "open \"{}\"".to_string();
+    let multi_command = "open \"{}\"".to_string();
     let mut swapper = Swapper::new(
       Box::new(&mut executor),
       "".to_string(),
       user_command,
       upcase_command,
+      multi_command,
       false,
     );
 
@@ -509,15 +538,21 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
     )
     .arg(
       Arg::with_name("command")
-        .help("Pick command")
+        .help("Command to execute after choose a hint")
         .long("command")
-        .default_value("tmux set-buffer -- {} && tmux display-message \"Copied {}\""),
+        .default_value("tmux set-buffer -- \"{}\" && tmux display-message \"Copied {}\""),
     )
     .arg(
       Arg::with_name("upcase_command")
-        .help("Upcase command")
+        .help("Command to execute after choose a hint, in upcase")
         .long("upcase-command")
-        .default_value("tmux set-buffer -- {} && tmux paste-buffer && tmux display-message \"Copied {}\""),
+        .default_value("tmux set-buffer -- \"{}\" && tmux paste-buffer && tmux display-message \"Copied {}\""),
+    )
+    .arg(
+      Arg::with_name("multi_command")
+        .help("Command to execute after choose multiple hints")
+        .long("multi-command")
+        .default_value("tmux set-buffer -- \"{}\" && tmux paste-buffer && tmux display-message \"Multi copied {}\""),
     )
     .arg(
       Arg::with_name("osc52")
@@ -533,6 +568,7 @@ fn main() -> std::io::Result<()> {
   let dir = args.value_of("dir").unwrap();
   let command = args.value_of("command").unwrap();
   let upcase_command = args.value_of("upcase_command").unwrap();
+  let multi_command = args.value_of("multi_command").unwrap();
   let osc52 = args.is_present("osc52");
 
   if dir.is_empty() {
@@ -545,6 +581,7 @@ fn main() -> std::io::Result<()> {
     dir.to_string(),
     command.to_string(),
     upcase_command.to_string(),
+    multi_command.to_string(),
     osc52,
   );
 
