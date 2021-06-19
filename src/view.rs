@@ -19,15 +19,18 @@ pub struct View<'a> {
   matches: Vec<state::Match<'a>>,
   select_foreground_color: Box<dyn color::Color>,
   select_background_color: Box<dyn color::Color>,
+  multi_foreground_color: Box<dyn color::Color>,
+  multi_background_color: Box<dyn color::Color>,
   foreground_color: Box<dyn color::Color>,
   background_color: Box<dyn color::Color>,
   hint_background_color: Box<dyn color::Color>,
   hint_foreground_color: Box<dyn color::Color>,
+  chosen: Vec<(String, bool)>,
 }
 
 enum CaptureEvent {
   Exit,
-  Hint(Vec<(String, bool)>),
+  Hint,
 }
 
 impl<'a> View<'a> {
@@ -40,6 +43,8 @@ impl<'a> View<'a> {
     position: &'a str,
     select_foreground_color: Box<dyn color::Color>,
     select_background_color: Box<dyn color::Color>,
+    multi_foreground_color: Box<dyn color::Color>,
+    multi_background_color: Box<dyn color::Color>,
     foreground_color: Box<dyn color::Color>,
     background_color: Box<dyn color::Color>,
     hint_foreground_color: Box<dyn color::Color>,
@@ -57,10 +62,13 @@ impl<'a> View<'a> {
       matches,
       select_foreground_color,
       select_background_color,
+      multi_foreground_color,
+      multi_background_color,
       foreground_color,
       background_color,
       hint_foreground_color,
       hint_background_color,
+      chosen: vec![],
     }
   }
 
@@ -98,12 +106,18 @@ impl<'a> View<'a> {
     let selected = self.matches.get(self.skip);
 
     for mat in self.matches.iter() {
-      let selected_color = if selected == Some(mat) {
+      let chosen_hint = self.chosen.iter().any(|(hint, _)| hint == mat.text);
+
+      let selected_color = if chosen_hint {
+        &self.multi_foreground_color
+      } else if selected == Some(mat) {
         &self.select_foreground_color
       } else {
         &self.foreground_color
       };
-      let selected_background_color = if selected == Some(mat) {
+      let selected_background_color = if chosen_hint {
+        &self.multi_background_color
+      } else if selected == Some(mat) {
         &self.select_background_color
       } else {
         &self.background_color
@@ -157,7 +171,6 @@ impl<'a> View<'a> {
       return CaptureEvent::Exit;
     }
 
-    let mut chosen = vec![];
     let mut typed_hint: String = "".to_owned();
     let longest_hint = self
       .matches
@@ -195,43 +208,49 @@ impl<'a> View<'a> {
                   self.next();
                 }
                 Key::Char(ch) => {
-                  if ch == '\n' {
-                    match self.matches.iter().enumerate().find(|&h| h.0 == self.skip) {
+                  match ch {
+                    '\n' => match self.matches.iter().enumerate().find(|&h| h.0 == self.skip) {
                       Some(hm) => {
-                        chosen.push((hm.1.text.to_string(), false));
+                        self.chosen.push((hm.1.text.to_string(), false));
 
                         if !self.multi {
-                          return CaptureEvent::Hint(chosen);
+                          return CaptureEvent::Hint;
                         }
                       }
                       _ => panic!("Match not found?"),
-                    }
-                  }
-
-                  if ch == ' ' && self.multi {
-                    return CaptureEvent::Hint(chosen);
-                  }
-
-                  let key = ch.to_string();
-                  let lower_key = key.to_lowercase();
-
-                  typed_hint.push_str(lower_key.as_str());
-
-                  let selection = self.matches.iter().find(|mat| mat.hint == Some(typed_hint.clone()));
-
-                  match selection {
-                    Some(mat) => {
-                      chosen.push((mat.text.to_string(), key != lower_key));
-
+                    },
+                    ' ' => {
                       if self.multi {
-                        typed_hint.clear();
+                        // Finalize the multi selection
+                        return CaptureEvent::Hint;
                       } else {
-                        return CaptureEvent::Hint(chosen);
+                        // Enable the multi selection
+                        self.multi = true;
                       }
                     }
-                    None => {
-                      if !self.multi && typed_hint.len() >= longest_hint.len() {
-                        break;
+                    key => {
+                      let key = key.to_string();
+                      let lower_key = key.to_lowercase();
+
+                      typed_hint.push_str(lower_key.as_str());
+
+                      let selection = self.matches.iter().find(|mat| mat.hint == Some(typed_hint.clone()));
+
+                      match selection {
+                        Some(mat) => {
+                          self.chosen.push((mat.text.to_string(), key != lower_key));
+
+                          if self.multi {
+                            typed_hint.clear();
+                          } else {
+                            return CaptureEvent::Hint;
+                          }
+                        }
+                        None => {
+                          if !self.multi && typed_hint.len() >= longest_hint.len() {
+                            break;
+                          }
+                        }
                       }
                     }
                   }
@@ -265,7 +284,7 @@ impl<'a> View<'a> {
 
     let hints = match self.listen(&mut stdin, &mut stdout) {
       CaptureEvent::Exit => vec![],
-      CaptureEvent::Hint(chosen) => chosen,
+      CaptureEvent::Hint => self.chosen.clone(),
     };
 
     write!(stdout, "{}", cursor::Show).unwrap();
@@ -296,10 +315,13 @@ mod tests {
       matches: vec![],
       select_foreground_color: colors::get_color("default"),
       select_background_color: colors::get_color("default"),
+      multi_foreground_color: colors::get_color("default"),
+      multi_background_color: colors::get_color("default"),
       foreground_color: colors::get_color("default"),
       background_color: colors::get_color("default"),
       hint_background_color: colors::get_color("default"),
       hint_foreground_color: colors::get_color("default"),
+      chosen: vec![],
     };
 
     let result = view.make_hint_text("a");

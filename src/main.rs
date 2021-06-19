@@ -67,6 +67,18 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
         .default_value("black"),
     )
     .arg(
+      Arg::with_name("multi_foreground_color")
+        .help("Sets the foreground color for a multi selected item")
+        .long("multi-fg-color")
+        .default_value("yellow"),
+    )
+    .arg(
+      Arg::with_name("multi_background_color")
+        .help("Sets the background color for a multi selected item")
+        .long("multi-bg-color")
+        .default_value("black"),
+    )
+    .arg(
       Arg::with_name("select_foreground_color")
         .help("Sets the foreground color for selection")
         .long("select-fg-color")
@@ -149,6 +161,8 @@ fn main() {
   let hint_background_color = colors::get_color(args.value_of("hint_background_color").unwrap());
   let select_foreground_color = colors::get_color(args.value_of("select_foreground_color").unwrap());
   let select_background_color = colors::get_color(args.value_of("select_background_color").unwrap());
+  let multi_foreground_color = colors::get_color(args.value_of("multi_foreground_color").unwrap());
+  let multi_background_color = colors::get_color(args.value_of("multi_background_color").unwrap());
 
   let stdin = io::stdin();
   let mut handle = stdin.lock();
@@ -170,6 +184,8 @@ fn main() {
       position,
       select_foreground_color,
       select_background_color,
+      multi_foreground_color,
+      multi_background_color,
       foreground_color,
       background_color,
       hint_foreground_color,
