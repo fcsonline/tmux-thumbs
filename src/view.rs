@@ -260,7 +260,7 @@ impl<'a> View<'a> {
                 }
               }
             }
-            Err(err) => panic!(err),
+            Err(err) => panic!("{}", err),
           }
 
           stdin.keys().for_each(|_| { /* Skip the rest of stdin buffer */ })
