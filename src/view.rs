@@ -92,7 +92,7 @@ impl<'a> View<'a> {
     }
   }
 
-  fn render(&self, stdout: &mut dyn Write) -> () {
+  fn render(&self, stdout: &mut dyn Write, typed_hint: &str) -> () {
     write!(stdout, "{}", cursor::Hide).unwrap();
 
     for (index, line) in self.state.lines.iter().enumerate() {
@@ -160,6 +160,18 @@ impl<'a> View<'a> {
           resetb = color::Bg(color::Reset),
           text = &text
         );
+
+        if hint.starts_with(typed_hint) {
+          print!(
+            "{goto}{background}{foregroud}{text}{resetf}{resetb}",
+            goto = cursor::Goto(final_position as u16 + 1, mat.y as u16 + 1),
+            foregroud = color::Fg(&*self.multi_foreground_color),
+            background = color::Bg(&*self.multi_background_color),
+            resetf = color::Fg(color::Reset),
+            resetb = color::Bg(color::Reset),
+            text = &typed_hint
+          );
+        }
       }
     }
 
@@ -180,7 +192,7 @@ impl<'a> View<'a> {
       .unwrap()
       .clone();
 
-    self.render(stdout);
+    self.render(stdout, &typed_hint);
 
     loop {
       match stdin.keys().next() {
@@ -206,6 +218,9 @@ impl<'a> View<'a> {
                 }
                 Key::Right => {
                   self.next();
+                }
+                Key::Backspace => {
+                  typed_hint.pop();
                 }
                 Key::Char(ch) => {
                   match ch {
@@ -272,7 +287,7 @@ impl<'a> View<'a> {
         }
       }
 
-      self.render(stdout);
+      self.render(stdout, &typed_hint);
     }
 
     CaptureEvent::Exit
