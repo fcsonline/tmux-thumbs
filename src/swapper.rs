@@ -179,6 +179,8 @@ impl<'a> Swapper<'a> {
             "hint-fg-color",
             "select-fg-color",
             "select-bg-color",
+            "multi-fg-color",
+            "multi-bg-color",
           ];
 
           if string_params.iter().any(|&x| x == name) {

@@ -33,6 +33,7 @@ function add-param() {
 
 add-param command        string
 add-param upcase-command string
+add-param multi-command  string
 add-param osc52          boolean
 
 "${CURRENT_DIR}/target/release/tmux-thumbs" "${PARAMS[@]}" || true
