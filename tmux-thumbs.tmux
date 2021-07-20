@@ -2,12 +2,15 @@
 
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-DEFAULT_THUMBS_KEY=space
+DEFAULT_THUMBS_KEY_OPTIONS=""
+THUMBS_KEY_OPTIONS="$(tmux show-option -gqv @thumbs-key-options)"
+THUMBS_KEY_OPTIONS=${THUMBS_KEY_OPTIONS:-$DEFAULT_THUMBS_KEY_OPTIONS}
 
+DEFAULT_THUMBS_KEY=space
 THUMBS_KEY="$(tmux show-option -gqv @thumbs-key)"
 THUMBS_KEY=${THUMBS_KEY:-$DEFAULT_THUMBS_KEY}
 
-tmux bind-key "${THUMBS_KEY}" run-shell -b "${CURRENT_DIR}/tmux-thumbs.sh"
+tmux bind-key ${THUMBS_KEY_OPTIONS:+"$THUMBS_KEY_OPTIONS"} ${THUMBS_KEY:+"$THUMBS_KEY"} run-shell -b "${CURRENT_DIR}/tmux-thumbs.sh"
 
 BINARY="${CURRENT_DIR}/target/release/thumbs"
 
