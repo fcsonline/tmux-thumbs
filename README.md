@@ -2,7 +2,7 @@
 
 [![Build Status](https://github.com/fcsonline/tmux-thumbs/workflows/Rust/badge.svg)](https://github.com/fcsonline/tmux-thumbs/actions)
 [![dependency status](https://deps.rs/repo/github/fcsonline/tmux-thumbs/status.svg)](https://deps.rs/repo/github/fcsonline/tmux-thumbs)
-[![Coverage Status](https://coveralls.io/repos/github/fcsonline/tmux-thumbs/badge.svg?branch=main)](https://coveralls.io/github/fcsonline/tmux-thumbs?branch=main)
+[![Coverage Status](https://coveralls.io/repos/github/fcsonline/tmux-thumbs/badge.svg?branch=master)](https://coveralls.io/github/fcsonline/tmux-thumbs?branch=master)
 [![Maintenance](https://img.shields.io/badge/maintenance-actively%20maintained-brightgreen.svg)](https://deps.rs/repo/github/fcsonline/tmux-thumbs)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
