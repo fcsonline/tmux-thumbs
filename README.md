@@ -492,6 +492,18 @@ I was curious to know if this was possible to be written in [Rust](https://www.r
 - [X] Decouple `tmux-thumbs` from `tmux`
 - [ ] Code [Kitty](https://github.com/kovidgoyal/kitty) plugin, now that `thumbs` can run standalone
 
+## Troubleshooting
+
+Tmux-thumbs must work lighting fast. If you are facing a slow performance capturing the screen hints try to configure Tmux with these settings:
+
+```
+set -g visual-activity off
+set -g visual-bell off
+set -g visual-silence on
+```
+
+You can read a bit more about this issue here: https://github.com/fcsonline/tmux-thumbs/issues/88
+
 ## Contribute
 
 This project started as a side project to learn Rust, so I'm sure that is full
