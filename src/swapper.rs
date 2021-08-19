@@ -188,7 +188,7 @@ impl<'a> Swapper<'a> {
           }
 
           if name.starts_with("regexp") {
-            return vec!["--regexp".to_string(), format!("'{}'", value.replace("\\\\", "\\"))];
+            return vec!["--regexp".to_string(), format!("'{}'", value.replace("\\\\", "\\").replace("'", "'\"'\"'"))];
           }
 
           vec![]
