@@ -188,7 +188,7 @@ impl<'a> Swapper<'a> {
           }
 
           if name.starts_with("regexp") {
-            return vec!["--regexp".to_string(), format!("'{}'", value.replace("\\\\", "\\").replace("'", "'\"'\"'"))];
+            return vec!["--regexp".to_string(), format!("'{}'", value.replace("\\\\", "\\").replace("'", r"'\''"))];
           }
 
           vec![]
@@ -525,6 +525,37 @@ mod tests {
     ];
 
     assert_eq!(executor.last_executed().unwrap(), expectation);
+  }
+
+  #[test]
+  fn escape_single_quotes_in_pattern() {
+    let last_command_outputs = vec![
+      "".to_string(),
+      "@thumbs-regexp-2 \"'[^']+'\"".to_string(),
+      "%97:100:24:1:0:active\n%106:100:24:1:0:nope\n%107:100:24:1:0:nope\n".to_string(),
+    ];
+    let mut executor = TestShell::new(last_command_outputs);
+    let mut swapper = Swapper::new(
+      Box::new(&mut executor),
+      "".to_string(),
+      "".to_string(),
+      "".to_string(),
+      "".to_string(),
+      false,
+    );
+
+    swapper.capture_active_pane();
+    swapper.execute_thumbs();
+
+    let expectation = r"''\''[^'\'']+'\'";
+    let mut command = "".to_string();
+    for s in executor.last_executed().unwrap() {
+      if s.find("--regexp").is_some(){
+        command = s;
+        break;
+      }
+    }
+    assert_eq!(true, command.find(expectation).is_some());
   }
 }
 
