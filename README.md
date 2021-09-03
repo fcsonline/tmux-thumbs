@@ -119,6 +119,13 @@ For example:
 set -g @thumbs-key F
 ```
 
+If you want to customize the way how `tmux-thumbs` is triggered, you can always
+bind whatever key to `thumbs-pick` command. For example:
+
+```
+bind-key \; thumbs-pick
+```
+
 ### @thumbs-alphabet
 
 `default: qwerty`
