@@ -2,6 +2,7 @@
 set -Eeu -o pipefail
 
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+BIN="${CURRENT_DIR}/target/release/tmux-thumbs"
 
 function get-opt-value() {
   tmux show -vg "@thumbs-${1}" 2> /dev/null
@@ -36,4 +37,10 @@ add-param upcase-command string
 add-param multi-command  string
 add-param osc52          boolean
 
-"${CURRENT_DIR}/target/release/tmux-thumbs" "${PARAMS[@]}" || true
+if [ -x "${BIN}" ]; then
+  "${BIN}" "${PARAMS[@]}"
+else
+  tmux display-message -p "\"${BIN}\" not found or not executable, you must build it manually:
+  
+  cd \"${CURRENT_DIR}\" && cargo build --release"
+fi
