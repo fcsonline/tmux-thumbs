@@ -77,8 +77,14 @@ You can add this line to your list of [TPM](https://github.com/tmux-plugins/tpm)
 set -g @plugin 'fcsonline/tmux-thumbs'
 ```
 
-To be able to install the plugin just hit <kbd>prefix</kbd> + <kbd>I</kbd>. You should now be able to use
-the plugin!
+To install the plugin just hit <kbd>prefix</kbd> + <kbd>I</kbd>, then compile it with [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html):
+
+```
+cd ~/.tmux/plugins/tmux-thumbs
+cargo build --release
+```
+
+You should now be able to use the plugin!
 
 ## Configuration
 
