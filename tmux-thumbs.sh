@@ -3,6 +3,13 @@ set -Eeu -o pipefail
 
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+BINARY="${CURRENT_DIR}/target/release/thumbs"
+
+if [ ! -f "$BINARY" ]; then
+  tmux split-window "cd ${CURRENT_DIR} && bash ./tmux-thumbs-install.sh"
+  exit
+fi
+
 function get-opt-value() {
   tmux show -vg "@thumbs-${1}" 2> /dev/null
 }
