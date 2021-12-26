@@ -4,13 +4,17 @@ use std::fmt;
 
 const EXCLUDE_PATTERNS: [(&'static str, &'static str); 1] = [("bash", r"[[:cntrl:]]\[([0-9]{1,2};)?([0-9]{1,2})?m")];
 
-const PATTERNS: [(&'static str, &'static str); 14] = [
+const PATTERNS: [(&'static str, &'static str); 15] = [
   ("markdown_url", r"\[[^]]*\]\(([^)]+)\)"),
-  ("url", r"((https?://|git@|git://|ssh://|ftp://|file:///)[^ ]+)"),
+  ("url", r"(?P<match>(https?://|git@|git://|ssh://|ftp://|file:///)[^ ]+)"),
+  (
+    "diff_summary",
+    r"diff --git a/([.\w\-@~\[\]]+?/[.\w\-@\[\]]++) b/([.\w\-@~\[\]]+?/[.\w\-@\[\]]++)",
+  ),
   ("diff_a", r"--- a/([^ ]+)"),
   ("diff_b", r"\+\+\+ b/([^ ]+)"),
   ("docker", r"sha256:([0-9a-f]{64})"),
-  ("path", r"(([.\w\-@~\[\]]+)?(/[.\w\-@\[\]]+)+)"),
+  ("path", r"(?P<match>([.\w\-@~\[\]]+)?(/[.\w\-@\[\]]+)+)"),
   ("color", r"#[0-9a-fA-F]{6}"),
   ("uid", r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"),
   ("ipfs", r"Qm[0-9a-zA-Z]{44}"),
@@ -84,6 +88,7 @@ impl<'a> State<'a> {
       .map(|tuple| (tuple.0, Regex::new(tuple.1).unwrap()))
       .collect::<Vec<_>>();
 
+    // This order determines the priority of pattern matching
     let all_patterns = [exclude_patterns, custom_patterns, patterns].concat();
 
     for (index, line) in self.lines.iter().enumerate() {
@@ -91,6 +96,7 @@ impl<'a> State<'a> {
       let mut offset: i32 = 0;
 
       loop {
+        // For this line we search which patterns match, all of them.
         let submatches = all_patterns
           .iter()
           .filter_map(|tuple| match tuple.1.find_iter(chunk).nth(0) {
@@ -98,6 +104,8 @@ impl<'a> State<'a> {
             None => None,
           })
           .collect::<Vec<_>>();
+
+        // Then, we search for the match with the lowest index
         let first_match_option = submatches.iter().min_by(|x, y| x.2.start().cmp(&y.2.start()));
 
         if let Some(first_match) = first_match_option {
@@ -105,21 +113,30 @@ impl<'a> State<'a> {
           let text = matching.as_str();
 
           if let Some(captures) = pattern.captures(text) {
-            let (subtext, substart) = if let Some(capture) = captures.get(1) {
-              (capture.as_str(), capture.start())
+            let captures: Vec<(&str, usize)> = if let Some(capture) = captures.name("match") {
+              [(capture.as_str(), capture.start())].to_vec()
+            } else if captures.len() > 1 {
+              captures
+                .iter()
+                .skip(1)
+                .filter_map(|capture| capture)
+                .map(|capture| (capture.as_str(), capture.start()))
+                .collect::<Vec<(&str, usize)>>()
             } else {
-              (matching.as_str(), 0)
+              [(matching.as_str(), 0)].to_vec()
             };
 
-            // Never hint or broke bash color sequences
+            // Never hint or broke bash color sequences, but process it
             if *name != "bash" {
-              matches.push(Match {
-                x: offset + matching.start() as i32 + substart as i32,
-                y: index as i32,
-                pattern: name,
-                text: subtext,
-                hint: None,
-              });
+              for (subtext, substart) in captures.iter() {
+                matches.push(Match {
+                  x: offset + matching.start() as i32 + *substart as i32,
+                  y: index as i32,
+                  pattern: name,
+                  text: subtext,
+                  hint: None,
+                });
+              }
             }
 
             chunk = chunk.get(matching.end()..).expect("Unknown chunk");
@@ -407,6 +424,17 @@ mod tests {
 
     assert_eq!(results.len(), 1);
     assert_eq!(results.get(0).unwrap().text.clone(), "src/main.rs");
+  }
+
+  #[test]
+  fn match_diff_summary() {
+    let lines = split("diff --git a/samples/test1 b/samples/test2");
+    let custom = [].to_vec();
+    let results = State::new(&lines, "abcd", &custom).matches(false, false);
+
+    assert_eq!(results.len(), 2);
+    assert_eq!(results.get(0).unwrap().text.clone(), "samples/test1");
+    assert_eq!(results.get(1).unwrap().text.clone(), "samples/test2");
   }
 
   #[test]
