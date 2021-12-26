@@ -10,7 +10,7 @@ const PATTERNS: [(&'static str, &'static str); 14] = [
   ("diff_a", r"--- a/([^ ]+)"),
   ("diff_b", r"\+\+\+ b/([^ ]+)"),
   ("docker", r"sha256:([0-9a-f]{64})"),
-  ("path", r"(([.\w\-@~]+)?(/[.\w\-@]+)+)"),
+  ("path", r"(([.\w\-@~\[\]]+)?(/[.\w\-@\[\]]+)+)"),
   ("color", r"#[0-9a-fA-F]{6}"),
   ("uid", r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"),
   ("ipfs", r"Qm[0-9a-zA-Z]{44}"),
@@ -246,6 +246,16 @@ mod tests {
 
     assert_eq!(results.len(), 1);
     assert_eq!(results.get(0).unwrap().text.clone(), "~/.gnu/.config.txt");
+  }
+
+  #[test]
+  fn match_slugs() {
+    let lines = split("Lorem dev/api/[slug]/foo, lorem");
+    let custom = [].to_vec();
+    let results = State::new(&lines, "abcd", &custom).matches(false, false);
+
+    assert_eq!(results.len(), 1);
+    assert_eq!(results.get(0).unwrap().text.clone(), "dev/api/[slug]/foo");
   }
 
   #[test]
