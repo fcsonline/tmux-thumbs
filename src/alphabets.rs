@@ -37,30 +37,36 @@ impl<'a> Alphabet<'a> {
   pub fn hints(&self, matches: usize) -> Vec<String> {
     let letters: Vec<String> = self.letters.chars().map(|s| s.to_string()).collect();
 
-    let mut expansion = letters.clone();
-    let mut expanded: Vec<String> = Vec::new();
+    if letters.len() <= 1 {
+      return letters;
+    }
+
+    let mut expansion: Vec<String> = letters.clone();
+    let mut expand_idx = expansion.len() - 1;
 
     loop {
-      if expansion.len() + expanded.len() >= matches {
-        break;
-      }
-      if expansion.is_empty() {
+      if expansion.len() >= matches {
         break;
       }
 
-      let prefix = expansion.pop().expect("Ouch!");
+      let prefix = expansion.remove(expand_idx);
+
       let sub_expansion: Vec<String> = letters
         .iter()
-        .take(matches - expansion.len() - expanded.len())
+        .take(matches - expansion.len())
         .map(|s| prefix.clone() + s)
         .collect();
 
-      expanded.splice(0..0, sub_expansion);
+      expansion.splice(expand_idx..expand_idx, sub_expansion.clone());
+
+      if expand_idx == 0 {
+        expand_idx = expansion.len() - 1;
+      } else {
+        expand_idx -= 1;
+      }
     }
 
-    expansion = expansion.iter().take(matches - expanded.len()).cloned().collect();
-    expansion.append(&mut expanded);
-    expansion
+    expansion.iter().take(matches).cloned().collect()
   }
 }
 
@@ -93,16 +99,16 @@ mod tests {
   }
 
   #[test]
-  fn composed_matches_multiple() {
+  fn composed_matches_two_arity() {
     let alphabet = Alphabet::new("abcd");
     let hints = alphabet.hints(8);
     assert_eq!(hints, ["a", "b", "ca", "cb", "da", "db", "dc", "dd"]);
   }
 
   #[test]
-  fn composed_matches_max() {
+  fn composed_matches_three_arity() {
     let alphabet = Alphabet::new("ab");
-    let hints = alphabet.hints(8);
-    assert_eq!(hints, ["aa", "ab", "ba", "bb"]);
+    let hints = alphabet.hints(7);
+    assert_eq!(hints, ["aa", "aba", "abb", "baa", "bab", "bba", "bbb"]);
   }
 }
