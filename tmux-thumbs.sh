@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
 set -Eeu -o pipefail
 
+# Setup env variables to be compatible with compiled and bundled installations
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-BINARY="${CURRENT_DIR}/target/release/thumbs"
+if [ -d .git ]; then
+  RELEASE_DIR="${CURRENT_DIR}/target/release"
+else
+  RELEASE_DIR=${CURRENT_DIR}
+fi
+
+BINARY="${RELEASE_DIR}/thumbs"
 
 if [ ! -f "$BINARY" ]; then
   tmux split-window "cd ${CURRENT_DIR} && bash ./tmux-thumbs-install.sh"
@@ -43,4 +50,4 @@ add-param upcase-command string
 add-param multi-command  string
 add-param osc52          boolean
 
-"${CURRENT_DIR}/target/release/tmux-thumbs" "${PARAMS[@]}" || true
+"${RELEASE_DIR}/tmux-thumbs" "${PARAMS[@]}" || true
