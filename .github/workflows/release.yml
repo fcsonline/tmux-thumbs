@@ -1,36 +1,29 @@
 name: release
 
 on:
-  push:
-    tags:
-      - '*'
-      
-  workflow_dispatch:
+  release:
+    types: [created]
 
 jobs:
-    release:
-      name: release
-      runs-on: ubuntu-latest
-      steps:
-        - name: checkout
-          uses: actions/checkout@v2
-          with:
-            fetch-depth: 0
-        - name: build
-          uses: sassman/rust-deb-builder@v1.57.0
-          with:
-             target: x86_64-unknown-linux-musl
-        - name: package
-          run: |
-            cd "$GITHUB_WORKSPACE"
-            mkdir -p package
-            mkdir -p package/target/release
-            cp -v tmux-thumbs.sh tmux-thumbs.tmux package/
-            cp -v target/x86_64-unknown-linux-musl/release/thumbs package/target/release
-            cp -v target/x86_64-unknown-linux-musl/release/tmux-thumbs package/target/release
-            tar czvf tmux-thumbs.x86_64-musl.tar.gz package/*
-        - name: create_release
-          uses: ncipollo/release-action@v1.9.0
-          with:
-            artifactErrorsFailBuild: true
-            artifacts: "tmux-thumbs.x86_64-musl.tar.gz"
+  release:
+    name: release ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-pc-windows-gnu
+            archive: zip
+          - target: x86_64-unknown-linux-musl
+            archive: tar.gz tar.xz
+          - target: x86_64-apple-darwin
+            archive: zip
+    steps:
+      - uses: actions/checkout@master
+      - name: Compile and release
+        uses: rust-build/rust-build.action@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUSTTARGET: ${{ matrix.target }}
+          EXTRA_FILES: "tmux-thumbs.sh tmux-thumbs.tmux"
+          ARCHIVE_TYPES: ${{ matrix.archive }}
