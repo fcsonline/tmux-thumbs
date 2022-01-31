@@ -53,7 +53,18 @@ select opt in "Compile" "Download"; do
 
       break;;
     Download ) 
-      curl -L https://github.com/fcsonline/tmux-thumbs/releases/download/0.7.0/tmux-thumbs_0.7.0_x86_64-apple-darwin.zip | bsdtar -xf - thumbs
+      system=$(uname -s)
+      case $system in
+        Darwin )
+          curl -L https://github.com/fcsonline/tmux-thumbs/releases/download/0.7.0/tmux-thumbs_0.7.0_x86_64-apple-darwin.zip | bsdtar -xf - thumbs
+
+          break;;
+        *)
+          echo "Unknown system"
+
+          break;;
+      esac
+      
       chmod +x thumbs
       mkdir -p target/release
       mv thumbs target/release/thumbs
