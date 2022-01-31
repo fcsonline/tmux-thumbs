@@ -4,7 +4,7 @@ set -Eeu -o pipefail
 # Setup env variables to be compatible with compiled and bundled installations
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-if [ -d .git ]; then
+if [ -d ${CURRENT_DIR}/.git ]; then
   RELEASE_DIR="${CURRENT_DIR}/target/release"
 else
   RELEASE_DIR=${CURRENT_DIR}
