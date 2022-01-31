@@ -59,6 +59,10 @@ select opt in "Compile" "Download"; do
           curl -L https://github.com/fcsonline/tmux-thumbs/releases/download/0.7.0/tmux-thumbs_0.7.0_x86_64-apple-darwin.zip | bsdtar -xf - thumbs
 
           break;;
+        Linux )
+          curl -L https://github.com/fcsonline/tmux-thumbs/releases/download/0.7.0/tmux-thumbs_0.7.0_x86_64-unknown-linux-musl.tar.gz | tar -zxf - thumbs
+
+          break;;
         *)
           echo "Unknown system"
 
