@@ -22,29 +22,48 @@ cat << EOF
 It looks like this is the first time you are executing tmux-thumbs
 because the binary is not present.
 
-We are going to proceed with the installation. Remember that Rust is
-a prerequisite to being able to build tmux-thumbs.
+We are going to proceed with the installation. If you have Rust preinstalled, we will try to
+compile the binary from source. Otherwise, a prebuild binary for your platform will be used.
 
 Do you want to continue?
 
 Press any key to continue...
 EOF
 
-read -s -n 1
+read -rs -n 1
 
 if ! [ -x "$(command -v cargo)" ]; then
-  echo 'Rust is not installed! ❌' >&2
-  echo 'Press any key to install it' >&2
+  platform="$(uname -s) $(uname -m)"
 
-  read -s -n 1
+  echo "Rust is not installed! Trying to install ${platform} binary..."
 
-  # This installation es provided by the official https://rustup.rs documentation
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+  sources=$(curl -s "https://api.github.com/repos/fcsonline/tmux-thumbs/releases/latest" | grep browser_download_url)
+
+  case $platform in
+    "Darwin x86_64")
+      url=$(echo "${sources}" | grep -o 'https://.*darwin.zip' | uniq)
+      curl -L "${url}" | bsdtar -xf - thumbs tmux-thumbs
+
+      ;;
+    "Linux x86_64")
+      url=$(echo "${sources}" | grep -o 'https://.*linux-musl.tar.gz' | uniq)
+      curl -L "${url}" | tar -zxf - thumbs tmux-thumbs
+
+      ;;
+    *)
+      echo "Unknown platform: $platform"
+      exit 1
+      ;;
+  esac
+
+  chmod +x thumbs tmux-thumbs
+  mkdir -p target/release
+  mv thumbs target/release
+  mv tmux-thumbs target/release
+else
+  echo 'Compiling tmux-thumbs, be patient:'
+  cargo build --release --target-dir=target
 fi
-
-echo 'Compiling tmux-thumbs, be patient:'
-
-cargo build --release --target-dir=target
 
 cat << EOF
 Installation complete! 💯
@@ -52,4 +71,4 @@ Installation complete! 💯
 Press any key to close this pane...
 EOF
 
-read -s -n 1
+read -rs -n 1
