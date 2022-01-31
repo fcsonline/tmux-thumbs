@@ -30,21 +30,37 @@ Do you want to continue?
 Press any key to continue...
 EOF
 
-read -s -n 1
+echo "Which format do you prefer for installation?"
+echo "  1) Compile: will use cargo to compile tmux-thumbs."
+echo "     If cargo isn't installed will use rustup to install it."
+echo "  2) Download: will download a precompiled binary for your system."
 
-if ! [ -x "$(command -v cargo)" ]; then
-  echo 'Rust is not installed! ❌' >&2
-  echo 'Press any key to install it' >&2
+select opt in "Compile" "Download"; do
+  case $opt in
+    Compile ) 
+      if ! [ -x "$(command -v cargo)" ]; then
+        echo 'Rust is not installed! ❌' >&2
+        echo 'Press any key to install it' >&2
 
-  read -s -n 1
+        read -s -n 1
 
-  # This installation es provided by the official https://rustup.rs documentation
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-fi
+        # This installation es provided by the official https://rustup.rs documentation
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+      fi
 
-echo 'Compiling tmux-thumbs, be patient:'
+      echo 'Compiling tmux-thumbs, be patient:'
+      cargo build --release --target-dir=target
 
-cargo build --release --target-dir=target
+      break;;
+    Download ) 
+      curl -L https://github.com/fcsonline/tmux-thumbs/releases/download/0.7.0/tmux-thumbs_0.7.0_x86_64-apple-darwin.zip | bsdtar -xf - thumbs
+      chmod +x thumbs
+      mkdir -p target/release
+      mv thumbs target/release/thumbs
+
+      break;;
+  esac
+done
 
 cat << EOF
 Installation complete! 💯
