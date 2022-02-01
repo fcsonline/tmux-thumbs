@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -Eeu -o pipefail
 
+VERSION=$(grep 'version =' Cargo.toml | grep -oe "[0-9]\+.[0-9]\+.[0-9]\+")
+
 # Setup env variables to be compatible with compiled and bundled installations
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 RELEASE_DIR="${CURRENT_DIR}/target/release"
@@ -10,6 +12,9 @@ TMUX_THUMBS_BINARY="${RELEASE_DIR}/tmux-thumbs"
 
 if [ ! -f "$THUMBS_BINARY" ]; then
   tmux split-window "cd ${CURRENT_DIR} && bash ./tmux-thumbs-install.sh"
+  exit
+elif [[ $(${THUMBS_BINARY} --version) != "thumbs ${VERSION}"  ]]; then
+  tmux split-window "cd ${CURRENT_DIR} && bash ./tmux-thumbs-install.sh update"
   exit
 fi
 
