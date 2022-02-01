@@ -22,60 +22,47 @@ cat << EOF
 It looks like this is the first time you are executing tmux-thumbs
 because the binary is not present.
 
-We are going to proceed with the installation. Remember that Rust is
-a prerequisite to being able to build tmux-thumbs.
+We are going to proceed with the installation. If you have Rust preinstalled, we will try to 
+compile the binary from source. Otherwise, a prebuild binary for your platform will be used.
 
 Do you want to continue?
 
 Press any key to continue...
 EOF
 
-echo "Which format do you prefer for installation?"
-echo "  1) Compile: will use cargo to compile tmux-thumbs."
-echo "     If cargo isn't installed will use rustup to install it."
-echo "  2) Download: will download a precompiled binary for your system."
+read -s -n 1
 
-select opt in "Compile" "Download"; do
-  case $opt in
-    Compile ) 
-      if ! [ -x "$(command -v cargo)" ]; then
-        echo 'Rust is not installed! ❌' >&2
-        echo 'Press any key to install it' >&2
+if ! [ -x "$(command -v cargo)" ]; then
+  system=$(uname -s)
 
-        read -s -n 1
+  echo "Rust is not installed! Trying to install ${system} binary..."
 
-        # This installation es provided by the official https://rustup.rs documentation
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-      fi
+  sources=$(curl -s "https://api.github.com/repos/fcsonline/tmux-thumbs/releases/latest" | grep browser_download_url)
 
-      echo 'Compiling tmux-thumbs, be patient:'
-      cargo build --release --target-dir=target
+  case $system in
+    Darwin )
+      url=$(echo $sources | grep -o 'https://.*darwin.zip' | uniq)
+      curl -L ${url} | bsdtar -xf - thumbs
 
       break;;
-    Download ) 
-      system=$(uname -s)
-      case $system in
-        Darwin )
-          curl -L https://github.com/fcsonline/tmux-thumbs/releases/download/0.7.0/tmux-thumbs_0.7.0_x86_64-apple-darwin.zip | bsdtar -xf - thumbs
+    Linux )
+      url=$(echo $sources | grep -o 'https://.*linux-musl.tar.gz' | uniq)
+      curl -L ${url} | tar -zxf - thumbs
 
-          break;;
-        Linux )
-          curl -L https://github.com/fcsonline/tmux-thumbs/releases/download/0.7.0/tmux-thumbs_0.7.0_x86_64-unknown-linux-musl.tar.gz | tar -zxf - thumbs
-
-          break;;
-        *)
-          echo "Unknown system"
-
-          break;;
-      esac
-      
-      chmod +x thumbs
-      mkdir -p target/release
-      mv thumbs target/release/thumbs
-
+      break;;
+    *)
+      echo "Unknown system"
+      exit 1
       break;;
   esac
-done
+
+  chmod +x thumbs
+  mkdir -p target/release
+  mv thumbs target/release/thumbs
+else
+  echo 'Compiling tmux-thumbs, be patient:'
+  cargo build --release --target-dir=target
+fi
 
 cat << EOF
 Installation complete! 💯
