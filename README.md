@@ -75,6 +75,8 @@ You can add this line to your list of [TPM](https://github.com/tmux-plugins/tpm)
 
 ```
 set -g @plugin 'fcsonline/tmux-thumbs'
+
+run-shell ~/.tmux/plugins/tmux-thumbs/tmux-thumbs.tmux
 ```
 
 To be able to install the plugin just hit <kbd>prefix</kbd> + <kbd>I</kbd>. You should now be able to use
