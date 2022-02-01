@@ -435,7 +435,7 @@ cargo install thumbs
 And those are all available options:
 
 ```
-thumbs 0.7.0
+thumbs 0.7.1
 A lightning fast version copy/pasting like vimium/vimperator
 
 USAGE:
