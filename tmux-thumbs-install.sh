@@ -39,10 +39,8 @@ else
 
 cat << EOF
   It looks like this is the first time you are executing tmux-thumbs
-  because the binary is not present.
-
-  We are going to proceed with the installation. If you have Rust preinstalled, we will try to
-  compile the binary from source. Otherwise, a prebuild binary for your platform will be used.
+  because the binary is not present. We are going to proceed with the
+  installation.
 
   Do you want to continue?
 
@@ -53,37 +51,61 @@ fi
 
 read -rs -n 1
 
-if ! [ -x "$(command -v cargo)" ]; then
-  platform="$(uname -s) $(uname -m)"
+cat << EOF
 
-  echo "  Rust is not installed! Trying to install ${platform} binary..."
+  Which format do you prefer for installation?
 
-  sources=$(curl -s "https://api.github.com/repos/fcsonline/tmux-thumbs/releases/latest" | grep browser_download_url)
+  1) Compile: will use cargo to compile tmux-thumbs. It requires Rust.
+  2) Download: will download a precompiled binary for your system.
 
-  case $platform in
-    "Darwin x86_64")
-      url=$(echo "${sources}" | grep -o 'https://.*darwin.zip' | uniq)
-      curl -sL "${url}" | bsdtar -xf - thumbs tmux-thumbs
+EOF
 
-      ;;
-    "Linux x86_64")
-      url=$(echo "${sources}" | grep -o 'https://.*linux-musl.tar.gz' | uniq)
-      curl -sL "${url}" | tar -zxf - thumbs tmux-thumbs
+select opt in "Compile" "Download"; do
+  case $opt in
+    Compile|1)
 
-      ;;
+      if ! [ -x "$(command -v cargo)" ]; then
+        echo '❌ Rust is not installed!'
+        exit 1
+      fi
+
+      echo '  Compiling tmux-thumbs, be patient:'
+      cargo build --release --target-dir=target
+
+      break;;
+    Download|2)
+      platform="$(uname -s)_$(uname -m)"
+
+      echo "  Downloading ${platform} binary..."
+
+      sources=$(curl -s "https://api.github.com/repos/fcsonline/tmux-thumbs/releases/latest" | grep browser_download_url)
+
+      case $platform in
+        Darwin_x86_64)
+          url=$(echo "${sources}" | grep -o 'https://.*darwin.zip' | uniq)
+          curl -sL "${url}" | bsdtar -xf - thumbs tmux-thumbs
+
+          ;;
+        Linux_x86_64)
+          url=$(echo "${sources}" | grep -o 'https://.*linux-musl.tar.gz' | uniq)
+          curl -sL "${url}" | tar -zxf - thumbs tmux-thumbs
+
+          ;;
+        *)
+          echo "❌ Unknown platform: ${platform}"
+          exit 1
+          ;;
+      esac
+
+      chmod +x thumbs tmux-thumbs
+      mkdir -p target/release
+      mv thumbs tmux-thumbs target/release
+
+      break;;
     *)
-      echo "Unknown platform: $platform"
-      exit 1
-      ;;
+      echo "❌ Ouh? Choose an available option."
   esac
-
-  chmod +x thumbs tmux-thumbs
-  mkdir -p target/release
-  mv thumbs tmux-thumbs target/release
-else
-  echo '  Compiling tmux-thumbs, be patient:'
-  cargo build --release --target-dir=target
-fi
+done
 
 cat << EOF
   Installation complete! 💯
