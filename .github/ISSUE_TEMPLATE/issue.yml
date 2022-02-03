@@ -1,0 +1,90 @@
+name: Bug Report
+description: File a bug report
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Also tell us, what did you expect to happen?
+      placeholder: Tell us what happened! Try to be as much descriptive as possible.
+    validations:
+      required: true
+  - type: dropdown
+    id: version
+    attributes:
+      label: Version
+      description: What version of `tmux-thumbs` are you running?
+      options:
+        - master
+        - '0.7.*'
+        - '0.6.*'
+        - '0.5.*'
+        - other
+    validations:
+      required: true
+  - type: dropdown
+    id: installation
+    attributes:
+      label: Installation method
+      description: Which is your installation method to get `tmux-thumbs`?
+      options:
+        - Git clone
+        - Tmux Plugin Manager (TPM)
+    validations:
+      required: true
+  - type: dropdown
+    id: build
+    attributes:
+      label: Build process
+      description: Which is your build process to get the compiled binary?
+      options:
+        - Compiled with Rust / Cargo
+        - Download a platform binary
+    validations:
+      required: true
+  - type: dropdown
+    id: tmux_version
+    attributes:
+      label: Tmux version
+      description: What version of our tmux you running?
+      options:
+        - source
+        - '3.3'
+        - '3.2'
+        - '3.1'
+        - '3.0'
+        - '2.9'
+        - '2.8'
+        - '2.7'
+        - '2.6'
+        - '2.5'
+        - '2.4'
+        - '2.3'
+        - '1.8'
+        - '1.7'
+        - other
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      description: Which operating system are you using?
+      options:
+        - Linux
+        - MacOX
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: shell
