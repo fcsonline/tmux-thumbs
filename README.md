@@ -37,12 +37,23 @@ more with `--regexp` parameter.
 
 [![demo](https://asciinema.org/a/232775.png?ts=1)](https://asciinema.org/a/232775?autoplay=1)
 
-## Prerequisites
+## Using Tmux Plugin Manager
+
+You can add this line to your list of [TPM](https://github.com/tmux-plugins/tpm) plugins in `.tmux.conf`:
+
+```
+set -g @plugin 'fcsonline/tmux-thumbs'
+
+run-shell ~/.tmux/plugins/tmux-thumbs/tmux-thumbs.tmux
+```
+
+To be able to install the plugin just hit <kbd>prefix</kbd> + <kbd>I</kbd>. You should now be able to use
+the plugin!
+
+## Installation checking out the source code
 
 `tmux-thumbs` is written in Rust. You will need `rustc` version 1.35.0 or higher. The
 recommended way to install Rust is from the official [download page](https://rustup.rs/).
-
-## Tmux integration
 
 Clone the repo:
 
@@ -68,19 +79,6 @@ Reload TMUX conf by running:
 ```
 tmux source-file ~/.tmux.conf
 ```
-
-## Using Tmux Plugin Manager
-
-You can add this line to your list of [TPM](https://github.com/tmux-plugins/tpm) plugins in `.tmux.conf`:
-
-```
-set -g @plugin 'fcsonline/tmux-thumbs'
-
-run-shell ~/.tmux/plugins/tmux-thumbs/tmux-thumbs.tmux
-```
-
-To be able to install the plugin just hit <kbd>prefix</kbd> + <kbd>I</kbd>. You should now be able to use
-the plugin!
 
 ## Configuration
 
