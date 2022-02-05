@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@master
       - name: Compile and release
         # uses: rust-build/rust-build.action@latest
-        uses: fcsonline/rust-build.action@7937485b7ed0f0a7f6040acadef6358323fe5a74
+        uses: fcsonline/rust-build.action@351418c179361e5f1e58955a4c4238c194070d7c
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RUSTTARGET: ${{ matrix.target }}

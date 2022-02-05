@@ -50,11 +50,6 @@ jobs:
     - name: Build
       run: cargo build --release
 
-    - uses: actions/upload-artifact@v1
-      with:
-        name: thumbs-macos.zip
-        path: ./target/release/thumbs
-
   build-linux:
     needs: test
     runs-on: ubuntu-latest
@@ -69,8 +64,3 @@ jobs:
 
     - name: Build
       run: cargo build --release
-
-    - uses: actions/upload-artifact@v1
-      with:
-        name: thumbs-linux.zip
-        path: ./target/release/thumbs
