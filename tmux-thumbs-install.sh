@@ -91,6 +91,11 @@ select opt in "Compile" "Download"; do
           curl -sL "${url}" | tar -zxf - thumbs tmux-thumbs
 
           ;;
+        Linux_armv6l)
+          url=$(echo "${sources}" | grep -o 'https://.*linux-gnueabi.tar.gz' | uniq)
+          curl -sL "${url}" | tar -zxf - thumbs tmux-thumbs
+
+          ;;
         *)
           echo "❌ Unknown platform: ${platform}"
           read -rs -n 1

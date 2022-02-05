@@ -17,10 +17,13 @@ jobs:
             archive: tar.gz tar.xz
           - target: x86_64-apple-darwin
             archive: zip
+          - target: arm-unknown-linux-gnueabi
+            archive: tar.gz tar.xz
     steps:
       - uses: actions/checkout@master
       - name: Compile and release
-        uses: rust-build/rust-build.action@latest
+        # uses: rust-build/rust-build.action@latest
+        uses: fcsonline/rust-build.action@7937485b7ed0f0a7f6040acadef6358323fe5a74
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RUSTTARGET: ${{ matrix.target }}
