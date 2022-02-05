@@ -93,6 +93,8 @@ select opt in "Compile" "Download"; do
           ;;
         *)
           echo "❌ Unknown platform: ${platform}"
+          read -rs -n 1
+          echo "  Press any key to close this pane..."
           exit 1
           ;;
       esac
