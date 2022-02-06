@@ -501,7 +501,7 @@ I was curious to know if this was possible to be written in [Rust](https://www.r
 
 ## Troubleshooting
 
-Tmux-thumbs must work lighting fast. If you are facing a slow performance capturing the screen hints try to configure Tmux with these settings:
+`tmux-thumbs` must work lighting fast. If you are facing a slow performance capturing the screen hints try to configure Tmux with these settings:
 
 ```
 set -g visual-activity off
@@ -510,6 +510,15 @@ set -g visual-silence on
 ```
 
 You can read a bit more about this issue here: https://github.com/fcsonline/tmux-thumbs/issues/88
+
+Every time I use `tmux-thumbs`, dead panes are created. Just review if you have
+this setting on:
+
+```
+set -g remain-on-exit on
+```
+
+You can read a bit more about this issue here: https://github.com/fcsonline/tmux-thumbs/issues/84
 
 ## Contribute
 
