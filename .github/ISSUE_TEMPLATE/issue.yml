@@ -49,12 +49,26 @@ body:
     validations:
       required: true
   - type: dropdown
+    id: shell
+    attributes:
+      label: Used shell
+      description: Which is the shell where `tmux-thumbs` runs?
+      options:
+        - Sh
+        - Bash
+        - Zsh
+        - Elvish
+    validations:
+      required: true
+  - type: dropdown
     id: tmux_version
     attributes:
       label: Tmux version
       description: What version of our tmux you running?
       options:
         - source
+        - 'next-3.4'
+        - '3.4'
         - '3.3'
         - '3.2'
         - '3.1'
@@ -82,6 +96,12 @@ body:
         - other
     validations:
       required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: `tmux-thumbs` configuration
+      description: Please copy and paste your `tmux-thumbs` configuration in `tmux.conf`
+      render: shell
   - type: textarea
     id: logs
     attributes:
