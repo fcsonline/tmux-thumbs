@@ -37,7 +37,7 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
     )
     .arg(
       Arg::with_name("format")
-        .help("Specifies the out format for the picked hint. (%U: Upcase, %H: Hint)")
+        .help("Specifies the out format for the picked hint. (%K: Key, %H: Hint)")
         .long("format")
         .short("f")
         .default_value("%H"),
@@ -198,12 +198,10 @@ fn main() {
   if !selected.is_empty() {
     let output = selected
       .iter()
-      .map(|(text, upcase)| {
-        let upcase_value = if *upcase { "true" } else { "false" };
-
+      .map(|(text, modkey)| {
         let mut output = format.to_string();
 
-        output = str::replace(&output, "%U", upcase_value);
+        output = str::replace(&output, "%K", modkey);
         output = str::replace(&output, "%H", text.as_str());
         output
       })

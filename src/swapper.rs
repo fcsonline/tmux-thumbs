@@ -1,5 +1,7 @@
 extern crate clap;
 
+mod view;
+
 use self::clap::{App, Arg};
 use clap::crate_version;
 use regex::Regex;
@@ -58,9 +60,11 @@ fn dbg(msg: &str) {
 pub struct Swapper<'a> {
   executor: Box<&'a mut dyn Executor>,
   dir: String,
-  command: String,
-  upcase_command: String,
-  multi_command: String,
+  main_action: String,
+  shift_action: String,
+  ctrl_action: String,
+  alt_action: String,
+  multi_action: String,
   osc52: bool,
   active_pane_id: Option<String>,
   active_pane_height: Option<i32>,
@@ -75,9 +79,11 @@ impl<'a> Swapper<'a> {
   fn new(
     executor: Box<&'a mut dyn Executor>,
     dir: String,
-    command: String,
-    upcase_command: String,
-    multi_command: String,
+    main_action: String,
+    shift_action: String,
+    ctrl_action: String,
+    alt_action: String,
+    multi_action: String,
     osc52: bool,
   ) -> Swapper {
     let since_the_epoch = SystemTime::now()
@@ -88,9 +94,11 @@ impl<'a> Swapper<'a> {
     Swapper {
       executor,
       dir,
-      command,
-      upcase_command,
-      multi_command,
+      main_action,
+      shift_action,
+      ctrl_action,
+      alt_action,
+      multi_action,
       osc52,
       active_pane_id: None,
       active_pane_height: None,
@@ -215,7 +223,7 @@ impl<'a> Swapper<'a> {
     };
 
     let pane_command = format!(
-        "tmux capture-pane -t {active_pane_id} -p{scroll_params} | tail -n {height} | {dir}/target/release/thumbs -f '%U:%H' -t {tmp} {args}; tmux swap-pane -t {active_pane_id}; {zoom_command} tmux wait-for -S {signal}",
+        "tmux capture-pane -t {active_pane_id} -p{scroll_params} | tail -n {height} | {dir}/target/release/thumbs -f '%K:%H' -t {tmp} {args}; tmux swap-pane -t {active_pane_id}; {zoom_command} tmux wait-for -S {signal}",
         active_pane_id = active_pane_id,
         scroll_params = scroll_params,
         height = self.active_pane_height.unwrap_or(i32::MAX),
@@ -320,7 +328,8 @@ impl<'a> Swapper<'a> {
         .collect::<Vec<&str>>()
         .join(" ");
 
-      self.execute_final_command(&text, &self.multi_command.clone());
+      // REVIEW: Not sure about the ModifierKeys here
+      self.execute_final_command(&text, &view::ModifierKeys::Main.to_string(), &self.multi_action.clone());
 
       return;
     }
@@ -330,7 +339,7 @@ impl<'a> Swapper<'a> {
 
     let mut splitter = item.splitn(2, ':');
 
-    if let Some(upcase) = splitter.next() {
+    if let Some(modkey) = splitter.next() {
       if let Some(text) = splitter.next() {
         if self.osc52 {
           let base64_text = base64::encode(text.as_bytes());
@@ -360,10 +369,17 @@ impl<'a> Swapper<'a> {
           std::io::stdout().flush().unwrap();
         }
 
-        let execute_command = if upcase.trim_end() == "true" {
-          self.upcase_command.clone()
-        } else {
-          self.command.clone()
+        let modkey = modkey.trim_end();
+
+        let shift = view::ModifierKeys::Shift.to_string();
+        let ctrl = view::ModifierKeys::Ctrl.to_string();
+        let alt = view::ModifierKeys::Alt.to_string();
+
+        let execute_command = match modkey {
+          shift => self.shift_action.clone(),
+          ctrl => self.ctrl_action.clone(),
+          alt => self.alt_action.clone(),
+          _ => self.main_action.clone(),
         };
 
         // The command we run has two arguments:
@@ -389,19 +405,20 @@ impl<'a> Swapper<'a> {
         // Ideally user commands would just use "${THUMB}" to begin with rather than having any
         // sort of ad-hoc string splicing here at all, and then they could specify the quoting they
         // want, but that would break backwards compatibility.
-        self.execute_final_command(text.trim_end(), &execute_command);
+        self.execute_final_command(text.trim_end(), modkey, &execute_command);
       }
     }
   }
 
-  pub fn execute_final_command(&mut self, text: &str, execute_command: &str) {
+  pub fn execute_final_command(&mut self, text: &str, modkey: &str, execute_command: &str) {
     let final_command = str::replace(execute_command, "{}", "${THUMB}");
     let retrieve_command = vec![
       "bash",
       "-c",
-      "THUMB=\"$1\"; eval \"$2\"",
+      "THUMB=\"$1\"; MODIFIER=\"$2\"; eval \"$3\"",
       "--",
       text,
+      modkey,
       final_command.as_str(),
     ];
 
@@ -450,6 +467,8 @@ mod tests {
       "".to_string(),
       "".to_string(),
       "".to_string(),
+      "".to_string(),
+      "".to_string(),
       false,
     );
 
@@ -473,6 +492,8 @@ mod tests {
       "".to_string(),
       "".to_string(),
       "".to_string(),
+      "".to_string(),
+      "".to_string(),
       false,
     );
 
@@ -490,15 +511,19 @@ mod tests {
     let last_command_outputs = vec!["Blah blah blah, the ignored user script output".to_string()];
     let mut executor = TestShell::new(last_command_outputs);
 
-    let user_command = "echo \"{}\"".to_string();
-    let upcase_command = "open \"{}\"".to_string();
-    let multi_command = "open \"{}\"".to_string();
+    let main_action = "echo \"{}\"".to_string();
+    let shift_action = "open \"{}\"".to_string();
+    let ctrl_action = "echo \"{}\"".to_string();
+    let alt_action = "echo \"{}\"".to_string();
+    let multi_action = "open \"{}\"".to_string();
     let mut swapper = Swapper::new(
       Box::new(&mut executor),
       "".to_string(),
-      user_command,
-      upcase_command,
-      multi_command,
+      main_action,
+      shift_action,
+      ctrl_action,
+      alt_action,
+      multi_action,
       false,
     );
 
@@ -539,21 +564,33 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
         .default_value(""),
     )
     .arg(
-      Arg::with_name("command")
+      Arg::with_name("main-action")
         .help("Command to execute after choose a hint")
-        .long("command")
+        .long("main-action")
         .default_value("tmux set-buffer -- \"{}\" && tmux display-message \"Copied {}\""),
     )
     .arg(
-      Arg::with_name("upcase_command")
-        .help("Command to execute after choose a hint, in upcase")
-        .long("upcase-command")
+      Arg::with_name("shift-action")
+        .help("Command to execute after choose a hint with SHIFT key pressed (Upcase)")
+        .long("shift-action")
         .default_value("tmux set-buffer -- \"{}\" && tmux paste-buffer && tmux display-message \"Copied {}\""),
     )
     .arg(
-      Arg::with_name("multi_command")
+      Arg::with_name("ctrl-action")
+        .help("Command to execute after choose a hint with CTRL key pressed")
+        .long("ctrl-action")
+        .default_value("tmux display-message \"No CTRL action configured! Hint: {}\""),
+    )
+    .arg(
+      Arg::with_name("alt-action")
+        .help("Command to execute after choose a hint with ALT key pressed")
+        .long("alt-action")
+        .default_value("tmux display-message \"No ALT action configured! Hint: {}\" && echo \"FOO $MODIFIER ~ $HINT BAR\" > /tmp/tx.txt"),
+    )
+    .arg(
+      Arg::with_name("multi-action")
         .help("Command to execute after choose multiple hints")
-        .long("multi-command")
+        .long("multi-action")
         .default_value("tmux set-buffer -- \"{}\" && tmux paste-buffer && tmux display-message \"Multi copied {}\""),
     )
     .arg(
@@ -568,9 +605,11 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
 fn main() -> std::io::Result<()> {
   let args = app_args();
   let dir = args.value_of("dir").unwrap();
-  let command = args.value_of("command").unwrap();
-  let upcase_command = args.value_of("upcase_command").unwrap();
-  let multi_command = args.value_of("multi_command").unwrap();
+  let main_action = args.value_of("main-action").unwrap();
+  let shift_action = args.value_of("shift-action").unwrap();
+  let ctrl_action = args.value_of("ctrl-action").unwrap();
+  let alt_action = args.value_of("alt-action").unwrap();
+  let multi_action = args.value_of("multi-action").unwrap();
   let osc52 = args.is_present("osc52");
 
   if dir.is_empty() {
@@ -581,9 +620,11 @@ fn main() -> std::io::Result<()> {
   let mut swapper = Swapper::new(
     Box::new(&mut executor),
     dir.to_string(),
-    command.to_string(),
-    upcase_command.to_string(),
-    multi_command.to_string(),
+    main_action.to_string(),
+    shift_action.to_string(),
+    ctrl_action.to_string(),
+    alt_action.to_string(),
+    multi_action.to_string(),
     osc52,
   );
 

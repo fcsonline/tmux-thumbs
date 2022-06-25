@@ -45,9 +45,10 @@ function add-param() {
   fi
 }
 
-add-param command        string
-add-param upcase-command string
-add-param multi-command  string
-add-param osc52          boolean
+add-param main-action  string
+add-param shift-action string
+add-param ctrl-action  string
+add-param alt-action   string
+add-param osc52        boolean
 
 "${TMUX_THUMBS_BINARY}" "${PARAMS[@]}" || true

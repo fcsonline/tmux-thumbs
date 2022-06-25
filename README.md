@@ -33,6 +33,19 @@ These are the list of matched patterns that will be highlighted by default. If
 you want to highlight a pattern that is not in this list you can add one or
 more with `--regexp` parameter.
 
+
+## Key shortcuts
+
+While in **[thumbs]** mode, you can use the following shortcuts:
+
+* <kbd>a</kbd>-<kbd>z</kbd>: copies selected match to the clipboard
+* <kbd>CTRL</kbd> + <kbd>a</kbd>-<kbd>z</kbd>: copies selected match to the clipboard and triggers [@thumbs-ctrl-action](#thumbs-ctrl-action).
+* <kbd>SHIFT</kbd> + <kbd>a</kbd>-<kbd>z</kbd>: copies selected match to the clipboard and triggers [@thumbs-shift-action](#thumbs-shift-action).
+* <kbd>ALT</kbd> + <kbd>a</kbd>-<kbd>z</kbd>: copies selected match to the clipboard and triggers [@thumbs-alt-action](#thumbs-alt-action).
+* <kbd>CTRL</kbd> + <kbd>c</kbd>: exit **[thumbs]** mode
+* <kbd>ESC</kbd>: exit help or **[thumbs]** mode
+* <kbd>?</kbd>: show help.
+
 ## Demo
 
 [![demo](https://asciinema.org/a/232775.png?ts=1)](https://asciinema.org/a/232775?autoplay=1)
@@ -93,9 +106,13 @@ NOTE: for changes to take effect, you'll need to source again your `.tmux.conf` 
 * [@thumbs-unique](#thumbs-unique)
 * [@thumbs-position](#thumbs-position)
 * [@thumbs-regexp-N](#thumbs-regexp-N)
-* [@thumbs-command](#thumbs-command)
-* [@thumbs-upcase-command](#thumbs-upcase-command)
-* [@thumbs-multi-command](#thumbs-multi-command)
+
+* [@thumbs-main-action](#thumbs-main-action)
+* [@thumbs-shift-action](#thumbs-shift-action)
+* [@thumbs-ctrl-action](#thumbs-ctrl-action)
+* [@thumbs-alt-action](#thumbs-alt-action)
+* [@thumbs-multi-action](#thumbs-multi-action)
+
 * [@thumbs-bg-color](#thumbs-bg-color)
 * [@thumbs-fg-color](#thumbs-fg-color)
 * [@thumbs-hint-bg-color](#thumbs-hint-bg-color)
@@ -106,6 +123,9 @@ NOTE: for changes to take effect, you'll need to source again your `.tmux.conf` 
 * [@thumbs-multi-bg-color](#thumbs-multi-bg-color)
 * [@thumbs-contrast](#thumbs-contrast)
 * [@thumbs-osc52](#thumbs-osc52)
+* deprecated: [@thumbs-command](#thumbs-command)
+* deprecated: [@thumbs-upcase-command](#thumbs-upcase-command)
+* deprecated: [@thumbs-multi-command](#thumbs-multi-command)
 
 ### @thumbs-key
 

@@ -1,6 +1,6 @@
 use super::*;
-use std::char;
 use std::io::{stdout, Read, Write};
+use std::{char, fmt, vec};
 use termion::async_stdin;
 use termion::event::Key;
 use termion::input::TermRead;
@@ -25,12 +25,31 @@ pub struct View<'a> {
   background_color: Box<dyn color::Color>,
   hint_background_color: Box<dyn color::Color>,
   hint_foreground_color: Box<dyn color::Color>,
-  chosen: Vec<(String, bool)>,
+  chosen: Vec<(String, String)>,
 }
 
 enum CaptureEvent {
   Exit,
   Hint,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum ModifierKeys {
+  Main,
+  Shift,
+  Ctrl,
+  Alt,
+}
+
+impl fmt::Display for ModifierKeys {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    match self {
+      ModifierKeys::Main => write!(f, "main"),
+      ModifierKeys::Shift => write!(f, "shift"),
+      ModifierKeys::Ctrl => write!(f, "ctrl"),
+      ModifierKeys::Alt => write!(f, "alt"),
+    }
+  }
 }
 
 impl<'a> View<'a> {
@@ -196,10 +215,10 @@ impl<'a> View<'a> {
 
     loop {
       match stdin.keys().next() {
-        Some(key) => {
-          match key {
-            Ok(key) => {
-              match key {
+        Some(original_key) => {
+          match original_key {
+            Ok(original_key) => {
+              match original_key {
                 Key::Esc => {
                   if self.multi && !typed_hint.is_empty() {
                     typed_hint.clear();
@@ -222,11 +241,13 @@ impl<'a> View<'a> {
                 Key::Backspace => {
                   typed_hint.pop();
                 }
-                Key::Char(ch) => {
+                Key::Char(ch) | Key::Alt(ch) | Key::Ctrl(ch) => {
                   match ch {
                     '\n' => match self.matches.iter().enumerate().find(|&h| h.0 == self.skip) {
                       Some(hm) => {
-                        self.chosen.push((hm.1.text.to_string(), false));
+                        self
+                          .chosen
+                          .push((hm.1.text.to_string(), ModifierKeys::Main.to_string()));
 
                         if !self.multi {
                           return CaptureEvent::Hint;
@@ -251,9 +272,19 @@ impl<'a> View<'a> {
 
                       let selection = self.matches.iter().find(|mat| mat.hint == Some(typed_hint.clone()));
 
+                      let modkey = if original_key == Key::Alt(ch) {
+                        ModifierKeys::Alt.to_string()
+                      } else if original_key == Key::Ctrl(ch) {
+                        ModifierKeys::Ctrl.to_string()
+                      } else if key != lower_key {
+                        ModifierKeys::Shift.to_string()
+                      } else {
+                        ModifierKeys::Main.to_string()
+                      };
+
                       match selection {
                         Some(mat) => {
-                          self.chosen.push((mat.text.to_string(), key != lower_key));
+                          self.chosen.push((mat.text.to_string(), modkey));
 
                           if self.multi {
                             typed_hint.clear();
@@ -293,7 +324,7 @@ impl<'a> View<'a> {
     CaptureEvent::Exit
   }
 
-  pub fn present(&mut self) -> Vec<(String, bool)> {
+  pub fn present(&mut self) -> Vec<(String, String)> {
     let mut stdin = async_stdin();
     let mut stdout = AlternateScreen::from(stdout().into_raw_mode().unwrap());
 
