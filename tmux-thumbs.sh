@@ -18,7 +18,7 @@ elif [[ $(${THUMBS_BINARY} --version) != "thumbs ${VERSION}"  ]]; then
 fi
 
 function get-opt-value() {
-  tmux show -vg "${1}" 2> /dev/null
+  tmux show -v "${2:-g}" "${1}" 2> /dev/null
 }
 
 function get-thumb-opt-value() {
@@ -26,7 +26,7 @@ function get-thumb-opt-value() {
 }
 
 function set-opt-value() {
-  tmux set -g "${1}" "${2}" 2> /dev/null
+  tmux set "${3:-g}" "${1}" "${2}" 2> /dev/null
 }
 
 function get-opt-arg() {
@@ -55,24 +55,28 @@ function add-param() {
 
 # Temporarily suppress tmux visual effects to work around display lag.
 function suppress-visual-effects() {
+  opt_ma="monitor-activity"
   opt_va="visual-activity"
   opt_vb="visual-bell"
   opt_vs="visual-silence"
-  opt_va_val=$(get-opt-value "${opt_va}")
-  opt_vb_val=$(get-opt-value "${opt_vb}")
-  opt_vs_val=$(get-opt-value "${opt_vs}")
+  opt_ma_val=$(get-opt-value "${opt_ma}" -p)
+  opt_va_val=$(get-opt-value "${opt_va}" -p)
+  opt_vb_val=$(get-opt-value "${opt_vb}" -p)
+  opt_vs_val=$(get-opt-value "${opt_vs}" -p)
 
   function cleanup {
-    set-opt-value "${opt_va}" "${opt_va_val}"
-    set-opt-value "${opt_vb}" "${opt_vb_val}"
-    set-opt-value "${opt_vs}" "${opt_vs_val}"
+    set-opt-value "${opt_ma}" "${opt_ma_val}" -p
+    set-opt-value "${opt_va}" "${opt_va_val}" -p
+    set-opt-value "${opt_vb}" "${opt_vb_val}" -p
+    set-opt-value "${opt_vs}" "${opt_vs_val}" -p
   }
   trap cleanup EXIT
 
   # https://github.com/fcsonline/tmux-thumbs/issues/88#issuecomment-871516639
-  set-opt-value "${opt_va}" off
-  set-opt-value "${opt_vb}" off
-  set-opt-value "${opt_vs}" on
+  set-opt-value "${opt_ma}" off -p
+  set-opt-value "${opt_va}" off -p
+  set-opt-value "${opt_vb}" off -p
+  set-opt-value "${opt_vs}" on -p
 }
 
 suppress-visual-effects
