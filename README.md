@@ -47,8 +47,12 @@ set -g @plugin 'fcsonline/tmux-thumbs'
 run-shell ~/.tmux/plugins/tmux-thumbs/tmux-thumbs.tmux
 ```
 
-To be able to install the plugin just hit <kbd>prefix</kbd> + <kbd>I</kbd>. You should now be able to use
-the plugin!
+To be able to install the plugin, just hit <kbd>prefix</kbd> + <kbd>I</kbd>. A fancy installation
+process will appear. Follow the described steps, and you should now be able to use the plugin!
+
+Note: If you always choose the same method during the installation process (Ex. Because you use this
+plugin in an immutable environment), you can pass the `TMUX_THUMBS_INSTALLATION` environment variable
+to choose your desired approach. Valid values for this environment variable are `compile` or `download`.
 
 ## Installation checking out the source code
 
