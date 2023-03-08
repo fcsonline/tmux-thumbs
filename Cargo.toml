@@ -1,6 +1,6 @@
 [package]
 name = "thumbs"
-version = "0.7.1"
+version = "0.8.0"
 authors = ["Ferran Basora <fcsonline@gmail.com>"]
 edition = "2018"
 description = "A lightning fast version copy/pasting like vimium/vimperator"
