@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -Eeu -o pipefail
+set -Ee -o pipefail
 
 # Removing the binary to make this script idempotent
 rm -rf target/release/thumbs
@@ -49,7 +49,9 @@ EOF
 
 fi
 
-read -rs -n 1
+if [[ -z "${TMUX_THUMBS_INSTALLATION}" ]]; then
+  read -rs -n 1
+fi
 
 cat << EOF
 
@@ -60,54 +62,76 @@ cat << EOF
 
 EOF
 
-select opt in "Compile" "Download"; do
-  case $opt in
-    Compile|1)
+function compile () {
+  if ! [ -x "$(command -v cargo)" ]; then
+    echo '❌ Rust is not installed!'
+    exit 1
+  fi
 
-      if ! [ -x "$(command -v cargo)" ]; then
-        echo '❌ Rust is not installed!'
-        exit 1
-      fi
+  echo '  Compiling tmux-thumbs, be patient:'
+  cargo build --release --target-dir=target
+}
 
-      echo '  Compiling tmux-thumbs, be patient:'
-      cargo build --release --target-dir=target
+function download () {
+  platform="$(uname -s)_$(uname -m)"
 
-      break;;
-    Download|2)
-      platform="$(uname -s)_$(uname -m)"
+  echo "  Downloading ${platform} binary..."
 
-      echo "  Downloading ${platform} binary..."
+  sources=$(curl -s "https://api.github.com/repos/fcsonline/tmux-thumbs/releases/latest" | grep browser_download_url)
 
-      sources=$(curl -s "https://api.github.com/repos/fcsonline/tmux-thumbs/releases/latest" | grep browser_download_url)
+  case $platform in
+    Darwin_x86_64)
+      url=$(echo "${sources}" | grep -o 'https://.*darwin.zip' | uniq)
+      curl -sL "${url}" | bsdtar -xf - thumbs tmux-thumbs
 
-      case $platform in
-        Darwin_x86_64)
-          url=$(echo "${sources}" | grep -o 'https://.*darwin.zip' | uniq)
-          curl -sL "${url}" | bsdtar -xf - thumbs tmux-thumbs
+      ;;
+    Linux_x86_64)
+      url=$(echo "${sources}" | grep -o 'https://.*linux-musl.tar.gz' | uniq)
+      curl -sL "${url}" | tar -zxf - thumbs tmux-thumbs
 
-          ;;
-        Linux_x86_64)
-          url=$(echo "${sources}" | grep -o 'https://.*linux-musl.tar.gz' | uniq)
-          curl -sL "${url}" | tar -zxf - thumbs tmux-thumbs
+      ;;
+    *)
+      echo "❌ Unknown platform: ${platform}"
+      read -rs -n 1
+      echo "  Press any key to close this pane..."
+      exit 1
+      ;;
+  esac
 
-          ;;
-        *)
-          echo "❌ Unknown platform: ${platform}"
-          read -rs -n 1
-          echo "  Press any key to close this pane..."
-          exit 1
-          ;;
-      esac
+  chmod +x thumbs tmux-thumbs
+  mkdir -p target/release
+  mv thumbs tmux-thumbs target/release
+}
 
-      chmod +x thumbs tmux-thumbs
-      mkdir -p target/release
-      mv thumbs tmux-thumbs target/release
+if [[ -z "${TMUX_THUMBS_INSTALLATION}" ]]; then
+  select action in "Compile" "Download"; do
+    case $action in
+      Compile|1)
+        compile
 
-      break;;
+        break;;
+      Download|2)
+        download
+
+        break;;
+      *)
+        echo "❌ Ouh? Choose an available option."
+    esac
+  done
+else
+  case $TMUX_THUMBS_INSTALLATION in
+    Compile|compile|1)
+      compile
+
+      ;;
+    Download|download|2)
+      download
+
+      ;;
     *)
       echo "❌ Ouh? Choose an available option."
   esac
-done
+fi
 
 cat << EOF
   Installation complete! 💯
@@ -115,4 +139,6 @@ cat << EOF
   Press any key to close this pane...
 EOF
 
-read -rs -n 1
+if [[ -z "${TMUX_THUMBS_INSTALLATION}" ]]; then
+  read -rs -n 1
+fi
