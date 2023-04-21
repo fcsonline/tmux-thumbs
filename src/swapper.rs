@@ -311,7 +311,7 @@ impl<'a> Swapper<'a> {
 
   pub fn execute_command(&mut self) {
     let content = self.content.clone().unwrap();
-    let items: Vec<&str> = content.split('\n').collect();
+    let items: Vec<&str> = content.split('\0').collect();
 
     if items.len() > 1 {
       let text = items

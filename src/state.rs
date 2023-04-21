@@ -27,8 +27,8 @@ const PATTERNS: [(&'static str, &'static str); 15] = [
 
 #[derive(Clone)]
 pub struct Match<'a> {
-  pub x: i32,
-  pub y: i32,
+  pub start: usize,
+  pub end: usize,
   pub pattern: &'a str,
   pub text: &'a str,
   pub hint: Option<String>,
@@ -38,9 +38,9 @@ impl<'a> fmt::Debug for Match<'a> {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     write!(
       f,
-      "Match {{ x: {}, y: {}, pattern: {}, text: {}, hint: <{}> }}",
-      self.x,
-      self.y,
+      "Match {{ start: {}, end: {}, pattern: {}, text: {}, hint: <{}> }}",
+      self.start,
+      self.end,
       self.pattern,
       self.text,
       self.hint.clone().unwrap_or("<undefined>".to_string())
@@ -50,20 +50,20 @@ impl<'a> fmt::Debug for Match<'a> {
 
 impl<'a> PartialEq for Match<'a> {
   fn eq(&self, other: &Match) -> bool {
-    self.x == other.x && self.y == other.y
+    self.start == other.start && self.end == other.end
   }
 }
 
 pub struct State<'a> {
-  pub lines: &'a Vec<&'a str>,
+  pub output: &'a str,
   alphabet: &'a str,
   regexp: &'a Vec<&'a str>,
 }
 
 impl<'a> State<'a> {
-  pub fn new(lines: &'a Vec<&'a str>, alphabet: &'a str, regexp: &'a Vec<&'a str>) -> State<'a> {
+  pub fn new(output: &'a str, alphabet: &'a str, regexp: &'a Vec<&'a str>) -> State<'a> {
     State {
-      lines,
+      output,
       alphabet,
       regexp,
     }
@@ -91,64 +91,68 @@ impl<'a> State<'a> {
     // This order determines the priority of pattern matching
     let all_patterns = [exclude_patterns, custom_patterns, patterns].concat();
 
-    for (index, line) in self.lines.iter().enumerate() {
-      let mut chunk: &str = line;
-      let mut offset: i32 = 0;
+    let mut chunk: &str = self.output;
+    let mut offset: usize = 0;
+    let mut end_last: usize = 0;
 
-      loop {
-        // For this line we search which patterns match, all of them.
-        let submatches = all_patterns
-          .iter()
-          .filter_map(|tuple| match tuple.1.find_iter(chunk).nth(0) {
-            Some(m) => Some((tuple.0, tuple.1.clone(), m)),
-            None => None,
-          })
-          .collect::<Vec<_>>();
+    loop {
+      // For this line we search which patterns match, all of them.
+      let submatches = all_patterns
+        .iter()
+        .filter_map(|tuple| match tuple.1.find_iter(chunk).nth(0) {
+          Some(m) => Some((tuple.0, tuple.1.clone(), m)),
+          None => None,
+        })
+      .collect::<Vec<_>>();
 
-        // Then, we search for the match with the lowest index
-        let first_match_option = submatches.iter().min_by(|x, y| x.2.start().cmp(&y.2.start()));
+      // Then, we search for the match with the lowest index
+      let first_match_option = submatches.iter().min_by(|x, y| x.2.start().cmp(&y.2.start()));
 
-        if let Some(first_match) = first_match_option {
-          let (name, pattern, matching) = first_match;
-          let text = matching.as_str();
+      if let Some(first_match) = first_match_option {
+        let (name, pattern, matching) = first_match;
+        let text = matching.as_str();
 
-          if let Some(captures) = pattern.captures(text) {
-            let captures: Vec<(&str, usize)> = if let Some(capture) = captures.name("match") {
-              [(capture.as_str(), capture.start())].to_vec()
-            } else if captures.len() > 1 {
-              captures
-                .iter()
-                .skip(1)
-                .filter_map(|capture| capture)
-                .map(|capture| (capture.as_str(), capture.start()))
-                .collect::<Vec<(&str, usize)>>()
-            } else {
-              [(matching.as_str(), 0)].to_vec()
-            };
+        if let Some(captures) = pattern.captures(text) {
+          let captures: Vec<(&str, usize)> = if let Some(capture) = captures.name("match") {
+            [(capture.as_str(), capture.start())].to_vec()
+          } else if captures.len() > 1 {
+            captures
+              .iter()
+              .skip(1)
+              .filter_map(|capture| capture)
+              .map(|capture| (capture.as_str(), capture.start()))
+              .collect::<Vec<(&str, usize)>>()
+          } else {
+            [(matching.as_str(), 0)].to_vec()
+          };
 
-            // Never hint or broke bash color sequences, but process it
-            if *name != "bash" {
-              for (subtext, substart) in captures.iter() {
+          // Never hint or broke bash color sequences, but process it
+          if *name != "bash" {
+            for (subtext, substart) in captures.iter() {
+              let start = offset + matching.start() + *substart;
+              if start > end_last {
+                end_last = start + subtext.len();
                 matches.push(Match {
-                  x: offset + matching.start() as i32 + *substart as i32,
-                  y: index as i32,
+                  start: start,
+                  end: end_last,
                   pattern: name,
                   text: subtext,
                   hint: None,
                 });
               }
             }
-
-            chunk = chunk.get(matching.end()..).expect("Unknown chunk");
-            offset += matching.end() as i32;
-          } else {
-            panic!("No matching?");
           }
+
+          chunk = chunk.get(matching.end()..).expect("Unknown chunk");
+          offset += matching.end();
         } else {
-          break;
+          panic!("No matching?");
         }
+      } else {
+        break;
       }
     }
+
 
     let alphabet = super::alphabets::get_alphabet(self.alphabet);
     let mut hints = alphabet.hints(matches.len());

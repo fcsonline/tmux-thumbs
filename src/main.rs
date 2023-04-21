@@ -18,6 +18,7 @@ use std::io::{self, Read, Write};
 fn dbg(msg: &str) {
   let mut file = std::fs::OpenOptions::new()
     .append(true)
+    .create(true)
     .open("/tmp/thumbs.log")
     .expect("Unable to open log file");
 
@@ -170,9 +171,15 @@ fn main() {
 
   handle.read_to_string(&mut output).unwrap();
 
-  let lines = output.split('\n').collect::<Vec<&str>>();
+  if output.ends_with("\r\n") {
+    output.pop();
+    output.pop();
+  } else if output.ends_with("\n") {
+    output.pop();
+    output = output.replace("\n", "\r\n");
+  };
 
-  let mut state = state::State::new(&lines, alphabet, &regexp);
+  let mut state = state::State::new(output.as_str(), alphabet, &regexp);
 
   let selected = {
     let mut viewbox = view::View::new(
@@ -204,11 +211,15 @@ fn main() {
         let mut output = format.to_string();
 
         output = str::replace(&output, "%U", upcase_value);
-        output = str::replace(&output, "%H", text.as_str());
+        output = str::replace(&output, "%H", text
+                              .split('\n')
+                              .map(|line| line.trim_end())
+                              .collect::<Vec<&str>>()
+                              .join("\n").as_str());
         output
       })
       .collect::<Vec<_>>()
-      .join("\n");
+      .join("\0");
 
     if let Some(target) = target {
       let mut file = OpenOptions::new()
