@@ -2,9 +2,9 @@ use regex::Regex;
 use std::collections::HashMap;
 use std::fmt;
 
-const EXCLUDE_PATTERNS: [(&'static str, &'static str); 1] = [("bash", r"[[:cntrl:]]\[([0-9]{1,2};)?([0-9]{1,2})?m")];
+const EXCLUDE_PATTERNS: [(&str, &str); 1] = [("bash", r"[[:cntrl:]]\[([0-9]{1,2};)?([0-9]{1,2})?m")];
 
-const PATTERNS: [(&'static str, &'static str); 15] = [
+const PATTERNS: [(&str, &str); 15] = [
   ("markdown_url", r"\[[^]]*\]\(([^)]+)\)"),
   ("url", r"(?P<match>(https?://|git@|git://|ssh://|ftp://|file:///)[^ ]+)"),
   (
@@ -99,10 +99,7 @@ impl<'a> State<'a> {
       // For this line we search which patterns match, all of them.
       let submatches = all_patterns
         .iter()
-        .filter_map(|tuple| match tuple.1.find_iter(chunk).nth(0) {
-          Some(m) => Some((tuple.0, tuple.1.clone(), m)),
-          None => None,
-        })
+        .filter_map(|tuple| tuple.1.find_iter(chunk).next().map(|m| (tuple.0, tuple.1.clone(), m)))
       .collect::<Vec<_>>();
 
       // Then, we search for the match with the lowest index
@@ -119,7 +116,7 @@ impl<'a> State<'a> {
             captures
               .iter()
               .skip(1)
-              .filter_map(|capture| capture)
+              .flatten()
               .map(|capture| (capture.as_str(), capture.start()))
               .collect::<Vec<(&str, usize)>>()
           } else {
@@ -133,7 +130,7 @@ impl<'a> State<'a> {
               if start > end_last {
                 end_last = start + subtext.len();
                 matches.push(Match {
-                  start: start,
+                  start,
                   end: end_last,
                   pattern: name,
                   text: subtext,

@@ -174,9 +174,9 @@ fn main() {
   if output.ends_with("\r\n") {
     output.pop();
     output.pop();
-  } else if output.ends_with("\n") {
+  } else if output.ends_with('\n') {
     output.pop();
-    output = output.replace("\n", "\r\n");
+    output = output.replace('\n', "\r\n");
   };
 
   let mut state = state::State::new(output.as_str(), alphabet, &regexp);
@@ -229,7 +229,7 @@ fn main() {
         .open(target)
         .expect("Unable to open the target file");
 
-      file.write(output.as_bytes()).unwrap();
+      file.write_all(output.as_bytes()).unwrap();
     } else {
       print!("{}", output);
     }

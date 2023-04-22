@@ -56,7 +56,7 @@ fn dbg(msg: &str) {
 }
 
 pub struct Swapper<'a> {
-  executor: Box<&'a mut dyn Executor>,
+  executor: &'a mut dyn Executor,
   dir: String,
   command: String,
   upcase_command: String,
@@ -73,7 +73,7 @@ pub struct Swapper<'a> {
 
 impl<'a> Swapper<'a> {
   fn new(
-    executor: Box<&'a mut dyn Executor>,
+    executor: &'a mut dyn Executor,
     dir: String,
     command: String,
     upcase_command: String,
@@ -122,7 +122,7 @@ impl<'a> Swapper<'a> {
       .find(|&chunks| *chunks.get(5).unwrap() == "active")
       .expect("Unable to find active pane");
 
-    let pane_id = active_pane.get(0).unwrap();
+    let pane_id = active_pane.first().unwrap();
 
     self.active_pane_id = Some(pane_id.to_string());
 
@@ -134,7 +134,7 @@ impl<'a> Swapper<'a> {
 
     self.active_pane_height = Some(pane_height);
 
-    if active_pane.get(1).unwrap().to_string() == "1" {
+    if *active_pane.get(1).unwrap() == "1" {
       let pane_scroll_position = active_pane
         .get(3)
         .unwrap()
@@ -207,7 +207,7 @@ impl<'a> Swapper<'a> {
         "".to_string()
       };
 
-    let active_pane_zoomed = self.active_pane_zoomed.as_mut().unwrap().clone();
+    let active_pane_zoomed = *self.active_pane_zoomed.as_mut().unwrap();
     let zoom_command = if active_pane_zoomed {
       format!("tmux resize-pane -t {} -Z;", active_pane_id)
     } else {
@@ -267,7 +267,7 @@ impl<'a> Swapper<'a> {
   }
 
   pub fn resize_pane(&mut self) {
-    let active_pane_zoomed = self.active_pane_zoomed.as_mut().unwrap().clone();
+    let active_pane_zoomed = *self.active_pane_zoomed.as_mut().unwrap();
 
     if !active_pane_zoomed {
       return;
@@ -335,7 +335,7 @@ impl<'a> Swapper<'a> {
         if self.osc52 {
           let base64_text = base64::encode(text.as_bytes());
           let osc_seq = format!("\x1b]52;0;{}\x07", base64_text);
-          let tmux_seq = format!("\x1bPtmux;{}\x1b\\", osc_seq.replace("\x1b", "\x1b\x1b"));
+          let tmux_seq = format!("\x1bPtmux;{}\x1b\\", osc_seq.replace('\x1b', "\x1b\x1b"));
 
           // FIXME: Review if this comment is still rellevant
           //
@@ -445,7 +445,7 @@ mod tests {
     let last_command_outputs = vec!["%97:100:24:1:0:active\n%106:100:24:1:0:nope\n%107:100:24:1:0:nope\n".to_string()];
     let mut executor = TestShell::new(last_command_outputs);
     let mut swapper = Swapper::new(
-      Box::new(&mut executor),
+      &mut executor,
       "".to_string(),
       "".to_string(),
       "".to_string(),
@@ -468,7 +468,7 @@ mod tests {
     ];
     let mut executor = TestShell::new(last_command_outputs);
     let mut swapper = Swapper::new(
-      Box::new(&mut executor),
+      &mut executor,
       "".to_string(),
       "".to_string(),
       "".to_string(),
@@ -494,7 +494,7 @@ mod tests {
     let upcase_command = "open \"{}\"".to_string();
     let multi_command = "open \"{}\"".to_string();
     let mut swapper = Swapper::new(
-      Box::new(&mut executor),
+      &mut executor,
       "".to_string(),
       user_command,
       upcase_command,
@@ -579,7 +579,7 @@ fn main() -> std::io::Result<()> {
 
   let mut executor = RealShell::new();
   let mut swapper = Swapper::new(
-    Box::new(&mut executor),
+    &mut executor,
     dir.to_string(),
     command.to_string(),
     upcase_command.to_string(),

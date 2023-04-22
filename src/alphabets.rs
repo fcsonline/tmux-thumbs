@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-const ALPHABETS: [(&'static str, &'static str); 22] = [
+const ALPHABETS: [(&str, &str); 22] = [
   ("numeric", "1234567890"),
   ("abcd", "abcd"),
   ("qwerty", "asdfqwerzxcvjklmiuopghtybn"),
@@ -69,7 +69,7 @@ pub fn get_alphabet(alphabet_name: &str) -> Alphabet {
 
   alphabets
     .get(alphabet_name)
-    .expect(format!("Unknown alphabet: {}", alphabet_name).as_str()); // FIXME
+    .unwrap_or_else(|| panic!("Unknown alphabet: {}", alphabet_name)); // FIXME
 
   Alphabet::new(alphabets[alphabet_name])
 }

@@ -90,7 +90,7 @@ impl<'a> View<'a> {
     }
   }
 
-  fn render(&self, stdout: &mut dyn Write, typed_hint: &str) -> () {
+  fn render(&self, stdout: &mut dyn Write, typed_hint: &str) {
     write!(stdout, "{}", cursor::Hide).unwrap();
 
     let mut output = self.state.output.to_string();
@@ -188,8 +188,7 @@ impl<'a> View<'a> {
       .iter()
       .filter_map(|m| m.hint.clone())
       .max_by(|x, y| x.len().cmp(&y.len()))
-      .unwrap()
-      .clone();
+      .unwrap();
 
     self.render(stdout, &typed_hint);
 
