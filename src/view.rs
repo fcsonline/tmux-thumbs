@@ -310,15 +310,11 @@ impl<'a> View<'a> {
 mod tests {
   use super::*;
 
-  fn split(output: &str) -> Vec<&str> {
-    output.split("\n").collect::<Vec<&str>>()
-  }
-
   #[test]
   fn hint_text() {
-    let lines = split("lorem 127.0.0.1 lorem");
+    let output = "lorem 127.0.0.1 lorem";
     let custom = [].to_vec();
-    let mut state = state::State::new(&lines, "abcd", &custom);
+    let mut state = state::State::new(output, "abcd", &custom);
     let mut view = View {
       state: &mut state,
       skip: 0,
