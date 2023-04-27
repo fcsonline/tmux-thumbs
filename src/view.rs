@@ -173,6 +173,14 @@ impl<'a> View<'a> {
       }
     }
 
+    if output.ends_with("\r\n") {
+      output.pop();
+      output.pop();
+    } else if output.ends_with('\n') {
+      output.pop();
+      output = output.replace('\n', "\r\n");
+    };
+
     print!("\r\n{}", output);
     stdout.flush().unwrap();
   }

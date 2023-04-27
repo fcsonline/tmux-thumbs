@@ -4,6 +4,7 @@ use self::clap::{App, Arg};
 use clap::crate_version;
 use regex::Regex;
 use std::io::Write;
+use std::fs;
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -45,7 +46,7 @@ const TMP_FILE: &str = "/tmp/thumbs-last";
 
 #[allow(dead_code)]
 fn dbg(msg: &str) {
-  let mut file = std::fs::OpenOptions::new()
+  let mut file = fs::OpenOptions::new()
     .create(true)
     .write(true)
     .append(true)
@@ -301,16 +302,13 @@ impl<'a> Swapper<'a> {
   }
 
   pub fn destroy_content(&mut self) {
-    let retrieve_command = vec!["rm", TMP_FILE];
-    let params = retrieve_command.iter().map(|arg| arg.to_string()).collect();
-
-    self.executor.execute(params);
+    fs::remove_file(TMP_FILE).ok();
   }
 
   pub fn send_osc52(&mut self) {}
 
   pub fn execute_command(&mut self) {
-    let content = self.content.clone().unwrap();
+    let content = self.content.as_ref().unwrap();
     let items: Vec<&str> = content.split('\0').collect();
 
     if items.len() > 1 {
@@ -320,15 +318,13 @@ impl<'a> Swapper<'a> {
         .collect::<Vec<&str>>()
         .join(" ");
 
-      self.execute_final_command(&text, &self.multi_command.clone());
+      self.executor.execute(Swapper::build_final_command(&text, &self.multi_command));
 
       return;
     }
 
     // Only one item
-    let item: &str = items.first().unwrap();
-
-    let mut splitter = item.splitn(2, ':');
+    let mut splitter = content.splitn(2, ':');
 
     if let Some(upcase) = splitter.next() {
       if let Some(text) = splitter.next() {
@@ -360,12 +356,6 @@ impl<'a> Swapper<'a> {
           std::io::stdout().flush().unwrap();
         }
 
-        let execute_command = if upcase.trim_end() == "true" {
-          self.upcase_command.clone()
-        } else {
-          self.command.clone()
-        };
-
         // The command we run has two arguments:
         //  * The first arg is the (trimmed) text. This gets stored in a variable, in order to
         //    preserve quoting and special characters.
@@ -389,13 +379,17 @@ impl<'a> Swapper<'a> {
         // Ideally user commands would just use "${THUMB}" to begin with rather than having any
         // sort of ad-hoc string splicing here at all, and then they could specify the quoting they
         // want, but that would break backwards compatibility.
-        self.execute_final_command(text.trim_end(), &execute_command);
+        self.executor.execute(if upcase == "true" {
+          Swapper::build_final_command(text, &self.upcase_command)
+        } else {
+          Swapper::build_final_command(text, &self.command)
+        });
       }
     }
   }
 
-  pub fn execute_final_command(&mut self, text: &str, execute_command: &str) {
-    let final_command = str::replace(execute_command, "{}", "${THUMB}");
+  pub fn build_final_command(text: &str, command: &str) -> Vec<String> {
+    let final_command = str::replace(command, "{}", "${THUMB}");
     let retrieve_command = vec![
       "bash",
       "-c",
@@ -405,9 +399,7 @@ impl<'a> Swapper<'a> {
       final_command.as_str(),
     ];
 
-    let params = retrieve_command.iter().map(|arg| arg.to_string()).collect();
-
-    self.executor.execute(params);
+    retrieve_command.iter().map(|arg| arg.to_string()).collect()
   }
 }
 

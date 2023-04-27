@@ -44,18 +44,17 @@ impl<'a> Alphabet<'a> {
       if expansion.len() + expanded.len() >= matches {
         break;
       }
-      if expansion.is_empty() {
+      if let Some(prefix) = expansion.pop() {
+        let sub_expansion: Vec<String> = letters
+          .iter()
+          .take(matches - expansion.len() - expanded.len())
+          .map(|s| prefix.clone() + s)
+          .collect();
+
+        expanded.splice(0..0, sub_expansion);
+      } else {
         break;
       }
-
-      let prefix = expansion.pop().expect("Ouch!");
-      let sub_expansion: Vec<String> = letters
-        .iter()
-        .take(matches - expansion.len() - expanded.len())
-        .map(|s| prefix.clone() + s)
-        .collect();
-
-      expanded.splice(0..0, sub_expansion);
     }
 
     expansion = expansion.iter().take(matches - expanded.len()).cloned().collect();

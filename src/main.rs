@@ -171,14 +171,6 @@ fn main() {
 
   handle.read_to_string(&mut output).unwrap();
 
-  if output.ends_with("\r\n") {
-    output.pop();
-    output.pop();
-  } else if output.ends_with('\n') {
-    output.pop();
-    output = output.replace('\n', "\r\n");
-  };
-
   let mut state = state::State::new(output.as_str(), alphabet, &regexp);
 
   let selected = {
