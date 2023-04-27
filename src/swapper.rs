@@ -156,14 +156,30 @@ impl<'a> Swapper<'a> {
     let options = self.executor.execute(params);
     let lines: Vec<&str> = options.split('\n').collect();
 
-    let pattern = Regex::new(r#"^@thumbs-([\w\-0-9]+)\s+"?([^"]+)"?$"#).unwrap();
+    let pattern = Regex::new(r#"^@thumbs-([\w\-0-9]+)\s+(.+)$"#).unwrap();
 
     let args = lines
       .iter()
       .flat_map(|line| {
         if let Some(captures) = pattern.captures(line) {
           let name = captures.get(1).unwrap().as_str();
-          let value = captures.get(2).unwrap().as_str();
+          let mut value = captures.get(2).unwrap().as_str().to_string();
+          let mut value_chars = value.chars();
+          if let Some(first) = value_chars.next() {
+            if first == '"' {
+              if let Some(last) = value_chars.next_back() {
+                if last == '"' {
+                  value = value_chars.as_str().replace("\\\"", "\"");
+                }
+              }
+            } else if first == '\'' {
+              if let Some(last) = value_chars.next_back() {
+                if last == '\'' {
+                  value = value_chars.as_str().replace("\\'", "'");
+                }
+              }
+            }
+          }
 
           let boolean_params = vec!["reverse", "unique", "contrast"];
 
@@ -189,13 +205,10 @@ impl<'a> Swapper<'a> {
           }
 
           if name.starts_with("regexp") {
-            return vec!["--regexp".to_string(), format!("'{}'", value.replace("\\\\", "\\"))];
+            return vec!["--regexp".to_string(), format!("'{}'", value.replace('\'', "\\'"))];
           }
-
-          vec![]
-        } else {
-          vec![]
         }
+        vec![]
       })
       .collect::<Vec<String>>();
 
