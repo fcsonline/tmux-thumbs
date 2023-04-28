@@ -119,16 +119,105 @@ impl<'a> View<'a> {
       if let Some(ref hint) = mat.hint {
         let hint_text = self.make_hint_text(hint.as_str());
         let matched_text_len = matched_text.chars().count();
-        let extra_position = match self.position {
-          "right" => matched_text_len - hint_text.len(),
-          _ => 0,
+        let hint_text_len = hint_text.len();
+        let (extra_position, extra_position_end, start, end) = match self.position {
+          "right" => {
+            let extra = if matched_text_len > hint_text_len {
+              matched_text_len - hint_text_len
+            } else {
+              0
+            };
+            (
+              extra,
+              extra + hint_text_len,
+              output[0..mat.start].to_string(),
+              output[mat.end..].to_string(),
+            )
+          },
+          "left" => (
+            0,
+            hint_text_len,
+            output[0..mat.start].to_string(),
+            output[mat.end..].to_string(),
+          ),
+          "off_right" => {
+            let mut tmp = output[mat.end..].chars();
+            let mut newlines = false;
+            for _ in 0..hint_text_len + if self.contrast { 2 } else { 0 } {
+              match tmp.next() {
+                Some('\n') => {
+                  newlines = true;
+                  break;
+                },
+                Some('\r') => {
+                  newlines = true;
+                  break;
+                },
+                _ => (),
+              };
+            }
+            if newlines {
+              let extra = if matched_text_len > hint_text_len {
+                matched_text_len - hint_text_len
+              } else {
+                0
+              };
+              (
+                extra,
+                extra + hint_text_len,
+                output[0..mat.start].to_string(),
+                output[mat.end..].to_string(),
+              )
+            } else {
+              (
+                matched_text_len,
+                matched_text_len,
+                output[0..mat.start].to_string(),
+                tmp.collect::<String>(),
+              )
+            }
+          },
+          "off_left" => {
+            let mut tmp = output[0..mat.start].chars();
+            let mut newlines = false;
+            for _ in 0..hint_text_len + if self.contrast { 2 } else { 0 } {
+              match tmp.next_back() {
+                Some('\n') => {
+                  newlines = true;
+                  break;
+                },
+                Some('\r') => {
+                  newlines = true;
+                  break;
+                },
+                _ => (),
+              };
+            }
+            if newlines {
+              (
+                0,
+                hint_text_len,
+                output[0..mat.start].to_string(),
+                output[mat.end..].to_string(),
+              )
+            } else {
+              (
+                0,
+                0,
+                tmp.collect::<String>(),
+                output[mat.end..].to_string(),
+              )
+            }
+          },
+          _ => {
+            panic!("Unknown position: {}", self.position);
+          }
         };
-        let extra_position_end = extra_position + hint_text.len();
 
         if !typed_hint.is_empty() && hint.starts_with(typed_hint) {
           output = format!(
             "{start}{b}{f}{text_start}{typed_b}{typed_f}{typed}{hint_b}{hint_f}{hint}{b}{f}{text_end}{resetf}{resetb}{end}",
-            start = &output[0..mat.start],
+            start = &start,
             f = color::Fg(&**selected_color),
             b = color::Bg(&**selected_background_color),
             typed_f = color::Fg(&*self.multi_foreground_color),
@@ -141,12 +230,12 @@ impl<'a> View<'a> {
             resetb = color::Bg(color::Reset),
             text_start = &matched_text.chars().take(extra_position).collect::<String>(),
             text_end = &matched_text.chars().skip(extra_position_end).collect::<String>(),
-            end = &output[mat.end..],
+            end = &end,
           );
         } else {
           output = format!(
             "{start}{b}{f}{text_start}{hint_b}{hint_f}{hint}{b}{f}{text_end}{resetf}{resetb}{end}",
-            start = &output[0..mat.start],
+            start = &start,
             f = color::Fg(&**selected_color),
             b = color::Bg(&**selected_background_color),
             hint_f = color::Fg(&*self.hint_foreground_color),
@@ -156,7 +245,7 @@ impl<'a> View<'a> {
             resetb = color::Bg(color::Reset),
             text_start = &matched_text.chars().take(extra_position).collect::<String>(),
             text_end = &matched_text.chars().skip(extra_position_end).collect::<String>(),
-            end = &output[mat.end..],
+            end = &end,
           );
         };
       } else {
