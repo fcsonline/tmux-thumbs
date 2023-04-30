@@ -214,13 +214,6 @@ impl<'a> Swapper<'a> {
 
     let active_pane_id = self.active_pane_id.as_mut().unwrap().clone();
 
-    let scroll_params =
-      if let (Some(pane_height), Some(scroll_position)) = (self.active_pane_height, self.active_pane_scroll_position) {
-        format!(" -S {} -E {}", -scroll_position, pane_height - scroll_position - 1)
-      } else {
-        "".to_string()
-      };
-
     let active_pane_zoomed = *self.active_pane_zoomed.as_mut().unwrap();
     let zoom_command = if active_pane_zoomed {
       format!("tmux resize-pane -t {} -Z;", active_pane_id)
@@ -228,11 +221,32 @@ impl<'a> Swapper<'a> {
       "".to_string()
     };
 
+    let capture_pane_command = if let (Some(pane_height), Some(scroll_position)) = (self.active_pane_height, self.active_pane_scroll_position) {
+      vec![
+        "tmux".to_string(),
+        "capture-pane".to_string(),
+        "-J".to_string(),
+        "-t".to_string(),
+        active_pane_id.to_string(),
+        "-S".to_string(),
+        (-scroll_position).to_string(),
+        "-E".to_string(),
+        (pane_height - scroll_position - 1).to_string(),
+      ]
+    } else {
+      vec![
+        "tmux".to_string(),
+        "capture-pane".to_string(),
+        "-J".to_string(),
+        "-t".to_string(),
+        active_pane_id.to_string(),
+      ]
+    };
+    self.executor.execute(capture_pane_command);
+
     let pane_command = format!(
-        "tmux capture-pane -J -t {active_pane_id} -p{scroll_params} | tail -n {height} | {dir}/target/release/thumbs -f '%U:%H' -t {tmp} {args}; tmux swap-pane -t {active_pane_id}; {zoom_command} tmux wait-for -S {signal}",
+        "tmux show-buffer | {dir}/target/release/thumbs -f '%U:%H' -t {tmp} {args}; tmux swap-pane -t {active_pane_id}; {zoom_command} tmux wait-for -S {signal}",
         active_pane_id = active_pane_id,
-        scroll_params = scroll_params,
-        height = self.active_pane_height.unwrap_or(i32::MAX),
         dir = self.dir,
         tmp = TMP_FILE,
         args = args.join(" "),
@@ -241,20 +255,19 @@ impl<'a> Swapper<'a> {
     );
 
     let thumbs_command = vec![
-      "tmux",
-      "new-window",
-      "-P",
-      "-F",
-      "#{pane_id}",
-      "-d",
-      "-n",
-      "[thumbs]",
-      pane_command.as_str(),
+      "tmux".to_string(),
+      "new-window".to_string(),
+      "-P".to_string(),
+      "-F".to_string(),
+      "#{pane_id}".to_string(),
+      "-d".to_string(),
+      "-n".to_string(),
+      "[thumbs]".to_string(),
+      pane_command,
     ];
 
-    let params: Vec<String> = thumbs_command.iter().map(|arg| arg.to_string()).collect();
 
-    self.thumbs_pane_id = Some(self.executor.execute(params));
+    self.thumbs_pane_id = Some(self.executor.execute(thumbs_command));
   }
 
   pub fn swap_panes(&mut self) {
@@ -468,6 +481,7 @@ mod tests {
     let last_command_outputs = vec![
       "".to_string(),
       "%100".to_string(),
+      "".to_string(),
       "".to_string(),
       "%106:100:24:1:0:nope\n%98:100:24:1:0:active\n%107:100:24:1:0:nope\n".to_string(),
     ];
