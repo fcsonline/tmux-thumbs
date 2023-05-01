@@ -8,38 +8,37 @@ use std::fs;
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+pub enum CaseCommand {
+  DefaultCmd,
+  UpcaseCmd,
+  MultiCmd,
+}
+
 trait Executor {
-  fn execute(&mut self, args: Vec<String>) -> String;
-  fn last_executed(&self) -> Option<Vec<String>>;
+  fn execute(&mut self, args: Vec<&str>) -> String;
 }
 
 struct RealShell {
-  executed: Option<Vec<String>>,
 }
 
 impl RealShell {
   fn new() -> RealShell {
-    RealShell { executed: None }
+    RealShell {}
   }
 }
 
 impl Executor for RealShell {
-  fn execute(&mut self, args: Vec<String>) -> String {
-    let execution = Command::new(args[0].as_str())
+  fn execute(&mut self, args: Vec<&str>) -> String {
+    let execution = Command::new(args[0])
       .args(&args[1..])
       .output()
       .expect("Couldn't run it");
-
-    self.executed = Some(args);
 
     let output: String = String::from_utf8_lossy(&execution.stdout).into();
 
     output.trim_end().to_string()
   }
 
-  fn last_executed(&self) -> Option<Vec<String>> {
-    self.executed.clone()
-  }
 }
 
 const TMP_FILE: &str = "/tmp/thumbs-last";
@@ -113,7 +112,7 @@ impl<'a> Swapper<'a> {
 
     let output = self
       .executor
-      .execute(active_command.iter().map(|arg| arg.to_string()).collect());
+      .execute(active_command);
 
     let lines: Vec<&str> = output.split('\n').collect();
     let chunks: Vec<Vec<&str>> = lines.into_iter().map(|line| line.split(':').collect()).collect();
@@ -152,8 +151,7 @@ impl<'a> Swapper<'a> {
 
   pub fn execute_thumbs(&mut self) {
     let options_command = vec!["tmux", "show", "-g"];
-    let params: Vec<String> = options_command.iter().map(|arg| arg.to_string()).collect();
-    let options = self.executor.execute(params);
+    let options = self.executor.execute(options_command);
     let lines: Vec<&str> = options.split('\n').collect();
 
     let pattern = Regex::new(r#"^@thumbs-([\w\-0-9]+)\s+(.+)$"#).unwrap();
@@ -221,28 +219,27 @@ impl<'a> Swapper<'a> {
       "".to_string()
     };
 
-    let capture_pane_command = if let (Some(pane_height), Some(scroll_position)) = (self.active_pane_height, self.active_pane_scroll_position) {
-      vec![
-        "tmux".to_string(),
-        "capture-pane".to_string(),
-        "-J".to_string(),
-        "-t".to_string(),
-        active_pane_id.to_string(),
-        "-S".to_string(),
-        (-scroll_position).to_string(),
-        "-E".to_string(),
-        (pane_height - scroll_position - 1).to_string(),
-      ]
+    if let (Some(pane_height), Some(scroll_position)) = (self.active_pane_height, self.active_pane_scroll_position) {
+      self.executor.execute(vec![
+        "tmux",
+        "capture-pane",
+        "-J",
+        "-t",
+        &active_pane_id,
+        "-S",
+        &(-scroll_position).to_string(),
+        "-E",
+        &(pane_height - scroll_position - 1).to_string(),
+      ]);
     } else {
-      vec![
-        "tmux".to_string(),
-        "capture-pane".to_string(),
-        "-J".to_string(),
-        "-t".to_string(),
-        active_pane_id.to_string(),
-      ]
+      self.executor.execute(vec![
+        "tmux",
+        "capture-pane",
+        "-J",
+        "-t",
+        &active_pane_id,
+      ]);
     };
-    self.executor.execute(capture_pane_command);
 
     let pane_command = format!(
         "tmux show-buffer | {dir}/target/release/thumbs -f '%U:%H' -t {tmp} {args}; tmux swap-pane -t {active_pane_id}; {zoom_command} tmux wait-for -S {signal}",
@@ -255,15 +252,15 @@ impl<'a> Swapper<'a> {
     );
 
     let thumbs_command = vec![
-      "tmux".to_string(),
-      "new-window".to_string(),
-      "-P".to_string(),
-      "-F".to_string(),
-      "#{pane_id}".to_string(),
-      "-d".to_string(),
-      "-n".to_string(),
-      "[thumbs]".to_string(),
-      pane_command,
+      "tmux",
+      "new-window",
+      "-P",
+      "-F",
+      "#{pane_id}",
+      "-d",
+      "-n",
+      "[thumbs]",
+      &pane_command,
     ];
 
 
@@ -284,13 +281,7 @@ impl<'a> Swapper<'a> {
       thumbs_pane_id.as_str(),
     ];
 
-    let params = swap_command
-      .iter()
-      .filter(|&s| !s.is_empty())
-      .map(|arg| arg.to_string())
-      .collect();
-
-    self.executor.execute(params);
+    self.executor.execute(swap_command);
   }
 
   pub fn resize_pane(&mut self) {
@@ -300,31 +291,23 @@ impl<'a> Swapper<'a> {
       return;
     }
 
-    let thumbs_pane_id = self.thumbs_pane_id.as_mut().unwrap().clone();
+    let thumbs_pane_id = self.thumbs_pane_id.as_mut().unwrap();
 
     let resize_command = vec!["tmux", "resize-pane", "-t", thumbs_pane_id.as_str(), "-Z"];
 
-    let params = resize_command
-      .iter()
-      .filter(|&s| !s.is_empty())
-      .map(|arg| arg.to_string())
-      .collect();
-
-    self.executor.execute(params);
+    self.executor.execute(resize_command);
   }
 
   pub fn wait_thumbs(&mut self) {
     let wait_command = vec!["tmux", "wait-for", self.signal.as_str()];
-    let params = wait_command.iter().map(|arg| arg.to_string()).collect();
 
-    self.executor.execute(params);
+    self.executor.execute(wait_command);
   }
 
   pub fn retrieve_content(&mut self) {
     let retrieve_command = vec!["cat", TMP_FILE];
-    let params = retrieve_command.iter().map(|arg| arg.to_string()).collect();
 
-    self.content = Some(self.executor.execute(params));
+    self.content = Some(self.executor.execute(retrieve_command));
   }
 
   pub fn destroy_content(&mut self) {
@@ -344,7 +327,7 @@ impl<'a> Swapper<'a> {
         .collect::<Vec<&str>>()
         .join(" ");
 
-      self.executor.execute(Swapper::build_final_command(&text, &self.multi_command));
+      self.execute_final_command(&text, CaseCommand::MultiCmd);
 
       return;
     }
@@ -405,27 +388,28 @@ impl<'a> Swapper<'a> {
         // Ideally user commands would just use "${THUMB}" to begin with rather than having any
         // sort of ad-hoc string splicing here at all, and then they could specify the quoting they
         // want, but that would break backwards compatibility.
-        self.executor.execute(if upcase == "true" {
-          Swapper::build_final_command(text, &self.upcase_command)
+        if upcase == "true" {
+          self.execute_final_command(&text.to_owned(), CaseCommand::UpcaseCmd);
         } else {
-          Swapper::build_final_command(text, &self.command)
-        });
+          self.execute_final_command(&text.to_owned(), CaseCommand::DefaultCmd);
+        }
       }
     }
   }
 
-  pub fn build_final_command(text: &str, command: &str) -> Vec<String> {
-    let final_command = str::replace(command, "{}", "${THUMB}");
-    let retrieve_command = vec![
+  pub fn execute_final_command(&mut self, text: &str, command: CaseCommand) {
+    self.executor.execute(vec![
       "bash",
       "-c",
       "THUMB=\"$1\"; eval \"$2\"",
       "--",
       text,
-      final_command.as_str(),
-    ];
-
-    retrieve_command.iter().map(|arg| arg.to_string()).collect()
+      &str::replace(match command {
+        CaseCommand::DefaultCmd => &self.command,
+        CaseCommand::UpcaseCmd => &self.upcase_command,
+        CaseCommand::MultiCmd => &self.multi_command,
+      }, "{}", "${THUMB}"),
+    ]);
   }
 }
 
@@ -445,16 +429,16 @@ mod tests {
         outputs,
       }
     }
-  }
-
-  impl Executor for TestShell {
-    fn execute(&mut self, args: Vec<String>) -> String {
-      self.executed = Some(args);
-      self.outputs.pop().unwrap()
-    }
 
     fn last_executed(&self) -> Option<Vec<String>> {
       self.executed.clone()
+    }
+  }
+
+  impl Executor for TestShell {
+    fn execute(&mut self, args: Vec<&str>) -> String {
+      self.executed = Some(args.iter().map(|arg| arg.to_string()).collect());
+      self.outputs.pop().unwrap()
     }
   }
 
