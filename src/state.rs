@@ -100,34 +100,36 @@ impl<'a> State<'a> {
       // For this line we search which patterns match, all of them.
       let submatches = all_patterns
         .iter()
-        .filter_map(|tuple| tuple.1.find_iter(chunk).next().map(|m| (tuple.0, tuple.1.clone(), m)))
+        .filter_map(|tuple| tuple.1.captures_iter(chunk).next().map(
+          |captures| {
+            let m = captures.get(0).unwrap();
+            (tuple.0, captures, m.start(), m.end())
+          }
+        ))
       .collect::<Vec<_>>();
 
       // Then, we search for the match with the lowest index
-      let first_match_option = submatches.iter().min_by(|x, y| x.2.start().cmp(&y.2.start()));
+      let first_match_option = submatches.iter().min_by(|x, y| x.2.cmp(&y.2));
 
-      if let Some(first_match) = first_match_option {
-        let (name, pattern, matching) = first_match;
-        let text = matching.as_str();
-
+      if let Some((name, captures, _m_start, m_end)) = first_match_option {
         // Never hint or broke bash color sequences, but process it
         if *name != "bash" {
-          let captures = pattern.captures(text).expect("No matching?");
-          let captures: Vec<(&str, usize)> = if let Some(capture) = captures.name("match") {
-            [(capture.as_str(), capture.start())].to_vec()
+          let matches_start: Vec<(&str, usize)> = if let Some(mat) = captures.name("match") {
+            [(mat.as_str(), mat.start())].to_vec()
           } else if captures.len() > 1 {
             captures
               .iter()
               .skip(1)
               .flatten()
-              .map(|capture| (capture.as_str(), capture.start()))
+              .map(|mat| (mat.as_str(), mat.start()))
               .collect::<Vec<(&str, usize)>>()
           } else {
-            [(matching.as_str(), 0)].to_vec()
+            let mat = captures.get(0).unwrap();
+            [(mat.as_str(), mat.start())].to_vec()
           };
 
-          for (subtext, substart) in captures.iter() {
-            let start = offset + matching.start() + *substart;
+          for (subtext, substart) in matches_start.iter() {
+            let start = offset + *substart;
             let end = start + subtext.len();
             matches.push(Match {
               start,
@@ -141,8 +143,8 @@ impl<'a> State<'a> {
           }
         }
 
-        chunk = chunk.get(matching.end()..).expect("Unknown chunk");
-        offset += matching.end();
+        chunk = chunk.get(*m_end..).expect("Unknown chunk");
+        offset += *m_end;
       } else {
         break;
       }
