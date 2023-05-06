@@ -110,7 +110,9 @@ impl<'a> State<'a> {
         let (name, pattern, matching) = first_match;
         let text = matching.as_str();
 
-        if let Some(captures) = pattern.captures(text) {
+        // Never hint or broke bash color sequences, but process it
+        if *name != "bash" {
+          let captures = pattern.captures(text).expect("No matching?");
           let captures: Vec<(&str, usize)> = if let Some(capture) = captures.name("match") {
             [(capture.as_str(), capture.start())].to_vec()
           } else if captures.len() > 1 {
@@ -124,28 +126,23 @@ impl<'a> State<'a> {
             [(matching.as_str(), 0)].to_vec()
           };
 
-          // Never hint or broke bash color sequences, but process it
-          if *name != "bash" {
-            for (subtext, substart) in captures.iter() {
-              let start = offset + matching.start() + *substart;
-              let end = start + subtext.len();
-              matches.push(Match {
-                start,
-                end,
-                prev_end,
-                pattern: name,
-                text: subtext,
-                hint: None,
-              });
-              prev_end = end;
-            }
+          for (subtext, substart) in captures.iter() {
+            let start = offset + matching.start() + *substart;
+            let end = start + subtext.len();
+            matches.push(Match {
+              start,
+              end,
+              prev_end,
+              pattern: name,
+              text: subtext,
+              hint: None,
+            });
+            prev_end = end;
           }
-
-          chunk = chunk.get(matching.end()..).expect("Unknown chunk");
-          offset += matching.end();
-        } else {
-          panic!("No matching?");
         }
+
+        chunk = chunk.get(matching.end()..).expect("Unknown chunk");
+        offset += matching.end();
       } else {
         break;
       }
