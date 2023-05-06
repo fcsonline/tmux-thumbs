@@ -95,6 +95,7 @@ impl<'a> View<'a> {
 
     let mut output = self.state.output.to_string();
     let selected = self.matches.get(self.skip);
+    let mut next_start = usize::MAX;
 
     for mat in self.matches.iter().sorted_by_key(|x| usize::MAX - x.start) {
       let chosen_hint = self.chosen.iter().any(|(hint, _)| hint == mat.text);
@@ -141,22 +142,9 @@ impl<'a> View<'a> {
             output[mat.end..].to_string(),
           ),
           "off_right" => {
-            let mut tmp = output[mat.end..].chars();
-            let mut newlines = false;
-            for _ in 0..hint_text_len + if self.contrast { 2 } else { 0 } {
-              match tmp.next() {
-                Some('\n') => {
-                  newlines = true;
-                  break;
-                },
-                Some('\r') => {
-                  newlines = true;
-                  break;
-                },
-                _ => (),
-              };
-            }
-            if newlines {
+            let hint_text_contrast_len = hint_text_len +
+              if self.contrast { 2 } else { 0 };
+            if hint_text_contrast_len + mat.end > next_start {
               let extra = if matched_text_len > hint_text_len {
                 matched_text_len - hint_text_len
               } else {
@@ -169,31 +157,47 @@ impl<'a> View<'a> {
                 output[mat.end..].to_string(),
               )
             } else {
-              (
-                matched_text_len,
-                matched_text_len,
-                output[0..mat.start].to_string(),
-                tmp.collect::<String>(),
-              )
+              let mut tmp = output[mat.end..].chars();
+              let mut newlines = false;
+              for _ in 0..hint_text_contrast_len {
+                match tmp.next() {
+                  Some('\n') => {
+                    newlines = true;
+                    break;
+                  },
+                  Some('\r') => {
+                    newlines = true;
+                    break;
+                  },
+                  _ => (),
+                };
+              }
+              if newlines {
+                let extra = if matched_text_len > hint_text_len {
+                  matched_text_len - hint_text_len
+                } else {
+                  0
+                };
+                (
+                  extra,
+                  extra + hint_text_len,
+                  output[0..mat.start].to_string(),
+                  output[mat.end..].to_string(),
+                )
+              } else {
+                (
+                  matched_text_len,
+                  matched_text_len,
+                  output[0..mat.start].to_string(),
+                  tmp.collect::<String>(),
+                )
+              }
             }
           },
           "off_left" => {
-            let mut tmp = output[0..mat.start].chars();
-            let mut newlines = false;
-            for _ in 0..hint_text_len + if self.contrast { 2 } else { 0 } {
-              match tmp.next_back() {
-                Some('\n') => {
-                  newlines = true;
-                  break;
-                },
-                Some('\r') => {
-                  newlines = true;
-                  break;
-                },
-                _ => (),
-              };
-            }
-            if newlines {
+            let hint_text_contrast_len = hint_text_len +
+              if self.contrast { 2 } else { 0 };
+            if hint_text_contrast_len + mat.prev_end > mat.start {
               (
                 0,
                 hint_text_len,
@@ -201,12 +205,36 @@ impl<'a> View<'a> {
                 output[mat.end..].to_string(),
               )
             } else {
-              (
-                0,
-                0,
-                tmp.collect::<String>(),
-                output[mat.end..].to_string(),
-              )
+              let mut tmp = output[0..mat.start].chars();
+              let mut newlines = false;
+              for _ in 0..hint_text_contrast_len {
+                match tmp.next_back() {
+                  Some('\n') => {
+                    newlines = true;
+                    break;
+                  },
+                  Some('\r') => {
+                    newlines = true;
+                    break;
+                  },
+                  _ => (),
+                };
+              }
+              if newlines {
+                (
+                  0,
+                  hint_text_len,
+                  output[0..mat.start].to_string(),
+                  output[mat.end..].to_string(),
+                )
+              } else {
+                (
+                  0,
+                  0,
+                  tmp.collect::<String>(),
+                  output[mat.end..].to_string(),
+                )
+              }
             }
           },
           _ => {
@@ -260,6 +288,7 @@ impl<'a> View<'a> {
           end = &output[mat.end..],
         );
       }
+      next_start = mat.start;
     }
 
     if output.ends_with("\r\n") {

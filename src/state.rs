@@ -29,6 +29,7 @@ const PATTERNS: [(&str, &str); 15] = [
 pub struct Match<'a> {
   pub start: usize,
   pub end: usize,
+  pub prev_end: usize,
   pub pattern: &'a str,
   pub text: &'a str,
   pub hint: Option<String>,
@@ -93,7 +94,7 @@ impl<'a> State<'a> {
 
     let mut chunk: &str = self.output;
     let mut offset: usize = 0;
-    let mut end_last: usize = 0;
+    let mut prev_end: usize = 0;
 
     loop {
       // For this line we search which patterns match, all of them.
@@ -127,16 +128,16 @@ impl<'a> State<'a> {
           if *name != "bash" {
             for (subtext, substart) in captures.iter() {
               let start = offset + matching.start() + *substart;
-              if start > end_last {
-                end_last = start + subtext.len();
-                matches.push(Match {
-                  start,
-                  end: end_last,
-                  pattern: name,
-                  text: subtext,
-                  hint: None,
-                });
-              }
+              let end = start + subtext.len();
+              matches.push(Match {
+                start,
+                end,
+                prev_end,
+                pattern: name,
+                text: subtext,
+                hint: None,
+              });
+              prev_end = end;
             }
           }
 
