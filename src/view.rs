@@ -1,4 +1,5 @@
 use super::*;
+use regex::Regex;
 use std::io::{stdout, Read, Write};
 use itertools::Itertools;
 use termion::async_stdin;
@@ -297,7 +298,9 @@ impl<'a> View<'a> {
     } else if output.ends_with('\n') {
       output.pop();
       output = output.replace('\n', "\r\n");
-    };
+    } else if Regex::new("[^\r]\n").unwrap().is_match(&output) {
+      output = output.replace('\n', "\r\n");
+    }
 
     print!("\r\n{}", output);
     stdout.flush().unwrap();
