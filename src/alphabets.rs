@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-const ALPHABETS: [(&'static str, &'static str); 22] = [
+const ALPHABETS: [(&str, &str); 22] = [
   ("numeric", "1234567890"),
   ("abcd", "abcd"),
   ("qwerty", "asdfqwerzxcvjklmiuopghtybn"),
@@ -44,18 +44,17 @@ impl<'a> Alphabet<'a> {
       if expansion.len() + expanded.len() >= matches {
         break;
       }
-      if expansion.is_empty() {
+      if let Some(prefix) = expansion.pop() {
+        let sub_expansion: Vec<String> = letters
+          .iter()
+          .take(matches - expansion.len() - expanded.len())
+          .map(|s| prefix.clone() + s)
+          .collect();
+
+        expanded.splice(0..0, sub_expansion);
+      } else {
         break;
       }
-
-      let prefix = expansion.pop().expect("Ouch!");
-      let sub_expansion: Vec<String> = letters
-        .iter()
-        .take(matches - expansion.len() - expanded.len())
-        .map(|s| prefix.clone() + s)
-        .collect();
-
-      expanded.splice(0..0, sub_expansion);
     }
 
     expansion = expansion.iter().take(matches - expanded.len()).cloned().collect();
@@ -69,7 +68,7 @@ pub fn get_alphabet(alphabet_name: &str) -> Alphabet {
 
   alphabets
     .get(alphabet_name)
-    .expect(format!("Unknown alphabet: {}", alphabet_name).as_str()); // FIXME
+    .unwrap_or_else(|| panic!("Unknown alphabet: {}", alphabet_name)); // FIXME
 
   Alphabet::new(alphabets[alphabet_name])
 }
