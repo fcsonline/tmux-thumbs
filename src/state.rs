@@ -14,7 +14,7 @@ const PATTERNS: [(&'static str, &'static str); 15] = [
   ("diff_a", r"--- a/([^ ]+)"),
   ("diff_b", r"\+\+\+ b/([^ ]+)"),
   ("docker", r"sha256:([0-9a-f]{64})"),
-  ("path", r"(?P<match>([.\w\-@~\[\]]+)?(/[.\w\-@\[\]]+)+)"),
+  ("path", r"(?P<match>([.\w\-@$~\[\]]+)?(/[.\w\-@$\[\]]+)+)"),
   ("color", r"#[0-9a-fA-F]{6}"),
   ("uid", r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"),
   ("ipfs", r"Qm[0-9a-zA-Z]{44}"),
@@ -253,6 +253,17 @@ mod tests {
     assert_eq!(results.get(0).unwrap().text.clone(), "/tmp/foo/bar_lol");
     assert_eq!(results.get(1).unwrap().text.clone(), "/var/log/boot-strap.log");
     assert_eq!(results.get(2).unwrap().text.clone(), "../log/kern.log");
+  }
+
+  #[test]
+  fn match_routes() {
+    let lines = split("Lorem /app/routes/$routeId/$objectId, lorem\n Lorem /app/routes/$sectionId");
+    let custom = [].to_vec();
+    let results = State::new(&lines, "abcd", &custom).matches(false, false);
+
+    assert_eq!(results.len(), 2);
+    assert_eq!(results.get(0).unwrap().text.clone(), "/app/routes/$routeId/$objectId");
+    assert_eq!(results.get(1).unwrap().text.clone(), "/app/routes/$sectionId");
   }
 
   #[test]

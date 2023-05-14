@@ -1,6 +1,6 @@
 [package]
 name = "thumbs"
-version = "0.7.1"
+version = "0.8.0"
 authors = ["Ferran Basora <fcsonline@gmail.com>"]
 edition = "2018"
 description = "A lightning fast version copy/pasting like vimium/vimperator"
@@ -9,11 +9,11 @@ keywords = ["rust", "tmux", "tmux-plugin", "vimium", "vimperator"]
 license = "MIT"
 
 [dependencies]
-termion = "1.5"
-regex = "1.5.5"
-clap = "2.33.0"
-base64 = "0.13.0"
-unicode-width = "0.1.7"
+termion = "1.5.6"
+regex = "1.7.1"
+clap = "2.34.0"
+base64 = "0.13.1"
+unicode-width = "0.1.10"
 lazy_static = "1.4.0"
 
 [[bin]]
