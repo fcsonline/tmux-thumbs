@@ -1,6 +1,7 @@
 use regex::Regex;
 use std::collections::HashMap;
 use std::fmt;
+use std::fs;
 
 const EXCLUDE_PATTERNS: [(&'static str, &'static str); 1] = [("bash", r"[[:cntrl:]]\[([0-9]{1,2};)?([0-9]{1,2})?m")];
 
@@ -77,11 +78,19 @@ impl<'a> State<'a> {
       .map(|tuple| (tuple.0, Regex::new(tuple.1).unwrap()))
       .collect::<Vec<_>>();
 
-    let custom_patterns = self
-      .regexp
-      .iter()
-      .map(|regexp| ("custom", Regex::new(regexp).expect("Invalid custom regexp")))
-      .collect::<Vec<_>>();
+    // let custom_patterns = self
+    //   .regexp
+    //   .iter()
+    //   .map(|regexp| ("custom", Regex::new(&regex::escape(regexp)).expect("Invalid custom regexp")))
+    //   .collect::<Vec<_>>();
+    let paco1 = r#"("[^"]+")"#;
+    let paco2 = self.regexp.last().unwrap();
+
+    fs::write("/tmp/paco1", paco1).expect("Unable to write file");
+    fs::write("/tmp/paco2", paco2).expect("Unable to write file");
+    fs::write("/tmp/paco3", &self.regexp.len().to_string()).expect("Unable to write file");
+
+    let custom_patterns = [("custom", Regex::new(paco2).unwrap())].to_vec();
 
     let patterns = PATTERNS
       .iter()

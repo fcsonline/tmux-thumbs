@@ -1,5 +1,7 @@
 extern crate clap;
 
+use std::fs;
+
 use self::clap::{App, Arg};
 use clap::crate_version;
 use regex::Regex;
@@ -155,7 +157,7 @@ impl<'a> Swapper<'a> {
     let options = self.executor.execute(params);
     let lines: Vec<&str> = options.split('\n').collect();
 
-    let pattern = Regex::new(r#"^@thumbs-([\w\-0-9]+)\s+"?([^"]+)"?$"#).unwrap();
+    let pattern = Regex::new(r#"^@thumbs-([\w\-0-9]+)\s+"?(.+)"?$"#).unwrap();
 
     let args = lines
       .iter()
@@ -225,6 +227,8 @@ impl<'a> Swapper<'a> {
         zoom_command = zoom_command,
         signal = self.signal
     );
+
+    fs::write("/tmp/paco9", &pane_command);
 
     let thumbs_command = vec![
       "tmux",
