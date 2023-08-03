@@ -6,7 +6,7 @@ use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
 use termion::screen::AlternateScreen;
-use termion::{color, cursor};
+use termion::{color, cursor, terminal_size};
 
 use unicode_width::UnicodeWidthStr;
 
@@ -93,19 +93,41 @@ impl<'a> View<'a> {
   }
 
   fn render(&self, stdout: &mut dyn Write, typed_hint: &str) -> () {
+    let (columns, rows) = terminal_size().unwrap();
     write!(stdout, "{}", cursor::Hide).unwrap();
+    let mut line_row: u16 = 0;
+    let mut line_rows = Vec::new();
+
+    for line in self.state.lines.iter() {
+      let clean = line.trim_end_matches(|c: char| c.is_whitespace());
+
+      line_rows.push(line_row);
+      line_row += match clean.width() {
+        l if l >= 1 => (l as u16 - 1) / columns + 1,
+        _ => 1,
+      }
+    }
+
+    let mut line_start = 0;
 
     for (index, line) in self.state.lines.iter().enumerate() {
+      if line_row - 1 - line_rows[index] > rows as u16 {
+        line_start = line_rows[index + 1];
+        continue;
+      }
       let clean = line.trim_end_matches(|c: char| c.is_whitespace());
 
       if !clean.is_empty() {
-        print!("{goto}{text}", goto = cursor::Goto(1, index as u16 + 1), text = line);
+        print!("{goto}{text}", goto = cursor::Goto(1, line_rows[index] - line_start + 1), text = line);
       }
     }
 
     let selected = self.matches.get(self.skip);
 
     for mat in self.matches.iter() {
+      if line_rows[mat.y as usize] < line_start {
+        continue;
+      };
       let chosen_hint = self.chosen.iter().any(|(hint, _)| hint == mat.text);
 
       let selected_color = if chosen_hint {
@@ -132,7 +154,7 @@ impl<'a> View<'a> {
 
       print!(
         "{goto}{background}{foregroud}{text}{resetf}{resetb}",
-        goto = cursor::Goto(offset + 1, mat.y as u16 + 1),
+        goto = cursor::Goto(offset + 1, line_rows[mat.y as usize] - line_start + 1),
         foregroud = color::Fg(&**selected_color),
         background = color::Bg(&**selected_background_color),
         resetf = color::Fg(color::Reset),
@@ -153,7 +175,7 @@ impl<'a> View<'a> {
 
         print!(
           "{goto}{background}{foregroud}{text}{resetf}{resetb}",
-          goto = cursor::Goto(final_position as u16 + 1, mat.y as u16 + 1),
+          goto = cursor::Goto(final_position as u16 + 1, line_rows[mat.y as usize] - line_start + 1),
           foregroud = color::Fg(&*self.hint_foreground_color),
           background = color::Bg(&*self.hint_background_color),
           resetf = color::Fg(color::Reset),
@@ -164,7 +186,7 @@ impl<'a> View<'a> {
         if hint.starts_with(typed_hint) {
           print!(
             "{goto}{background}{foregroud}{text}{resetf}{resetb}",
-            goto = cursor::Goto(final_position as u16 + 1, mat.y as u16 + 1),
+            goto = cursor::Goto(final_position as u16 + 1, line_rows[mat.y as usize] - line_start + 1),
             foregroud = color::Fg(&*self.multi_foreground_color),
             background = color::Bg(&*self.multi_background_color),
             resetf = color::Fg(color::Reset),
