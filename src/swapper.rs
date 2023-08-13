@@ -164,7 +164,7 @@ impl<'a> Swapper<'a> {
           let name = captures.get(1).unwrap().as_str();
           let value = captures.get(2).unwrap().as_str();
 
-          let boolean_params = vec!["reverse", "unique", "contrast"];
+          let boolean_params = vec!["reverse", "unique", "contrast", "keep-colors"];
 
           if boolean_params.iter().any(|&x| x == name) {
             return vec![format!("--{}", name)];
@@ -215,7 +215,7 @@ impl<'a> Swapper<'a> {
     };
 
     let pane_command = format!(
-        "tmux capture-pane -J -t {active_pane_id} -p{scroll_params} | tail -n {height} | {dir}/target/release/thumbs -f '%U:%H' -t {tmp} {args}; tmux swap-pane -t {active_pane_id}; {zoom_command} tmux wait-for -S {signal}",
+        "tmux capture-pane -J -et {active_pane_id} -p{scroll_params} | tail -n {height} | {dir}/target/release/thumbs -f '%U:%H' -t {tmp} {args}; tmux swap-pane -t {active_pane_id}; {zoom_command} tmux wait-for -S {signal}",
         active_pane_id = active_pane_id,
         scroll_params = scroll_params,
         height = self.active_pane_height.unwrap_or(i32::MAX),

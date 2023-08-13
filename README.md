@@ -106,6 +106,7 @@ NOTE: for changes to take effect, you'll need to source again your `.tmux.conf` 
 * [@thumbs-multi-bg-color](#thumbs-multi-bg-color)
 * [@thumbs-contrast](#thumbs-contrast)
 * [@thumbs-osc52](#thumbs-osc52)
+* [@thumbs-keep-colors](#thumbs-keep-colors)
 
 ### @thumbs-key
 
@@ -344,6 +345,18 @@ For example:
 set -g @thumbs-osc52 1
 ```
 
+### @thumbs-keep-colors
+
+`default: 0`
+
+Keep text styling of the input when displaying matches.
+
+For example:
+
+```
+set -g @thumbs-keep-colors 1
+```
+
 #### Colors
 
 This is the list of predefined colors:
@@ -433,19 +446,20 @@ cargo install thumbs
 And those are all available options:
 
 ```
-thumbs 0.7.1
+thumbs 0.8.0
 A lightning fast version copy/pasting like vimium/vimperator
 
 USAGE:
     thumbs [FLAGS] [OPTIONS]
 
 FLAGS:
-    -c, --contrast    Put square brackets around hint for visibility
-    -h, --help        Prints help information
-    -m, --multi       Enable multi-selection
-    -r, --reverse     Reverse the order for assigned hints
-    -u, --unique      Don't show duplicated hints for the same match
-    -V, --version     Prints version information
+    -c, --contrast       Put square brackets around hint for visibility
+    -h, --help           Prints help information
+        --keep-colors    Preserve text styling of input
+    -m, --multi          Enable multi-selection
+    -r, --reverse        Reverse the order for assigned hints
+    -u, --unique         Don't show duplicated hints for the same match
+    -V, --version        Prints version information
 
 OPTIONS:
     -a, --alphabet <alphabet>                          Sets the alphabet [default: qwerty]
@@ -456,12 +470,16 @@ OPTIONS:
 
         --hint-bg-color <hint_background_color>        Sets the background color for hints [default: black]
         --hint-fg-color <hint_foreground_color>        Sets the foregroud color for hints [default: yellow]
+        --multi-bg-color <multi_background_color>
+            Sets the background color for a multi selected item [default: black]
+
+        --multi-fg-color <multi_foreground_color>
+            Sets the foreground color for a multi selected item [default: yellow]
+
     -p, --position <position>                          Hint position [default: left]
     -x, --regexp <regexp>...                           Use this regexp as extra pattern to match
         --select-bg-color <select_background_color>    Sets the background color for selection [default: black]
         --select-fg-color <select_foreground_color>    Sets the foreground color for selection [default: blue]
-        --multi-bg-color <multi_background_color>      Sets the background color for a multi selected item [default: black]
-        --multi-fg-color <multi_foreground_color>      Sets the foreground color for a multi selected item [default: cyan]
     -t, --target <target>                              Stores the hint in the specified path
 ```
 

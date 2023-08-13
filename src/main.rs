@@ -136,6 +136,11 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
         .short("t")
         .takes_value(true),
     )
+    .arg(
+      Arg::with_name("keep-colors")
+        .help("Preserve text styling of input")
+        .long("keep-colors"),
+    )
     .get_matches()
 }
 
@@ -149,6 +154,7 @@ fn main() {
   let reverse = args.is_present("reverse");
   let unique = args.is_present("unique");
   let contrast = args.is_present("contrast");
+  let keep_colors = args.is_present("keep-colors");
   let regexp = if let Some(items) = args.values_of("regexp") {
     items.collect::<Vec<_>>()
   } else {
@@ -172,7 +178,19 @@ fn main() {
 
   let lines = output.split('\n').collect::<Vec<&str>>();
 
-  let mut state = state::State::new(&lines, alphabet, &regexp);
+  let mut state;
+  // strip ansi color codes for match searching
+  let unescaped: Vec<_> = lines
+    .iter()
+    .map(|line| String::from_utf8(strip_ansi_escapes::strip(line)).unwrap())
+    .collect();
+  let reference = unescaped.iter().map(|x| &**x).collect();
+
+  if keep_colors {
+    state = state::State::new_extended(&lines, reference, alphabet, &regexp);
+  } else {
+    state = state::State::new_extended(&reference, reference.clone(), alphabet, &regexp);
+  }
 
   let selected = {
     let mut viewbox = view::View::new(
