@@ -215,7 +215,7 @@ impl<'a> Swapper<'a> {
     };
 
     let pane_command = format!(
-        "tmux capture-pane -J -t {active_pane_id} -p{scroll_params} | tail -n {height} | {dir}/target/release/thumbs -f '%U:%H' -t {tmp} {args}; tmux swap-pane -t {active_pane_id}; {zoom_command} tmux wait-for -S {signal}",
+        "sleep 0.1; tmux capture-pane -J -t {active_pane_id} -p{scroll_params} | tail -n {height} | {dir}/target/release/thumbs -f '%U:%H' -t {tmp} {args}; tmux swap-pane -t {active_pane_id}; {zoom_command} tmux wait-for -S {signal}",
         active_pane_id = active_pane_id,
         scroll_params = scroll_params,
         height = self.active_pane_height.unwrap_or(i32::MAX),
