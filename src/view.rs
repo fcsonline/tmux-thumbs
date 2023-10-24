@@ -6,7 +6,7 @@ use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
 use termion::screen::AlternateScreen;
-use termion::{color, cursor};
+use termion::{color, cursor, terminal_size};
 
 use unicode_width::UnicodeWidthStr;
 
@@ -84,95 +84,149 @@ impl<'a> View<'a> {
     }
   }
 
-  fn make_hint_text(&self, hint: &str) -> String {
-    if self.contrast {
-      format!("[{}]", hint)
-    } else {
-      hint.to_string()
-    }
-  }
-
   fn render(&self, stdout: &mut dyn Write, typed_hint: &str) -> () {
     write!(stdout, "{}", cursor::Hide).unwrap();
 
+    let mut printed_row_sum = 0;
+    let column_size = terminal_size().unwrap().0;
+
     for (index, line) in self.state.lines.iter().enumerate() {
       let clean = line.trim_end_matches(|c: char| c.is_whitespace());
-
-      if !clean.is_empty() {
-        print!("{goto}{text}", goto = cursor::Goto(1, index as u16 + 1), text = line);
+      if clean.is_empty() {
+        printed_row_sum += 1;
+        continue;
       }
-    }
 
-    let selected = self.matches.get(self.skip);
+      let mut output_line = (*line).to_string();
+      let selected = self.matches.get(self.skip);
+      let cur_line_matches = self.matches.iter().filter(|m| m.y == index as i32);
 
-    for mat in self.matches.iter() {
-      let chosen_hint = self.chosen.iter().any(|(hint, _)| hint == mat.text);
+      // process in reverse order so mat.x stays valid
+      for mat in cur_line_matches.rev() {
+        // split line into prefix, match, suffix
+        let mut prefix = &output_line[..mat.x as usize];
+        let mut m = &output_line[mat.x as usize..mat.x as usize + mat.text.width()];
+        let mut suffix = &output_line[mat.x as usize + mat.text.width()..];
 
-      let selected_color = if chosen_hint {
-        &self.multi_foreground_color
-      } else if selected == Some(mat) {
-        &self.select_foreground_color
-      } else {
-        &self.foreground_color
-      };
-      let selected_background_color = if chosen_hint {
-        &self.multi_background_color
-      } else if selected == Some(mat) {
-        &self.select_background_color
-      } else {
-        &self.background_color
-      };
+        /*
+         *  off_left: <prefix[..hint.len] + hint> <hint> <text> <suffix>
+         *      left: <prefix> <hint + text[hint.len..]> <suffix>
+         *     right: <prefix> <text[..hint.len] + hint> <suffix>
+         * off_right: <prefix> <text> <hint + suffix[hint.len..]>
+         * respect the unicode while slicing
+         */
+        if let Some(ref hint) = mat.hint {
+          if self.position == "off_left" {
+            prefix = if prefix.width() < hint.width() {
+              &prefix[..0]
+            } else {
+              let max_idx = prefix.char_indices().map(|(x, _)| x).max().unwrap_or(0);
+              let max_lower_than_hint = prefix
+                .char_indices()
+                .filter(|&(x, _)| x < max_idx - hint.width())
+                .map(|(x, _)| x)
+                .max()
+                .unwrap_or(0);
+              &prefix[..max_lower_than_hint]
+            };
+          } else if self.position == "left" {
+            m = &m[hint.width()..]
+          } else if self.position == "right" {
+            m = &m[..m.width() - hint.width()]
+          } else {
+            suffix = if suffix.width() < hint.width() {
+              &suffix[..0]
+            } else {
+              let min_idx = suffix.char_indices().map(|(x, _)| x).min().unwrap_or(0);
+              let max_lower_than_hint = suffix
+                .char_indices()
+                .filter(|&(x, _)| x > min_idx + hint.width())
+                .map(|(x, _)| x)
+                .max()
+                .unwrap_or(0);
+              &suffix[max_lower_than_hint..]
+            }
+          }
+        }
 
-      // Find long utf sequences and extract it from mat.x
-      let line = &self.state.lines[mat.y as usize];
-      let prefix = &line[0..mat.x as usize];
-      let extra = prefix.width_cjk() - prefix.chars().count();
-      let offset = (mat.x as u16) - (extra as u16);
-      let text = self.make_hint_text(mat.text);
-
-      print!(
-        "{goto}{background}{foregroud}{text}{resetf}{resetb}",
-        goto = cursor::Goto(offset + 1, mat.y as u16 + 1),
-        foregroud = color::Fg(&**selected_color),
-        background = color::Bg(&**selected_background_color),
-        resetf = color::Fg(color::Reset),
-        resetb = color::Bg(color::Reset),
-        text = &text
-      );
-
-      if let Some(ref hint) = mat.hint {
-        let extra_position = match self.position {
-          "right" => text.width_cjk() - hint.len(),
-          "off_left" => 0 - hint.len() - if self.contrast { 2 } else { 0 },
-          "off_right" => text.width_cjk(),
-          _ => 0,
+        let chosen_hint = self.chosen.iter().any(|(hint, _)| hint == mat.text);
+        let selected_color = if chosen_hint {
+          &self.multi_foreground_color
+        } else if selected == Some(mat) {
+          &self.select_foreground_color
+        } else {
+          &self.foreground_color
+        };
+        let selected_background_color = if chosen_hint {
+          &self.multi_background_color
+        } else if selected == Some(mat) {
+          &self.select_background_color
+        } else {
+          &self.background_color
         };
 
-        let text = self.make_hint_text(hint.as_str());
-        let final_position = std::cmp::max(offset as i16 + extra_position as i16, 0);
+        let match_bg_color = color::Bg(&**selected_background_color).to_string();
+        let match_bg_color = match_bg_color.as_str();
+        let match_fg_color = color::Fg(&**selected_color).to_string();
+        let match_fg_color = match_fg_color.as_str();
+        let bg_reset = color::Bg(color::Reset).to_string();
+        let bg_reset = bg_reset.as_str();
+        let fg_reset = color::Fg(color::Reset).to_string();
+        let fg_reset = fg_reset.as_str();
 
-        print!(
-          "{goto}{background}{foregroud}{text}{resetf}{resetb}",
-          goto = cursor::Goto(final_position as u16 + 1, mat.y as u16 + 1),
-          foregroud = color::Fg(&*self.hint_foreground_color),
-          background = color::Bg(&*self.hint_background_color),
-          resetf = color::Fg(color::Reset),
-          resetb = color::Bg(color::Reset),
-          text = &text
-        );
+        output_line = if let Some(ref hint) = mat.hint {
+          let (hint_bg_color, hint_fg_color) = if hint.starts_with(typed_hint) {
+            let bg = color::Bg(&*self.multi_background_color).to_string();
+            let fg = color::Fg(&*self.multi_foreground_color).to_string();
+            (bg, fg)
+          } else {
+            let bg = color::Bg(&*self.hint_background_color).to_string();
+            let fg = color::Fg(&*self.hint_foreground_color).to_string();
+            (bg, fg)
+          };
 
-        if hint.starts_with(typed_hint) {
-          print!(
-            "{goto}{background}{foregroud}{text}{resetf}{resetb}",
-            goto = cursor::Goto(final_position as u16 + 1, mat.y as u16 + 1),
-            foregroud = color::Fg(&*self.multi_foreground_color),
-            background = color::Bg(&*self.multi_background_color),
-            resetf = color::Fg(color::Reset),
-            resetb = color::Bg(color::Reset),
-            text = &typed_hint
-          );
-        }
+          if self.position == "left" || self.position == "off_left" {
+            String::from("")
+              + prefix
+              + hint_bg_color.as_str()
+              + hint_fg_color.as_str()
+              + hint
+              + fg_reset
+              + bg_reset
+              + match_bg_color
+              + match_fg_color
+              + m
+              + fg_reset
+              + bg_reset
+              + suffix
+          } else {
+            String::from("")
+              + prefix
+              + match_bg_color
+              + match_fg_color
+              + m
+              + fg_reset
+              + bg_reset
+              + hint_bg_color.as_str()
+              + hint_fg_color.as_str()
+              + hint
+              + fg_reset
+              + bg_reset
+              + suffix
+          }
+        } else {
+          String::from("") + prefix + match_bg_color + match_fg_color + m + fg_reset + bg_reset + suffix
+        };
       }
+
+      print!(
+        "{goto}{text}",
+        goto = cursor::Goto(1, printed_row_sum as u16 + 1),
+        text = output_line
+      );
+      stdout.flush().unwrap();
+      let printed_rows = line.width() / (column_size + 1) as usize + 1;
+      printed_row_sum += printed_rows;
     }
 
     stdout.flush().unwrap();
