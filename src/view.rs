@@ -224,7 +224,6 @@ impl<'a> View<'a> {
         goto = cursor::Goto(1, printed_row_sum as u16 + 1),
         text = output_line
       );
-      stdout.flush().unwrap();
       let printed_rows = line.width() / (column_size + 1) as usize + 1;
       printed_row_sum += printed_rows;
     }
