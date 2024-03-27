@@ -4,6 +4,7 @@ use self::clap::{App, Arg};
 use clap::crate_version;
 use regex::Regex;
 use std::io::Write;
+use std::path::Path;
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -57,7 +58,7 @@ fn dbg(msg: &str) {
 
 pub struct Swapper<'a> {
   executor: Box<&'a mut dyn Executor>,
-  dir: String,
+  thumbs_path: String,
   command: String,
   upcase_command: String,
   multi_command: String,
@@ -74,7 +75,7 @@ pub struct Swapper<'a> {
 impl<'a> Swapper<'a> {
   fn new(
     executor: Box<&'a mut dyn Executor>,
-    dir: String,
+    thumbs_path: String,
     command: String,
     upcase_command: String,
     multi_command: String,
@@ -87,7 +88,7 @@ impl<'a> Swapper<'a> {
 
     Swapper {
       executor,
-      dir,
+      thumbs_path,
       command,
       upcase_command,
       multi_command,
@@ -119,7 +120,7 @@ impl<'a> Swapper<'a> {
 
     let active_pane = chunks
       .iter()
-      .find(|&chunks| *chunks.get(5).unwrap() == "active")
+      .find(|&chunks| *chunks.get(5).expect("Unable to find active pane") == "active")
       .expect("Unable to find active pane");
 
     let pane_id = active_pane.get(0).unwrap();
@@ -215,11 +216,11 @@ impl<'a> Swapper<'a> {
     };
 
     let pane_command = format!(
-        "tmux capture-pane -J -t {active_pane_id} -p{scroll_params} | tail -n {height} | {dir}/target/release/thumbs -f '%U:%H' -t {tmp} {args}; tmux swap-pane -t {active_pane_id}; {zoom_command} tmux wait-for -S {signal}",
+        "tmux capture-pane -J -t {active_pane_id} -p{scroll_params} | tail -n {height} | {thumbs_path} -f '%U:%H' -t {tmp} {args}; tmux swap-pane -t {active_pane_id}; {zoom_command} tmux wait-for -S {signal}",
         active_pane_id = active_pane_id,
         scroll_params = scroll_params,
         height = self.active_pane_height.unwrap_or(i32::MAX),
-        dir = self.dir,
+        thumbs_path = self.thumbs_path,
         tmp = TMP_FILE,
         args = args.join(" "),
         zoom_command = zoom_command,
@@ -533,10 +534,10 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
     .version(crate_version!())
     .about("A lightning fast version of tmux-fingers, copy/pasting tmux like vimium/vimperator")
     .arg(
-      Arg::with_name("dir")
-        .help("Directory where to execute thumbs")
-        .long("dir")
-        .default_value(""),
+      Arg::with_name("thumbs_path")
+        .help("Path to the thumbs binary")
+        .long("thumbs-path")
+        .default_value("/usr/bin/thumbs"),
     )
     .arg(
       Arg::with_name("command")
@@ -567,20 +568,26 @@ fn app_args<'a>() -> clap::ArgMatches<'a> {
 
 fn main() -> std::io::Result<()> {
   let args = app_args();
-  let dir = args.value_of("dir").unwrap();
+  let thumbs_path = args.value_of("thumbs_path").unwrap();
   let command = args.value_of("command").unwrap();
   let upcase_command = args.value_of("upcase_command").unwrap();
   let multi_command = args.value_of("multi_command").unwrap();
   let osc52 = args.is_present("osc52");
 
-  if dir.is_empty() {
-    panic!("Invalid tmux-thumbs execution. Are you trying to execute tmux-thumbs directly?")
+  if thumbs_path.is_empty() {
+    panic!(
+      "Invalid tmux-thumbs execution. Are you trying to execute tmux-thumbs directly with empty --thumbs-path option?"
+    );
+  }
+
+  if !Path::new(thumbs_path).exists() {
+    panic!("Invalid thumbs binary path `{}`: file does not exists", thumbs_path);
   }
 
   let mut executor = RealShell::new();
   let mut swapper = Swapper::new(
     Box::new(&mut executor),
-    dir.to_string(),
+    thumbs_path.to_string(),
     command.to_string(),
     upcase_command.to_string(),
     multi_command.to_string(),
